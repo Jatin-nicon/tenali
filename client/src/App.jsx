@@ -81,6 +81,7 @@ import KeyTerms from './components/KeyTerms'
 import InteractiveLcmHcfApp from './LcmHcfApp';
 import IdliVadaSambharApp from './IdliVadaSambharApp';
 import CarJourneyApp from './CarJourneyApp';
+import GeoGebraLabApp from './GeoGebraLabApp';
 import RealWorldHubApp from './RealWorldHub';
 import { cjTakeReco } from './cjReco'; // Feature CR — Road License difficulty hand-off
 const CJ_RECO_DIFFS = ['easy', 'medium', 'hard', 'extrahard'];
@@ -44705,6 +44706,7 @@ function App() {
     hcflcm: InteractiveLcmHcfApp,  // HCF & LCM
     idlivada: IdliVadaSambharApp,  // Idli–Vada–Sambhar (Multiples, Common Multiples & LCM)
     carjourney: CarJourneyApp,     // The Car Journey (Feature CR — 16-stop math road trip)
+    geogebra: GeoGebraLabApp,      // GeoGebra Lab (Level 1: 33 hands-on practical challenges)
     realworld: RealWorldHubApp,    // Real-World hub (Feature CR) — phenomenon pathway cards
     profitloss: ProfitLossApp,     // Profit & Loss
     rounding: RoundingApp,         // Rounding
@@ -44901,6 +44903,8 @@ function App() {
       <div>
         {mode === 'vachana' ? (
           <Vachana onBack={() => setMode(null)} initialAdaptScore={diagnosticState[mode] || 0} />
+        ) : mode === 'geogebra' ? (
+          renderContent()
         ) : (
           <div className={`card ${mode === 'contrastlist' ? 'is-wide' : ''}`}>
             {renderContent()}
@@ -44974,6 +44978,7 @@ function Home({ onSelect, completedTopics = [], goldMastery = [], coins = 0, isG
     { key: 'fractionadd', name: 'Fractions', subtitle: 'Add, subtract, multiply & divide', color: 'green' },
     { key: 'funceval', name: 'Functions', subtitle: 'Evaluate f(x), f(x,y), f(x,y,z)', color: 'green' },
     { key: 'gk', name: 'GK', subtitle: 'General Knowledge questions', color: 'purple' },
+    { key: 'geogebra', name: '📐 GeoGebra Lab', subtitle: 'Level 1: 33 hands-on practical challenges', color: 'green' },
     { key: 'gst', name: 'GST', subtitle: 'Goods & Services Tax', color: 'purple' },
     { key: 'hcflcm', name: 'HCF & LCM', subtitle: 'Highest common factor & LCM', color: 'blue' },
     { key: 'idlivada', name: 'Idli Vada Sambhar', subtitle: 'Multiples, common multiples & LCM game', color: 'orange' },
