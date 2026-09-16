@@ -84,6 +84,8 @@ import InteractiveLcmHcfApp from './LcmHcfApp';
 import IdliVadaSambharApp from './IdliVadaSambharApp';
 import CarJourneyApp from './CarJourneyApp';
 import GeoGebraLabApp from './GeoGebraLabApp';
+import PaintMixingPlayground from './modules/PaintMixingPlayground';
+import KernelPlayground from './modules/KernelPlayground';
 import RealWorldHubApp from './RealWorldHub';
 import { cjTakeReco } from './cjReco'; // Feature CR — Road License difficulty hand-off
 const CJ_RECO_DIFFS = ['easy', 'medium', 'hard', 'extrahard'];
@@ -44845,6 +44847,8 @@ function App() {
     idlivada: IdliVadaSambharApp,  // Idli–Vada–Sambhar (Multiples, Common Multiples & LCM)
     carjourney: CarJourneyApp,     // The Car Journey (Feature CR — 16-stop math road trip)
     geogebra: GeoGebraLabApp,      // GeoGebra Lab (Level 1: 33 hands-on practical challenges)
+    paintmixer: PaintMixingPlayground, // Paint Mixing Studio (Linear combinations & color space)
+    kernel: KernelPlayground,      // The Zero Balance Studio (Null space & kernel equilibrium)
     realworld: RealWorldHubApp,    // Real-World hub (Feature CR) — phenomenon pathway cards
     profitloss: ProfitLossApp,     // Profit & Loss
     rounding: RoundingApp,         // Rounding
@@ -44952,6 +44956,24 @@ function App() {
             onBack={() => setMode('learning_journey_topic')}
           />
         </AuthGate>
+      );
+    }
+
+    if (mode === 'paintmixer') {
+      return (
+        <PaintMixingPlayground
+          onBack={() => setMode(null)}
+          onNavigateKernel={() => setMode('kernel')}
+        />
+      );
+    }
+
+    if (mode === 'kernel') {
+      return (
+        <KernelPlayground
+          onBack={() => setMode(null)}
+          onNavigateColor={() => setMode('paintmixer')}
+        />
       );
     }
 
@@ -45086,6 +45108,7 @@ function App() {
       gymdecimals: 'Gym Decimals', funcgym: 'Functions Gym', dotprodgym: 'Dot Products Gym',
       fracaddgym: 'Fractions Gym', lineqgym: 'Linear Equations Gym',
       indicesgym: 'Indices Gym', polygym: 'Polynomials Gym',
+      paintmixer: 'Paint Mixing Studio', kernel: 'The Zero Balance (Kernel)',
     }
     return labels[key] || key
   }
@@ -45487,7 +45510,7 @@ function App() {
       <div>
         {mode === 'vachana' ? (
           <Vachana onBack={() => setMode(null)} initialAdaptScore={diagnosticState[mode] || 0} />
-        ) : mode === 'geogebra' ? (
+        ) : mode === 'geogebra' || mode === 'paintmixer' || mode === 'kernel' ? (
           renderContent()
         ) : (
           <div className={`card ${mode === 'contrastlist' ? 'is-wide' : ''}`}>
