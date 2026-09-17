@@ -109,7 +109,6 @@ export const TILES = [
     { key: 'polygym', name: 'Polynomials Gym', subtitle: 'Arithmetic → monomial algebra (MCQ)', color: 'blue', category: 'algebra', foldInto: 'polymul' },
     { key: 'water-jug-lab', name: '🧪 Water Jug Lab', subtitle: 'GCD discovery — 13-level progression', color: 'teal', category: 'shelf' },
     { key: 'equation-crafting-lab', name: '⚗️ Equation Crafting Lab', subtitle: 'Build expressions in the mixing pot', color: 'orange', category: 'algebra' },
-    { key: 'paintmixer', name: '🎨 Paint Mixer Studio', subtitle: 'Linear combinations & color space discovery', color: 'orange', category: 'linear-algebra' },
     { key: 'kernel', name: '⚖️ The Zero Balance', subtitle: 'Null space & equilibrium discovery in 2D & 3D', color: 'teal', category: 'linear-algebra' },
 ]
 

@@ -31,7 +31,7 @@ const STAGES = {
   }
 };
 
-export default function KernelPlayground({ onBack, onNavigateColor }) {
+export default function KernelPlayground({ onBack }) {
   const [currentStage, setCurrentStage] = useState(1);
   const [completedStages, setCompletedStages] = useState(new Set());
 
@@ -751,25 +751,13 @@ export default function KernelPlayground({ onBack, onNavigateColor }) {
         style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 9998 }}
       />
 
-      {/* Top Bar with Navigation & Switcher */}
+      {/* Top Bar with Navigation */}
       <div className="kp-top-nav">
         {onBack && (
           <button className="kp-back-btn" onClick={onBack}>
             ← Back to Tenali
           </button>
         )}
-        <div className="kp-module-switch">
-          <button
-            className="kp-module-tab"
-            onClick={onNavigateColor}
-            title="Go to Color Mixing Studio"
-          >
-            🎨 Color Mixing
-          </button>
-          <button className="kp-module-tab active" title="Current: The Zero Balance">
-            ⚖️ Zero Balance
-          </button>
-        </div>
       </div>
 
       {/* Header */}
@@ -920,14 +908,22 @@ export default function KernelPlayground({ onBack, onNavigateColor }) {
                 Proceed to Stage {currentStage + 1} →
               </button>
             ) : (
-              onNavigateColor && (
+              <div style={{ display: 'flex', gap: '0.6rem', justifyContent: 'center' }}>
                 <button
                   className="kp-inline-btn-primary"
-                  onClick={onNavigateColor}
+                  onClick={() => handleSwitchStage(1)}
                 >
-                  Explore Color Mixing Studio 🎨 →
+                  Play Again 🔄
                 </button>
-              )
+                {onBack && (
+                  <button
+                    className="kp-inline-btn-secondary"
+                    onClick={onBack}
+                  >
+                    Back to Home 🏠
+                  </button>
+                )}
+              </div>
             )}
           </div>
         </div>
