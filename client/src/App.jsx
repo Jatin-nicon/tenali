@@ -85,6 +85,7 @@ import IdliVadaSambharApp from './IdliVadaSambharApp';
 import CarJourneyApp from './CarJourneyApp';
 import GeoGebraLabApp from './GeoGebraLabApp';
 import KernelPlayground from './modules/KernelPlayground';
+import LinearAlgebraModule from './modules/LinearAlgebra';
 import RealWorldHubApp from './RealWorldHub';
 import { cjTakeReco } from './cjReco'; // Feature CR — Road License difficulty hand-off
 const CJ_RECO_DIFFS = ['easy', 'medium', 'hard', 'extrahard'];
@@ -44847,6 +44848,7 @@ function App() {
     carjourney: CarJourneyApp,     // The Car Journey (Feature CR — 16-stop math road trip)
     geogebra: GeoGebraLabApp,      // GeoGebra Lab (Level 1: 33 hands-on practical challenges)
     kernel: KernelPlayground,      // The Zero Balance Studio (Null space & kernel equilibrium)
+    'linear-algebra-studio': LinearAlgebraModule, // Visual intuition & interactive challenges
     realworld: RealWorldHubApp,    // Real-World hub (Feature CR) — phenomenon pathway cards
     profitloss: ProfitLossApp,     // Profit & Loss
     rounding: RoundingApp,         // Rounding
@@ -44956,6 +44958,14 @@ function App() {
         </AuthGate>
       );
     }
+    if (mode === 'linear-algebra-studio') {
+      return (
+        <LinearAlgebraModule
+          onBack={() => setMode(null)}
+        />
+      );
+    }
+
     if (mode === 'kernel') {
       return (
         <KernelPlayground
@@ -45096,6 +45106,7 @@ function App() {
       fracaddgym: 'Fractions Gym', lineqgym: 'Linear Equations Gym',
       indicesgym: 'Indices Gym', polygym: 'Polynomials Gym',
       kernel: 'The Zero Balance (Kernel)',
+      'linear-algebra-studio': 'Linear Algebra Studio',
     }
     return labels[key] || key
   }
@@ -45497,7 +45508,7 @@ function App() {
       <div>
         {mode === 'vachana' ? (
           <Vachana onBack={() => setMode(null)} initialAdaptScore={diagnosticState[mode] || 0} />
-        ) : mode === 'geogebra' || mode === 'kernel' ? (
+        ) : mode === 'geogebra' || mode === 'kernel' || mode === 'linear-algebra-studio' ? (
           renderContent()
         ) : (
           <div className={`card ${mode === 'contrastlist' ? 'is-wide' : ''}`}>

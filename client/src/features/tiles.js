@@ -110,6 +110,7 @@ export const TILES = [
     { key: 'water-jug-lab', name: '🧪 Water Jug Lab', subtitle: 'GCD discovery — 13-level progression', color: 'teal', category: 'shelf' },
     { key: 'equation-crafting-lab', name: '⚗️ Equation Crafting Lab', subtitle: 'Build expressions in the mixing pot', color: 'orange', category: 'algebra' },
     { key: 'kernel', name: '⚖️ The Zero Balance', subtitle: 'Null space & equilibrium discovery in 2D & 3D', color: 'teal', category: 'linear-algebra' },
+    { key: 'linear-algebra-studio', name: '📐 Linear Algebra Studio', subtitle: 'Visual intuition & interactive challenges', color: 'orange', category: 'linear-algebra' },
 ]
 
 // Hamburger-only entries (#190). Data only -- composition stays in App.jsx.
