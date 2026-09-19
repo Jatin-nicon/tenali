@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   PATH_META,
   PHASES,
@@ -6,8 +6,10 @@ import {
   CLUSTER_1_SUMMARY,
   ENVIRONMENTS,
   ENVIRONMENT_OBJECTS,
-  UNSEEN_OBJECTS_DESCRIPTIONS
+  UNSEEN_OBJECTS_DESCRIPTIONS,
+  UNSEEN_SPOTS_PRESETS
 } from './questions';
+import GeoGebraPointPlotter from './GeoGebraPointPlotter';
 import './LinearAlgebraModule.css';
 
 // ==========================================
@@ -479,61 +481,165 @@ function SizeInspectorVisual({ selectedObject = 'Bulb' }) {
 }
 
 // ==========================================
-// 5. VISUAL: Mind's Eye & Spatial Compass (Q4)
+// 5. VISUAL: Top-Down Spatial Field of View Studio (Q10-Q12)
 // ==========================================
-function MindsEyeVisual({ eyesClosed, onToggleEyes, compassAngle, setCompassAngle, unseenLabel = 'Chair Spot (Behind You: 180°)' }) {
-  const rad = (compassAngle * Math.PI) / 180;
-  const pointerX = 210 + Math.sin(rad) * 45;
-  const pointerY = 90 - Math.cos(rad) * 45;
+function SpatialFieldOfViewVisual({
+  unseenSpot = 'Behind me on the chair',
+  showMentalRay = false,
+  showObserverToggle = false,
+  observerPresent = true,
+  onToggleObserver
+}) {
+  // Determine location coordinates based on the selected unseenSpot
+  let spotX = 220;
+  let spotY = 168; // directly behind (180°)
+  const lower = (unseenSpot || '').toLowerCase();
+  if (lower.includes('desk') || lower.includes('under') || lower.includes('floor')) {
+    spotX = 115;
+    spotY = 145; // lower-left
+  } else if (lower.includes('wall') || lower.includes('tree') || lower.includes('trunk') || lower.includes('path') || lower.includes('bench')) {
+    spotX = 325;
+    spotY = 150; // lower-right
+  }
 
   return (
-    <div className={`la-minds-eye-card ${eyesClosed ? 'dark-mode' : ''}`}>
-      <div className="la-minds-eye-header">
-        <span className="la-eye-badge">{eyesClosed ? '🌙 Mind\'s Eye Active' : '👁️ Eyes Open'}</span>
-        <button className="la-pill-btn active" onClick={onToggleEyes}>
-          {eyesClosed ? 'Open Eyes 👁️' : 'Close Eyes (Mind\'s Eye Mode) 🌙'}
-        </button>
+    <div className="la-fov-studio">
+      <div className="la-fov-header">
+        <span className="la-fov-title">🗺️ Top-Down Spatial Awareness Radar</span>
+        {showObserverToggle && (
+          <div className="la-observer-toggle-wrap">
+            <button
+              className={`la-pill-btn ${observerPresent ? 'active' : ''}`}
+              onClick={onToggleObserver}
+            >
+              {observerPresent ? '👁️ Observer Present' : '🌌 No Observer (Empty Space)'}
+            </button>
+          </div>
+        )}
       </div>
 
-      <svg className="la-svg-canvas" viewBox="0 0 420 180">
-        {/* Room Boundary Circle */}
-        <circle cx="210" cy="90" r="70" fill="none" stroke="rgba(255,245,230,0.15)" strokeWidth="1.5" strokeDasharray="4,4" />
+      <svg className="la-svg-canvas" viewBox="0 0 440 205">
+        <defs>
+          {/* Vision cone gradient radiating forward towards screen */}
+          <radialGradient id="fovConeGlow" cx="50%" cy="100%" r="90%">
+            <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.45" />
+            <stop offset="60%" stopColor="#0284c7" stopOpacity="0.2" />
+            <stop offset="100%" stopColor="#0369a1" stopOpacity="0.02" />
+          </radialGradient>
+          {/* Pulsing spot glow */}
+          <radialGradient id="spotAmberGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#fbbf24" stopOpacity="0.9" />
+            <stop offset="60%" stopColor="#d97706" stopOpacity="0.3" />
+            <stop offset="100%" stopColor="#b45309" stopOpacity="0" />
+          </radialGradient>
+        </defs>
 
-        {/* You at the Center */}
-        <circle cx="210" cy="90" r="9" fill="#10b981" />
-        <text x="210" y="93" textAnchor="middle" fill="#fff" fontSize="8" fontWeight="bold">YOU</text>
-        <text x="210" y="110" textAnchor="middle" fill="rgba(255,245,230,0.6)" fontSize="7.5">Facing Forward (0°)</text>
+        {/* Outer Spatial Room Boundary */}
+        <rect x="20" y="10" width="400" height="185" rx="10" fill="#181512" stroke="rgba(255,245,230,0.15)" strokeWidth="1.2" />
+        <circle cx="220" cy="110" r="75" fill="none" stroke="rgba(255,245,230,0.08)" strokeWidth="1" strokeDasharray="3,3" />
 
-        {/* The Unseen Spot Behind You (180°) */}
-        <g>
-          <circle cx="210" cy="155" r="5" fill="#f59e0b" />
-          <circle cx="210" cy="155" r="11" fill="none" stroke="#f59e0b" strokeWidth="1" strokeDasharray="2,2" />
-          <text x="210" y="174" textAnchor="middle" fill="#f59e0b" fontSize="8.5" fontWeight="bold">
-            {unseenLabel}
-          </text>
-        </g>
+        {/* Ambient Unseen Space Labels */}
+        <text x="35" y="112" fill="rgba(255,245,230,0.3)" fontSize="8" fontWeight="bold">UNSEEN SPACE</text>
+        <text x="405" y="112" textAnchor="end" fill="rgba(255,245,230,0.3)" fontSize="8" fontWeight="bold">UNSEEN SPACE</text>
+        <text x="220" y="198" textAnchor="middle" fill="rgba(255,245,230,0.4)" fontSize="7.5">BEHIND YOU (180°)</text>
 
-        {/* Pointer Vector */}
-        <line x1="210" y1="90" x2={pointerX} y2={pointerY} stroke="#e8864a" strokeWidth="2.5" />
-        <circle cx={pointerX} cy={pointerY} r="3.5" fill="#e8864a" />
+        {/* Screen at the Top (Facing Forward at 0°) */}
+        <rect x="170" y="16" width="100" height="12" rx="3" fill="#1e3a8a" stroke="#60a5fa" strokeWidth="1.2" />
+        <text x="220" y="25" textAnchor="middle" fill="#bfdbfe" fontSize="7.5" fontWeight="bold">
+          🖥️ YOUR SCREEN (0°)
+        </text>
 
-        {/* Lock indicator */}
-        {Math.abs(compassAngle - 180) < 25 && (
-          <text x="210" y="40" textAnchor="middle" fill="#10b981" fontSize="9.5" fontWeight="bold">
-            🎯 Locked on the Unseen Spot! (Even with eyes closed)
-          </text>
+        {/* Forward Field of View (FOV) Cone from Observer */}
+        {observerPresent && (
+          <g>
+            <polygon points="220,110 145,28 295,28" fill="url(#fovConeGlow)" />
+            <line x1="220" y1="110" x2="145" y2="28" stroke="#38bdf8" strokeWidth="1" strokeDasharray="2,2" opacity="0.6" />
+            <line x1="220" y1="110" x2="295" y2="28" stroke="#38bdf8" strokeWidth="1" strokeDasharray="2,2" opacity="0.6" />
+            <text x="220" y="65" textAnchor="middle" fill="#7dd3fc" fontSize="8" fontWeight="500">
+              Forward Field of View (Screen)
+            </text>
+          </g>
+        )}
+
+        {/* Mental Awareness Ray (Q11 & Q12) */}
+        {showMentalRay && observerPresent && (
+          <g>
+            <line
+              x1="220"
+              y1="110"
+              x2={spotX}
+              y2={spotY}
+              stroke="#f59e0b"
+              strokeWidth="2"
+              strokeDasharray="4,3"
+            />
+            <circle cx={(220 + spotX) / 2} cy={(110 + spotY) / 2} r="10" fill="#292524" stroke="#f59e0b" strokeWidth="1" />
+            <text x={(220 + spotX) / 2} y={(110 + spotY) / 2 + 3} textAnchor="middle" fill="#f59e0b" fontSize="7" fontWeight="bold">
+              🧠 Mind
+            </text>
+          </g>
+        )}
+
+        {/* Observer Center [YOU] */}
+        {observerPresent ? (
+          <g>
+            <circle cx="220" cy="110" r="15" fill="rgba(16, 185, 129, 0.2)" stroke="#10b981" strokeWidth="1.5" />
+            <circle cx="220" cy="110" r="8.5" fill="#10b981" />
+            <text x="220" y="113" textAnchor="middle" fill="#fff" fontSize="7.5" fontWeight="bold">
+              YOU
+            </text>
+            {/* Forward Eye Arrow */}
+            <polygon points="220,91 216,97 224,97" fill="#10b981" />
+          </g>
+        ) : (
+          <g>
+            <circle cx="220" cy="110" r="14" fill="none" stroke="rgba(255,245,230,0.15)" strokeWidth="1.2" strokeDasharray="3,3" />
+            <text x="220" y="113" textAnchor="middle" fill="rgba(255,245,230,0.4)" fontSize="7">
+              (Empty Space)
+            </text>
+          </g>
+        )}
+
+        {/* The Unseen Spot Marker (📍 Unseen Spot) */}
+        {unseenSpot && (
+          <g>
+            {/* Pulsing ring */}
+            <circle cx={spotX} cy={spotY} r="16" fill="url(#spotAmberGlow)" />
+            <circle cx={spotX} cy={spotY} r="9" fill="none" stroke="#f59e0b" strokeWidth="1.2" strokeDasharray="3,2" />
+            {/* True Spot point */}
+            <circle cx={spotX} cy={spotY} r="4.5" fill="#f59e0b" stroke="#ffffff" strokeWidth="1.5" />
+            {/* Label pill */}
+            <rect
+              x={spotX - 58}
+              y={spotY + 9}
+              width="116"
+              height="16"
+              rx="4"
+              fill="#24190e"
+              stroke="#f59e0b"
+              strokeWidth="1"
+            />
+            <text x={spotX} y={spotY + 20} textAnchor="middle" fill="#fef3c7" fontSize="7.5" fontWeight="bold">
+              📍 {unseenSpot.length > 20 ? unseenSpot.slice(0, 18) + '...' : unseenSpot}
+            </text>
+          </g>
         )}
       </svg>
 
-      <div className="la-slider-control">
-        <label>Aim Your Mental Pointer: <strong>{compassAngle}°</strong> (180° = Directly Behind You)</label>
-        <input
-          type="range"
-          min="0"
-          max="360"
-          value={compassAngle}
-          onChange={(e) => setCompassAngle(Number(e.target.value))}
-        />
+      <div className="la-studio-caption">
+        {!showObserverToggle ? (
+          <span>
+            You are facing forward at the screen. The <strong>📍 spot</strong> sits outside your vision cone in surrounding space.
+          </span>
+        ) : observerPresent ? (
+          <span>
+            The spot exists in space behind you. Toggle the observer to see what happens when no eyes are watching.
+          </span>
+        ) : (
+          <span style={{ color: '#f59e0b', fontWeight: 'bold' }}>
+            ✨ Observer is absent, but the spot's location in space remains firmly in place!
+          </span>
+        )}
       </div>
     </div>
   );
@@ -542,11 +648,80 @@ function MindsEyeVisual({ eyesClosed, onToggleEyes, compassAngle, setCompassAngl
 // ==========================================
 // MAIN CLUSTER 1 STUDIO MODULE
 // ==========================================
+// OPTION SHUFFLING HELPERS (Fisher-Yates)
 // ==========================================
-// MAIN STUDIO MODULE: Understanding the Point
+function shuffleOptions(arr) {
+  if (!arr || !Array.isArray(arr)) return [];
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+function getRawOptionsForQuestion(qId, selectedObject) {
+  const objName = (selectedObject || 'chosen object').toLowerCase();
+  switch (qId) {
+    case 3:
+      return [
+        { id: 'q3_obj', text: `The ${objName} itself`, isCorrect: false, aim: 'object' },
+        { id: 'q3_spot', text: `The spot where the ${objName} is`, isCorrect: true, aim: 'spot' }
+      ];
+    case 5:
+      return [
+        { id: 'q5_rep', text: `The drawn dot represents the spot, while the ${objName} occupies it`, isCorrect: true },
+        { id: 'q5_occ', text: `The drawn dot occupies the spot, while the ${objName} represents it`, isCorrect: false },
+        { id: 'q5_both_rep', text: 'Both represent the spot', isCorrect: false },
+        { id: 'q5_both_occ', text: 'Both occupy the spot', isCorrect: false }
+      ];
+    case 6:
+      return [
+        { id: 'q6_pretty', text: 'Because circles look pretty', isCorrect: false },
+        { id: 'q6_tradition', text: "Because it's a tradition", isCorrect: false },
+        { id: 'q6_visible', text: 'Because we have to put something visible on paper', isCorrect: true },
+        { id: 'q6_easy', text: 'Because circles are the easiest shape to draw', isCorrect: false }
+      ];
+    case 7:
+      return [
+        { id: 'q7_yes', text: 'Yes, it has size and body', isCorrect: true, value: 'Yes, it has physical size / body' },
+        { id: 'q7_no', text: 'No', isCorrect: false, value: 'No' }
+      ];
+    case 8:
+      return [
+        { id: 'q8_only_obj', text: `Only the ${objName} has size (the spot has zero size)`, isCorrect: true },
+        { id: 'q8_both', text: 'Both have size', isCorrect: false },
+        { id: 'q8_neither', text: 'Neither has size', isCorrect: false },
+        { id: 'q8_only_spot', text: 'Only the spot has size', isCorrect: false }
+      ];
+    case 10:
+      return [
+        { id: 'q10_yes', text: 'Yes, I can picture and locate it in my mind', isCorrect: true },
+        { id: 'q10_no', text: 'No, I cannot picture it', isCorrect: false }
+      ];
+    case 11:
+      return [
+        { id: 'q11_yes', text: 'Yes, the spot exists in space unseen', isCorrect: true },
+        { id: 'q11_no', text: 'No, it only exists when seen', isCorrect: false }
+      ];
+    default:
+      return [];
+  }
+}
+
+function initAllShuffledOptions(selectedObject) {
+  const result = {};
+  [3, 5, 6, 7, 8, 10, 11].forEach((qId) => {
+    result[qId] = shuffleOptions(getRawOptionsForQuestion(qId, selectedObject));
+  });
+  return result;
+}
+
+// ==========================================
+// MAIN STUDIO MODULE: Point Studio (Understanding the Point)
 // ==========================================
 export default function LinearAlgebraModule({ onBack, questions = POINT_PATH_QUESTIONS }) {
-  const [currentIdx, setCurrentIdx] = useState(0); // 0 to 12
+  const [currentIdx, setCurrentIdx] = useState(0); // 0 to 10
   const [isFinished, setIsFinished] = useState(false);
 
   // Environment & Studio Interactive States
@@ -555,24 +730,43 @@ export default function LinearAlgebraModule({ onBack, questions = POINT_PATH_QUE
   const [aimMode, setAimMode] = useState('spot');
   const [dotPos, setDotPos] = useState(null);
   const [zoomLevel, setZoomLevel] = useState(1);
-  const [eyesClosed, setEyesClosed] = useState(false);
-  const [compassAngle, setCompassAngle] = useState(180);
+  const [unseenSpotChoice, setUnseenSpotChoice] = useState('');
+  const [customUnseenSpot, setCustomUnseenSpot] = useState('');
+  const [observerPresent, setObserverPresent] = useState(true);
+  const [isEvaluating, setIsEvaluating] = useState(false);
+  const [hasPlottedPoint, setHasPlottedPoint] = useState(false);
 
-  // Answers State for all 13 questions
+  // Shuffled options for all option-based questions
+  const [shuffledOptionsMap, setShuffledOptionsMap] = useState(() => initAllShuffledOptions(null));
+
+  // Freshly shuffle options every time the learner enters an unsubmitted option question
+  useEffect(() => {
+    const qId = currentIdx + 1;
+    if ([3, 5, 6, 7, 8, 10, 11].includes(qId)) {
+      setShuffledOptionsMap((prev) => {
+        // If already submitted, preserve the existing shuffled options to keep answer state intact
+        if (answers[qId]?.isSubmitted) return prev;
+        return {
+          ...prev,
+          [qId]: shuffleOptions(getRawOptionsForQuestion(qId, selectedObject))
+        };
+      });
+    }
+  }, [currentIdx, selectedObject]);
+
+  // Answers State for all 11 questions
   const [answers, setAnswers] = useState({
     1: { value: null, isAnswered: false },
     2: { value: null, isAnswered: false },
     3: { selected: null, isSubmitted: false },
     4: { isDone: false },
     5: { selected: null, isSubmitted: false },
-    6: { text: '', isSubmitted: false },
-    7: { selected: null, isSubmitted: false },
-    8: { value: null, isAnswered: false },
-    9: { value: null, isAnswered: false },
+    6: { selected: null, isSubmitted: false },
+    7: { value: null, isAnswered: false },
+    8: { selected: null, text: '', isSubmitted: false },
+    9: { spotName: '', isSubmitted: false },
     10: { selected: null, text: '', isSubmitted: false },
-    11: { value: null, isAnswered: false },
-    12: { value: null, isAnswered: false },
-    13: { answer: null, text: '', isSubmitted: false }
+    11: { selected: null, text: '', userNote: '', isSubmitted: false }
   });
 
   const totalQuestions = questions.length;
@@ -594,13 +788,11 @@ export default function LinearAlgebraModule({ onBack, questions = POINT_PATH_QUE
     if (qId === 4) return a.isDone;
     if (qId === 5) return a.isSubmitted;
     if (qId === 6) return a.isSubmitted;
-    if (qId === 7) return a.isSubmitted;
-    if (qId === 8) return Boolean(a.value);
-    if (qId === 9) return Boolean(a.value);
-    if (qId === 10) return a.isSubmitted;
-    if (qId === 11) return Boolean(a.value);
-    if (qId === 12) return Boolean(a.value);
-    if (qId === 13) return a.isSubmitted;
+    if (qId === 7) return Boolean(a.value);
+    if (qId === 8) return a.isSubmitted;
+    if (qId === 9) return Boolean(a.spotName);
+    if (qId === 10) return Boolean(a.isSubmitted);
+    if (qId === 11) return Boolean(a.isSubmitted);
     return false;
   };
 
@@ -628,23 +820,34 @@ export default function LinearAlgebraModule({ onBack, questions = POINT_PATH_QUE
     setAimMode('spot');
     setDotPos(null);
     setZoomLevel(1);
-    setEyesClosed(false);
-    setCompassAngle(180);
+    setUnseenSpotChoice('');
+    setCustomUnseenSpot('');
+    setObserverPresent(true);
+    setIsEvaluating(false);
+    setHasPlottedPoint(false);
+    setShuffledOptionsMap(initAllShuffledOptions(null));
     setAnswers({
       1: { value: null, isAnswered: false },
       2: { value: null, isAnswered: false },
       3: { selected: null, isSubmitted: false },
       4: { isDone: false },
       5: { selected: null, isSubmitted: false },
-      6: { text: '', isSubmitted: false },
-      7: { selected: null, isSubmitted: false },
-      8: { value: null, isAnswered: false },
-      9: { value: null, isAnswered: false },
+      6: { selected: null, isSubmitted: false },
+      7: { value: null, isAnswered: false },
+      8: { selected: null, text: '', isSubmitted: false },
+      9: { spotName: '', isSubmitted: false },
       10: { selected: null, text: '', isSubmitted: false },
-      11: { value: null, isAnswered: false },
-      12: { value: null, isAnswered: false },
-      13: { answer: null, text: '', isSubmitted: false }
+      11: { selected: null, text: '', userNote: '', isSubmitted: false }
     });
+  };
+
+  const handleCompleteJourney = () => {
+    if (!hasPlottedPoint) return;
+    if (onBack) {
+      onBack();
+    } else {
+      handleRestart();
+    }
   };
 
   // Grand Finale: The Naming Handover Ceremony
@@ -663,7 +866,7 @@ export default function LinearAlgebraModule({ onBack, questions = POINT_PATH_QUE
           <div className="la-stars-row">🌟 🎯 🌟</div>
           <h2 className="la-celebration-title">{CLUSTER_1_SUMMARY.title}</h2>
           <p className="la-celebration-sub">
-            You walked through all 13 observational questions along your discovery path and earned the fundamental idea of a spot.
+            You walked through all 11 observational questions along your discovery path and earned the fundamental idea of a spot.
           </p>
 
           {/* The Naming Handover */}
@@ -672,6 +875,22 @@ export default function LinearAlgebraModule({ onBack, questions = POINT_PATH_QUE
             <blockquote className="la-handover-quote">
               "{CLUSTER_1_SUMMARY.namingHandover.quote}"
             </blockquote>
+          </div>
+
+          {/* GeoGebra Lab: Plot Your Point (mode=kernel UI style) */}
+          <div style={{ width: '100%', marginTop: '0.4rem' }}>
+            <div style={{ textAlign: 'center', marginBottom: '0.5rem' }}>
+              <span className="la-phase-pill" style={{ background: 'rgba(16, 185, 129, 0.15)', borderColor: '#10b981', color: '#10b981' }}>
+                Interactive GeoGebra Lab
+              </span>
+              <h3 style={{ margin: '0.25rem 0', fontSize: '1.25rem', color: 'var(--clr-heading, #ede8e3)' }}>
+                Plot Your First Point on GeoGebra
+              </h3>
+              <p style={{ margin: 0, color: 'var(--clr-text-soft, #a89e94)', fontSize: '0.85rem' }}>
+                Your spot is now formally a <strong>POINT</strong>. Use the interactive GeoGebra studio below to input coordinates and plot them live on the plane:
+              </p>
+            </div>
+            <GeoGebraPointPlotter onPointPlotted={() => setHasPlottedPoint(true)} />
           </div>
 
           {/* What You Earned Checklist */}
@@ -691,14 +910,29 @@ export default function LinearAlgebraModule({ onBack, questions = POINT_PATH_QUE
             <span>⏭️ <strong>Path Forward:</strong> {CLUSTER_1_SUMMARY.nextCluster}</span>
           </div>
 
-          <div style={{ display: 'flex', gap: '0.65rem', marginTop: '1rem' }}>
-            <button className="la-btn-primary" onClick={handleRestart}>
-              Explore the Journey Again 🔄
-            </button>
-            {onBack && (
-              <button className="la-btn-secondary" onClick={onBack}>
-                Dashboard 🏠
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginTop: '1.25rem', alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: '0.65rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+              <button
+                className="la-btn-primary"
+                onClick={handleCompleteJourney}
+                disabled={!hasPlottedPoint}
+                title={!hasPlottedPoint ? "Plot a point on the GeoGebra grid above to complete your journey" : "Complete the journey"}
+              >
+                Complete Journey 🎓
               </button>
+              <button className="la-btn-secondary" onClick={handleRestart}>
+                Explore the Journey Again 🔄
+              </button>
+              {onBack && (
+                <button className="la-btn-secondary" onClick={onBack}>
+                  Dashboard 🏠
+                </button>
+              )}
+            </div>
+            {!hasPlottedPoint && (
+              <span style={{ fontSize: '0.8rem', color: '#f59e0b', fontStyle: 'italic', textAlign: 'center' }}>
+                💡 Plot a point on the GeoGebra grid above to unlock and complete your journey.
+              </span>
             )}
           </div>
         </div>
@@ -728,7 +962,7 @@ export default function LinearAlgebraModule({ onBack, questions = POINT_PATH_QUE
         <p className="la-subtitle">{PATH_META.subtitle}</p>
       </div>
 
-      {/* Unified 13-Question Progress Stepper Bar */}
+      {/* Unified 11-Question Progress Stepper Bar */}
       <div className="la-stepper-bar">
         {questions.map((q, idx) => {
           const isCurrent = idx === currentIdx;
@@ -897,32 +1131,29 @@ export default function LinearAlgebraModule({ onBack, questions = POINT_PATH_QUE
               />
 
               <div className="la-options-stack" style={{ marginTop: '0.75rem' }}>
-                {[
-                  `The ${(selectedObject || 'chosen object').toLowerCase()} itself`,
-                  `The spot where the ${(selectedObject || 'chosen object').toLowerCase()} is`
-                ].map((opt, i) => {
-                  const isSelected = answers[3]?.selected === i;
+                {(shuffledOptionsMap[3] || getRawOptionsForQuestion(3, selectedObject)).map((opt, i) => {
+                  const isSelected = answers[3]?.selectedId === opt.id;
                   let cls = 'la-option-btn';
                   if (isSelected) cls += ' selected';
                   if (answers[3]?.isSubmitted) {
-                    if (i === 1) cls += ' correct';
+                    if (opt.isCorrect) cls += ' correct';
                     else if (isSelected) cls += ' incorrect';
                   }
 
                   return (
                     <button
-                      key={i}
+                      key={opt.id}
                       className={cls}
                       onClick={() => {
                         if (!answers[3]?.isSubmitted) {
-                          updateAnswer(3, { selected: i });
-                          setAimMode(i === 0 ? 'object' : 'spot');
+                          updateAnswer(3, { selectedId: opt.id, selected: i, text: opt.text });
+                          setAimMode(opt.aim || (opt.isCorrect ? 'spot' : 'object'));
                         }
                       }}
                       disabled={answers[3]?.isSubmitted}
                     >
                       <span className="la-option-letter">{String.fromCharCode(65 + i)}</span>
-                      <span>{opt}</span>
+                      <span>{opt.text}</span>
                     </button>
                   );
                 })}
@@ -935,7 +1166,7 @@ export default function LinearAlgebraModule({ onBack, questions = POINT_PATH_QUE
                   </button>
                   <button
                     className="la-btn-primary"
-                    disabled={answers[3]?.selected === null}
+                    disabled={!answers[3]?.selectedId}
                     onClick={() => updateAnswer(3, { isSubmitted: true })}
                   >
                     Check Observation
@@ -1021,33 +1252,28 @@ export default function LinearAlgebraModule({ onBack, questions = POINT_PATH_QUE
               </p>
 
               <div className="la-options-stack" style={{ marginTop: '0.5rem' }}>
-                {[
-                  `The drawn dot represents the spot, while the ${(selectedObject || 'chosen object').toLowerCase()} occupies it`,
-                  `The drawn dot occupies the spot, while the ${(selectedObject || 'chosen object').toLowerCase()} represents it`,
-                  'Both represent the spot',
-                  'Both occupy the spot'
-                ].map((opt, i) => {
-                  const isSelected = answers[5]?.selected === i;
+                {(shuffledOptionsMap[5] || getRawOptionsForQuestion(5, selectedObject)).map((opt, i) => {
+                  const isSelected = answers[5]?.selectedId === opt.id;
                   let cls = 'la-option-btn';
                   if (isSelected) cls += ' selected';
                   if (answers[5]?.isSubmitted) {
-                    if (i === 0) cls += ' correct';
+                    if (opt.isCorrect) cls += ' correct';
                     else if (isSelected) cls += ' incorrect';
                   }
 
                   return (
                     <button
-                      key={i}
+                      key={opt.id}
                       className={cls}
                       onClick={() => {
                         if (!answers[5]?.isSubmitted) {
-                          updateAnswer(5, { selected: i });
+                          updateAnswer(5, { selectedId: opt.id, selected: i, text: opt.text });
                         }
                       }}
                       disabled={answers[5]?.isSubmitted}
                     >
                       <span className="la-option-letter">{String.fromCharCode(65 + i)}</span>
-                      <span>{opt}</span>
+                      <span>{opt.text}</span>
                     </button>
                   );
                 })}
@@ -1060,7 +1286,7 @@ export default function LinearAlgebraModule({ onBack, questions = POINT_PATH_QUE
                   </button>
                   <button
                     className="la-btn-primary"
-                    disabled={answers[5]?.selected === null}
+                    disabled={!answers[5]?.selectedId}
                     onClick={() => updateAnswer(5, { isSubmitted: true })}
                   >
                     Check Answer
@@ -1086,61 +1312,61 @@ export default function LinearAlgebraModule({ onBack, questions = POINT_PATH_QUE
           )}
 
           {/* =================================================== */}
-          {/* QUESTION 6: INSPECTING THE PAPER                    */}
+          {/* QUESTION 6: WHY DRAW MARKS?                         */}
           {/* =================================================== */}
           {currentIdx === 5 && (
             <div className="la-single-step-view">
               <h3 className="la-step-heading">{currentQ.prompt}</h3>
-              <p className="la-step-subtext">
-                Use the microscope below to inspect the mark you made at various zoom levels:
-              </p>
+              <p className="la-step-subtext">{currentQ.subtext}</p>
 
-              <MicroscopeStudio
-                zoomLevel={zoomLevel}
-                setZoomLevel={setZoomLevel}
-                dotPos={dotPos}
-              />
+              <div className="la-options-stack" style={{ marginTop: '0.5rem' }}>
+                {(shuffledOptionsMap[6] || getRawOptionsForQuestion(6, selectedObject)).map((opt, i) => {
+                  const isSelected = answers[6]?.selectedId === opt.id;
+                  let cls = 'la-option-btn';
+                  if (isSelected) cls += ' selected';
+                  if (answers[6]?.isSubmitted) {
+                    if (opt.isCorrect) cls += ' correct';
+                    else if (isSelected) cls += ' incorrect';
+                  }
+
+                  return (
+                    <button
+                      key={opt.id}
+                      className={cls}
+                      onClick={() => {
+                        if (!answers[6]?.isSubmitted) {
+                          updateAnswer(6, { selectedId: opt.id, selected: i, text: opt.text });
+                        }
+                      }}
+                      disabled={answers[6]?.isSubmitted}
+                    >
+                      <span className="la-option-letter">{String.fromCharCode(65 + i)}</span>
+                      <span>{opt.text}</span>
+                    </button>
+                  );
+                })}
+              </div>
 
               {!answers[6]?.isSubmitted ? (
-                <div className="la-input-wrapper" style={{ marginTop: '0.5rem' }}>
-                  <input
-                    type="text"
-                    className="la-text-input"
-                    placeholder="Describe in one short phrase (e.g. a small dark mark on a page...)"
-                    value={answers[6]?.text || ''}
-                    onChange={(e) => updateAnswer(6, { text: e.target.value })}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && answers[6]?.text?.trim()) {
-                        updateAnswer(6, { isSubmitted: true });
-                      }
-                    }}
-                    autoFocus
-                  />
-                  <div className="la-step-footer-actions between" style={{ marginTop: '0.5rem' }}>
-                    <button className="la-btn-secondary" onClick={() => setCurrentIdx(4)}>
-                      ← Back to Question 5
-                    </button>
-                    <button
-                      className="la-btn-primary"
-                      disabled={!answers[6]?.text?.trim()}
-                      onClick={() => updateAnswer(6, { isSubmitted: true })}
-                    >
-                      Submit Description
-                    </button>
-                  </div>
+                <div className="la-step-footer-actions between" style={{ marginTop: '0.75rem' }}>
+                  <button className="la-btn-secondary" onClick={() => setCurrentIdx(4)}>
+                    ← Back to Question 5
+                  </button>
+                  <button
+                    className="la-btn-primary"
+                    disabled={!answers[6]?.selectedId}
+                    onClick={() => updateAnswer(6, { isSubmitted: true })}
+                  >
+                    Check Answer
+                  </button>
                 </div>
               ) : (
-                <div className="la-submitted-step-box">
-                  <div className="la-submitted-header">
-                    <span className="la-submitted-tag">Your Description:</span>
-                    <span className="la-credit-tag">✓ Credit Earned</span>
-                  </div>
-                  <p className="la-submitted-quote">"{answers[6]?.text}"</p>
-                  <div className="la-credit-box">
-                    <span>✓ A visible ink speck has been placed on the paper.</span>
-                  </div>
-
-                  <div className="la-step-footer-actions between" style={{ marginTop: '0.75rem' }}>
+                <div className="la-earns-card" style={{ marginTop: '0.75rem' }}>
+                  <div className="la-earns-badge">🎉 EARNED INSIGHT</div>
+                  <p className="la-earns-text">
+                    A spot itself cannot be drawn — we need a stand-in (the smallest visible thing on paper).
+                  </p>
+                  <div className="la-step-footer-actions between">
                     <button className="la-btn-secondary" onClick={() => setCurrentIdx(4)}>
                       ← Back to Question 5
                     </button>
@@ -1154,122 +1380,9 @@ export default function LinearAlgebraModule({ onBack, questions = POINT_PATH_QUE
           )}
 
           {/* =================================================== */}
-          {/* QUESTION 7: WHY DRAW MARKS?                         */}
+          {/* QUESTION 7: BODY & DIMENSIONS OF THE OBJECT        */}
           {/* =================================================== */}
           {currentIdx === 6 && (
-            <div className="la-single-step-view">
-              <h3 className="la-step-heading">{currentQ.prompt}</h3>
-              <p className="la-step-subtext">{currentQ.subtext}</p>
-
-              <div className="la-options-stack" style={{ marginTop: '0.5rem' }}>
-                {[
-                  'Because circles look pretty',
-                  "Because it's a tradition",
-                  'Because we have to put something visible on paper',
-                  'Because circles are the easiest shape to draw'
-                ].map((opt, i) => {
-                  const isSelected = answers[7]?.selected === i;
-                  let cls = 'la-option-btn';
-                  if (isSelected) cls += ' selected';
-                  if (answers[7]?.isSubmitted) {
-                    if (i === 2) cls += ' correct';
-                    else if (isSelected) cls += ' incorrect';
-                  }
-
-                  return (
-                    <button
-                      key={i}
-                      className={cls}
-                      onClick={() => {
-                        if (!answers[7]?.isSubmitted) {
-                          updateAnswer(7, { selected: i });
-                        }
-                      }}
-                      disabled={answers[7]?.isSubmitted}
-                    >
-                      <span className="la-option-letter">{String.fromCharCode(65 + i)}</span>
-                      <span>{opt}</span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {!answers[7]?.isSubmitted ? (
-                <div className="la-step-footer-actions between" style={{ marginTop: '0.75rem' }}>
-                  <button className="la-btn-secondary" onClick={() => setCurrentIdx(5)}>
-                    ← Back to Question 6
-                  </button>
-                  <button
-                    className="la-btn-primary"
-                    disabled={answers[7]?.selected === null}
-                    onClick={() => updateAnswer(7, { isSubmitted: true })}
-                  >
-                    Check Answer
-                  </button>
-                </div>
-              ) : (
-                <div className="la-earns-card" style={{ marginTop: '0.75rem' }}>
-                  <div className="la-earns-badge">🎉 EARNED INSIGHT</div>
-                  <p className="la-earns-text">
-                    A spot itself cannot be drawn — we need a stand-in (the smallest visible thing on paper).
-                  </p>
-                  <div className="la-step-footer-actions between">
-                    <button className="la-btn-secondary" onClick={() => setCurrentIdx(5)}>
-                      ← Back to Question 6
-                    </button>
-                    <button className="la-btn-primary" onClick={() => setCurrentIdx(7)}>
-                      Continue to Question 8 →
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* =================================================== */}
-          {/* QUESTION 8: MEMORY CHECK                            */}
-          {/* =================================================== */}
-          {currentIdx === 7 && (
-            <div className="la-single-step-view">
-              <h3 className="la-step-heading">
-                From earlier — do you remember the object you pointed at (your {(selectedObject || 'chosen object').toLowerCase()}) AND the spot your finger was at?
-              </h3>
-              <p className="la-step-subtext">{currentQ.subtext}</p>
-
-              <div className="la-btn-row" style={{ marginTop: '0.5rem' }}>
-                <button
-                  className={`la-choice-btn large ${answers[8]?.value === 'Yes, I remember both' ? 'selected' : ''}`}
-                  onClick={() => updateAnswer(8, { value: 'Yes, I remember both', isAnswered: true })}
-                >
-                  Yes, I remember both
-                </button>
-                <button
-                  className={`la-choice-btn large ${answers[8]?.value === 'No' ? 'selected' : ''}`}
-                  onClick={() => updateAnswer(8, { value: 'No', isAnswered: true })}
-                >
-                  No
-                </button>
-              </div>
-
-              <div className="la-step-footer-actions between" style={{ marginTop: '0.75rem' }}>
-                <button className="la-btn-secondary" onClick={() => setCurrentIdx(6)}>
-                  ← Back to Question 7
-                </button>
-                <button
-                  className="la-btn-primary"
-                  disabled={!answers[8]?.value}
-                  onClick={() => setCurrentIdx(8)}
-                >
-                  Continue to Question 9 →
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* =================================================== */}
-          {/* QUESTION 9: BODY & DIMENSIONS OF THE OBJECT        */}
-          {/* =================================================== */}
-          {currentIdx === 8 && (
             <div className="la-single-step-view">
               <h3 className="la-step-heading">
                 Does the {(selectedObject || 'chosen object').toLowerCase()} have size, like a body — length, width, something you can see?
@@ -1277,18 +1390,15 @@ export default function LinearAlgebraModule({ onBack, questions = POINT_PATH_QUE
               <p className="la-step-subtext">{currentQ.subtext}</p>
 
               <div className="la-btn-row" style={{ marginTop: '0.5rem' }}>
-                <button
-                  className={`la-choice-btn large ${answers[9]?.value === 'Yes, it has physical size / body' ? 'selected' : ''}`}
-                  onClick={() => updateAnswer(9, { value: 'Yes, it has physical size / body', isAnswered: true })}
-                >
-                  Yes, it has size and body
-                </button>
-                <button
-                  className={`la-choice-btn large ${answers[9]?.value === 'No' ? 'selected' : ''}`}
-                  onClick={() => updateAnswer(9, { value: 'No', isAnswered: true })}
-                >
-                  No
-                </button>
+                {(shuffledOptionsMap[7] || getRawOptionsForQuestion(7, selectedObject)).map((opt) => (
+                  <button
+                    key={opt.id}
+                    className={`la-choice-btn large ${answers[7]?.value === opt.value ? 'selected' : ''}`}
+                    onClick={() => updateAnswer(7, { value: opt.value, isAnswered: true })}
+                  >
+                    {opt.text}
+                  </button>
+                ))}
               </div>
 
               {/* 3D Wireframe Size Inspector */}
@@ -1297,12 +1407,164 @@ export default function LinearAlgebraModule({ onBack, questions = POINT_PATH_QUE
               </div>
 
               <div className="la-step-footer-actions between" style={{ marginTop: '0.75rem' }}>
+                <button className="la-btn-secondary" onClick={() => setCurrentIdx(5)}>
+                  ← Back to Question 6
+                </button>
+                <button
+                  className="la-btn-primary"
+                  disabled={!answers[7]?.value}
+                  onClick={() => setCurrentIdx(7)}
+                >
+                  Continue to Question 8 →
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* =================================================== */}
+          {/* QUESTION 8: SIZE OF THE SPOT                       */}
+          {/* =================================================== */}
+          {currentIdx === 7 && (
+            <div className="la-single-step-view">
+              <h3 className="la-step-heading">
+                Does the spot have size too, or only the {(selectedObject || 'chosen object').toLowerCase()}?
+              </h3>
+              <p className="la-step-subtext">{currentQ.subtext}</p>
+
+              <div className="la-options-stack" style={{ marginTop: '0.5rem' }}>
+                {(shuffledOptionsMap[8] || getRawOptionsForQuestion(8, selectedObject)).map((opt, i) => {
+                  const isSelected = answers[8]?.selectedId === opt.id;
+                  let cls = 'la-option-btn';
+                  if (isSelected) cls += ' selected';
+                  if (answers[8]?.isSubmitted) {
+                    if (opt.isCorrect) cls += ' correct';
+                    else if (isSelected) cls += ' incorrect';
+                  }
+
+                  return (
+                    <button
+                      key={opt.id}
+                      className={cls}
+                      onClick={() => {
+                        if (!answers[8]?.isSubmitted) {
+                          updateAnswer(8, { selectedId: opt.id, selected: i, text: opt.text });
+                        }
+                      }}
+                      disabled={answers[8]?.isSubmitted}
+                    >
+                      <span className="la-option-letter">{String.fromCharCode(65 + i)}</span>
+                      <span>{opt.text}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {!answers[8]?.isSubmitted ? (
+                <div className="la-step-footer-actions between" style={{ marginTop: '0.75rem' }}>
+                  <button className="la-btn-secondary" onClick={() => setCurrentIdx(6)}>
+                    ← Back to Question 7
+                  </button>
+                  <button
+                    className="la-btn-primary"
+                    disabled={!answers[8]?.selectedId}
+                    onClick={() => updateAnswer(8, { isSubmitted: true })}
+                  >
+                    Check Observation
+                  </button>
+                </div>
+              ) : (
+                <div className="la-submitted-step-box">
+                  <div className="la-submitted-header">
+                    <span className="la-submitted-tag">Your Answer:</span>
+                    <span className="la-credit-tag">✓ Credit Earned</span>
+                  </div>
+                  <p className="la-submitted-quote">"{answers[8]?.text}"</p>
+                  <div className="la-credit-box">
+                    <span>✓ <strong>Spot on:</strong> A spot has zero size! Only the {(selectedObject || 'chosen object').toLowerCase()} occupying it has physical dimensions.</span>
+                  </div>
+
+                  <div className="la-earns-card" style={{ marginTop: '0.75rem' }}>
+                    <div className="la-earns-badge">🎉 EARNED INSIGHT</div>
+                    <p className="la-earns-text">
+                      A spot has no size — that is why we need a stand-in mark to see it on paper.
+                    </p>
+                    <div className="la-step-footer-actions between">
+                      <button className="la-btn-secondary" onClick={() => setCurrentIdx(6)}>
+                        ← Back to Question 7
+                      </button>
+                      <button className="la-btn-primary" onClick={() => setCurrentIdx(8)}>
+                        Continue to Question 9 →
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* =================================================== */}
+          {/* QUESTION 9: A SPOT YOU AREN'T LOOKING AT           */}
+          {/* =================================================== */}
+          {currentIdx === 8 && (
+            <div className="la-single-step-view">
+              <h3 className="la-step-heading">{currentQ.prompt}</h3>
+              <p className="la-step-subtext">{currentQ.subtext}</p>
+
+              {/* Preset Location Chips */}
+              <div className="la-btn-row" style={{ marginTop: '0.65rem' }}>
+                {(UNSEEN_SPOTS_PRESETS[userEnvironment] || UNSEEN_SPOTS_PRESETS.room).map((preset) => (
+                  <button
+                    key={preset}
+                    className={`la-choice-btn ${(answers[9]?.spotName === preset && !customUnseenSpot) ? 'selected' : ''}`}
+                    onClick={() => {
+                      setCustomUnseenSpot('');
+                      setUnseenSpotChoice(preset);
+                      updateAnswer(9, { spotName: preset, isSubmitted: true });
+                    }}
+                  >
+                    📍 {preset}
+                  </button>
+                ))}
+              </div>
+
+              {/* Custom Input */}
+              <div style={{ marginTop: '0.65rem' }}>
+                <input
+                  type="text"
+                  className="la-text-input"
+                  placeholder="Or type another spot (e.g. Under the desk, behind the door...)"
+                  value={customUnseenSpot}
+                  onChange={(e) => {
+                    setCustomUnseenSpot(e.target.value);
+                    setUnseenSpotChoice(e.target.value);
+                    updateAnswer(9, { spotName: e.target.value, isSubmitted: Boolean(e.target.value.trim()) });
+                  }}
+                />
+              </div>
+
+              {/* Dynamic Top-down Spatial Awareness Studio */}
+              <div style={{ marginTop: '0.75rem' }}>
+                <SpatialFieldOfViewVisual
+                  unseenSpot={answers[9]?.spotName || unseenSpotChoice || 'Behind me on the chair'}
+                  showMentalRay={false}
+                  showObserverToggle={false}
+                  observerPresent={true}
+                />
+              </div>
+
+              {answers[9]?.spotName && (
+                <div className="la-credit-box" style={{ marginTop: '0.5rem' }}>
+                  <span>✓ <strong>Spot Plotted:</strong> You have identified "{answers[9]?.spotName}" located in space outside your forward view.</span>
+                </div>
+              )}
+
+              <div className="la-step-footer-actions between" style={{ marginTop: '0.75rem' }}>
                 <button className="la-btn-secondary" onClick={() => setCurrentIdx(7)}>
                   ← Back to Question 8
                 </button>
                 <button
                   className="la-btn-primary"
-                  disabled={!answers[9]?.value}
+                  disabled={!answers[9]?.spotName?.trim()}
                   onClick={() => setCurrentIdx(9)}
                 >
                   Continue to Question 10 →
@@ -1312,43 +1574,46 @@ export default function LinearAlgebraModule({ onBack, questions = POINT_PATH_QUE
           )}
 
           {/* =================================================== */}
-          {/* QUESTION 10: SIZE OF THE SPOT                       */}
+          {/* QUESTION 10: PICTURE IT MENTALLY                    */}
           {/* =================================================== */}
           {currentIdx === 9 && (
             <div className="la-single-step-view">
-              <h3 className="la-step-heading">
-                Does the spot have size too, or only the {(selectedObject || 'chosen object').toLowerCase()}?
-              </h3>
+              <h3 className="la-step-heading">{currentQ.prompt}</h3>
               <p className="la-step-subtext">{currentQ.subtext}</p>
 
-              <div className="la-options-stack" style={{ marginTop: '0.5rem' }}>
-                {[
-                  'Only the object has size (the spot has zero size)',
-                  'Both have size',
-                  'Neither has size',
-                  'Only the spot has size'
-                ].map((opt, i) => {
-                  const isSelected = answers[10]?.selected === i;
+              {/* Top-down Spatial Radar with Mental Awareness Ray */}
+              <div style={{ marginTop: '0.5rem' }}>
+                <SpatialFieldOfViewVisual
+                  unseenSpot={answers[9]?.spotName || 'Behind me on the chair'}
+                  showMentalRay={true}
+                  showObserverToggle={false}
+                  observerPresent={true}
+                />
+              </div>
+
+              <div className="la-options-stack" style={{ marginTop: '0.75rem' }}>
+                {(shuffledOptionsMap[10] || getRawOptionsForQuestion(10, selectedObject)).map((opt, i) => {
+                  const isSelected = answers[10]?.selectedId === opt.id;
                   let cls = 'la-option-btn';
                   if (isSelected) cls += ' selected';
                   if (answers[10]?.isSubmitted) {
-                    if (i === 0) cls += ' correct';
+                    if (opt.isCorrect) cls += ' correct';
                     else if (isSelected) cls += ' incorrect';
                   }
 
                   return (
                     <button
-                      key={i}
+                      key={opt.id}
                       className={cls}
                       onClick={() => {
                         if (!answers[10]?.isSubmitted) {
-                          updateAnswer(10, { selected: i, text: opt });
+                          updateAnswer(10, { selectedId: opt.id, selected: i, text: opt.text });
                         }
                       }}
                       disabled={answers[10]?.isSubmitted}
                     >
                       <span className="la-option-letter">{String.fromCharCode(65 + i)}</span>
-                      <span>{opt}</span>
+                      <span>{opt.text}</span>
                     </button>
                   );
                 })}
@@ -1361,7 +1626,7 @@ export default function LinearAlgebraModule({ onBack, questions = POINT_PATH_QUE
                   </button>
                   <button
                     className="la-btn-primary"
-                    disabled={answers[10]?.selected === null}
+                    disabled={!answers[10]?.selectedId}
                     onClick={() => updateAnswer(10, { isSubmitted: true })}
                   >
                     Check Observation
@@ -1370,18 +1635,18 @@ export default function LinearAlgebraModule({ onBack, questions = POINT_PATH_QUE
               ) : (
                 <div className="la-submitted-step-box">
                   <div className="la-submitted-header">
-                    <span className="la-submitted-tag">Your Answer:</span>
+                    <span className="la-submitted-tag">Your Observation:</span>
                     <span className="la-credit-tag">✓ Credit Earned</span>
                   </div>
                   <p className="la-submitted-quote">"{answers[10]?.text}"</p>
                   <div className="la-credit-box">
-                    <span>✓ <strong>Spot on:</strong> A spot has zero size! Only the {(selectedObject || 'chosen object').toLowerCase()} occupying it has physical dimensions.</span>
+                    <span>✓ <strong>Mental Spatial Map:</strong> {currentQ.creditExplanation}</span>
                   </div>
 
                   <div className="la-earns-card" style={{ marginTop: '0.75rem' }}>
                     <div className="la-earns-badge">🎉 EARNED INSIGHT</div>
                     <p className="la-earns-text">
-                      A spot has no size — that is why we need a stand-in mark to see it on paper.
+                      A spot can be held and located in thought without direct sight. Your mind holds a 360° map of space.
                     </p>
                     <div className="la-step-footer-actions between">
                       <button className="la-btn-secondary" onClick={() => setCurrentIdx(8)}>
@@ -1398,197 +1663,101 @@ export default function LinearAlgebraModule({ onBack, questions = POINT_PATH_QUE
           )}
 
           {/* =================================================== */}
-          {/* QUESTION 11: CLOSING YOUR EYES                      */}
+          {/* QUESTION 11: THE SPOT STILL EXISTS                  */}
           {/* =================================================== */}
           {currentIdx === 10 && (
             <div className="la-single-step-view">
               <h3 className="la-step-heading">{currentQ.prompt}</h3>
               <p className="la-step-subtext">{currentQ.subtext}</p>
 
-              <div className="la-btn-row" style={{ marginTop: '0.75rem' }}>
-                <button
-                  className={`la-choice-btn large ${answers[11]?.value === 'Yes, eyes are closed' ? 'selected' : ''}`}
-                  onClick={() => {
-                    setEyesClosed(true);
-                    updateAnswer(11, { value: 'Yes, eyes are closed', isAnswered: true });
-                  }}
-                >
-                  Yes, Eyes Closed 🌙
-                </button>
-                <button
-                  className={`la-choice-btn large ${answers[11]?.value === 'No' ? 'selected' : ''}`}
-                  onClick={() => {
-                    setEyesClosed(false);
-                    updateAnswer(11, { value: 'No', isAnswered: true });
-                  }}
-                >
-                  No
-                </button>
-              </div>
-
-              {/* Ambient Visual */}
-              <div style={{ marginTop: '0.75rem' }}>
-                <MindsEyeVisual
-                  eyesClosed={eyesClosed}
-                  onToggleEyes={() => setEyesClosed(!eyesClosed)}
-                  compassAngle={compassAngle}
-                  setCompassAngle={setCompassAngle}
-                  unseenLabel={
-                    {
-                      room: 'Chair Spot (Behind You: 180°)',
-                      outside: 'Bench/Tree Spot (Behind You: 180°)',
-                      vehicle: 'Seat Spot (Behind You: 180°)'
-                    }[userEnvironment || 'room'] || 'Unseen Spot (Behind You: 180°)'
-                  }
+              {/* Top-down Spatial Radar with Observer Presence Toggle */}
+              <div style={{ marginTop: '0.5rem' }}>
+                <SpatialFieldOfViewVisual
+                  unseenSpot={answers[9]?.spotName || 'Behind me on the chair'}
+                  showMentalRay={observerPresent}
+                  showObserverToggle={true}
+                  observerPresent={observerPresent}
+                  onToggleObserver={() => setObserverPresent(!observerPresent)}
                 />
               </div>
 
-              <div className="la-step-footer-actions between" style={{ marginTop: '0.75rem' }}>
-                <button className="la-btn-secondary" onClick={() => setCurrentIdx(9)}>
-                  ← Back to Question 10
-                </button>
-                <button
-                  className="la-btn-primary"
-                  disabled={!answers[11]?.value}
-                  onClick={() => setCurrentIdx(11)}
-                >
-                  Continue to Question 12 →
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* =================================================== */}
-          {/* QUESTION 12: PICTURE A SPOT IN MIND’S EYE           */}
-          {/* =================================================== */}
-          {currentIdx === 11 && (
-            <div className="la-single-step-view">
-              <h3 className="la-step-heading">
-                Picture a spot: {UNSEEN_OBJECTS_DESCRIPTIONS[userEnvironment] || UNSEEN_OBJECTS_DESCRIPTIONS.room}. Can you picture it?
-              </h3>
-              <p className="la-step-subtext">{currentQ.subtext}</p>
-
-              <div className="la-btn-row" style={{ marginTop: '0.5rem' }}>
-                <button
-                  className={`la-choice-btn large ${answers[12]?.value === 'Yes, I can picture it clearly' ? 'selected' : ''}`}
-                  onClick={() => updateAnswer(12, { value: 'Yes, I can picture it clearly', isAnswered: true })}
-                >
-                  Yes, I can picture it clearly
-                </button>
-                <button
-                  className={`la-choice-btn large ${answers[12]?.value === 'No' ? 'selected' : ''}`}
-                  onClick={() => updateAnswer(12, { value: 'No', isAnswered: true })}
-                >
-                  No
-                </button>
-              </div>
-
-              <div style={{ marginTop: '0.75rem' }}>
-                <MindsEyeVisual
-                  eyesClosed={eyesClosed}
-                  onToggleEyes={() => setEyesClosed(!eyesClosed)}
-                  compassAngle={compassAngle}
-                  setCompassAngle={setCompassAngle}
-                  unseenLabel={
-                    {
-                      room: 'Chair Spot (Behind You: 180°)',
-                      outside: 'Bench/Tree Spot (Behind You: 180°)',
-                      vehicle: 'Seat Spot (Behind You: 180°)'
-                    }[userEnvironment || 'room'] || 'Unseen Spot (Behind You: 180°)'
+              <div className="la-options-stack" style={{ marginTop: '0.75rem' }}>
+                {(shuffledOptionsMap[11] || getRawOptionsForQuestion(11, selectedObject)).map((opt, i) => {
+                  const isSelected = answers[11]?.selectedId === opt.id;
+                  let cls = 'la-option-btn';
+                  if (isSelected) cls += ' selected';
+                  if (answers[11]?.isSubmitted) {
+                    if (opt.isCorrect) cls += ' correct';
+                    else if (isSelected) cls += ' incorrect';
                   }
-                />
+
+                  return (
+                    <button
+                      key={opt.id}
+                      className={cls}
+                      onClick={() => {
+                        if (!answers[11]?.isSubmitted) {
+                          updateAnswer(11, { selectedId: opt.id, selected: i, text: opt.text });
+                        }
+                      }}
+                      disabled={answers[11]?.isSubmitted}
+                    >
+                      <span className="la-option-letter">{String.fromCharCode(65 + i)}</span>
+                      <span>{opt.text}</span>
+                    </button>
+                  );
+                })}
               </div>
 
-              <div className="la-step-footer-actions between" style={{ marginTop: '0.75rem' }}>
-                <button className="la-btn-secondary" onClick={() => setCurrentIdx(10)}>
-                  ← Back to Question 11
-                </button>
-                <button
-                  className="la-btn-primary"
-                  disabled={!answers[12]?.value}
-                  onClick={() => setCurrentIdx(12)}
-                >
-                  Continue to Question 13 →
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* =================================================== */}
-          {/* QUESTION 13: EXISTENCE WITHOUT SIGHT                */}
-          {/* =================================================== */}
-          {currentIdx === 12 && (
-            <div className="la-single-step-view">
-              <h3 className="la-step-heading">
-                Can you still <em>point at</em> that spot — even though you cannot see it?
-              </h3>
-              <p className="la-step-subtext">{currentQ.subtext}</p>
-
-              {!answers[13]?.isSubmitted ? (
-                <div className="la-input-wrapper" style={{ marginTop: '0.5rem' }}>
-                  <div className="la-btn-row" style={{ marginBottom: '0.5rem' }}>
-                    <button
-                      className={`la-choice-btn large ${answers[13]?.answer === 'Yes, I can point at it ✓' ? 'selected' : ''}`}
-                      onClick={() => updateAnswer(13, { answer: 'Yes, I can point at it ✓' })}
-                    >
-                      Yes, I can point at it ✓
-                    </button>
-                    <button
-                      className={`la-choice-btn large ${answers[13]?.answer === 'No' ? 'selected' : ''}`}
-                      onClick={() => updateAnswer(13, { answer: 'No' })}
-                    >
-                      No
-                    </button>
-                  </div>
-
+              {!answers[11]?.isSubmitted ? (
+                <div className="la-input-wrapper" style={{ marginTop: '0.75rem' }}>
                   <input
                     type="text"
                     className="la-text-input"
-                    placeholder="Add one short phrase (e.g. Yes, spots exist in space even unseen...)"
-                    value={answers[13]?.text || ''}
-                    onChange={(e) => updateAnswer(13, { text: e.target.value })}
+                    placeholder={currentQ.placeholder}
+                    value={answers[11]?.userNote || ''}
+                    onChange={(e) => updateAnswer(11, { userNote: e.target.value })}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter' && (answers[13]?.answer || answers[13]?.text?.trim())) {
-                        updateAnswer(13, { isSubmitted: true });
+                      if (e.key === 'Enter' && answers[11]?.selectedId) {
+                        updateAnswer(11, { isSubmitted: true });
                       }
                     }}
-                    autoFocus
                   />
 
                   <div className="la-step-footer-actions between" style={{ marginTop: '0.75rem' }}>
-                    <button className="la-btn-secondary" onClick={() => setCurrentIdx(11)}>
-                      ← Back to Question 12
+                    <button className="la-btn-secondary" onClick={() => setCurrentIdx(9)}>
+                      ← Back to Question 10
                     </button>
                     <button
                       className="la-btn-primary"
-                      disabled={!answers[13]?.answer && !answers[13]?.text?.trim()}
-                      onClick={() => updateAnswer(13, { isSubmitted: true })}
+                      disabled={!answers[11]?.selectedId}
+                      onClick={() => updateAnswer(11, { isSubmitted: true })}
                     >
-                      Submit Final Observation
+                      Confirm Final Observation
                     </button>
                   </div>
                 </div>
               ) : (
                 <div className="la-submitted-step-box">
                   <div className="la-submitted-header">
-                    <span className="la-submitted-tag">Your Final Observation:</span>
+                    <span className="la-submitted-tag">Your Final Realization:</span>
                     <span className="la-credit-tag">✓ Credit Earned</span>
                   </div>
                   <p className="la-submitted-quote">
-                    "{answers[13]?.answer ? answers[13]?.answer + ': ' : ''}{answers[13]?.text}"
+                    "{answers[11]?.text}{answers[11]?.userNote ? ` — ${answers[11].userNote}` : ''}"
                   </p>
                   <div className="la-credit-box">
-                    <span>✓ <strong>Abstract Reality:</strong> A spot exists in space whether you are looking at it or not!</span>
+                    <span>✓ <strong>Abstract Reality:</strong> {currentQ.creditExplanation}</span>
                   </div>
 
                   <div className="la-earns-card" style={{ marginTop: '0.75rem' }}>
-                    <div className="la-earns-badge">🎉 JOURNEY COMPLETE</div>
+                    <div className="la-earns-badge">🎉 DISCOVERY JOURNEY COMPLETE</div>
                     <p className="la-earns-text">
-                      A point is abstract — thinkable and real without anyone pointing at it or drawing it.
+                      You have earned every property of a spot: it is distinct from objects, has zero size, cannot be directly drawn, and exists unconditionally everywhere in space!
                     </p>
                     <div className="la-step-footer-actions between">
-                      <button className="la-btn-secondary" onClick={() => setCurrentIdx(11)}>
-                        ← Back to Question 12
+                      <button className="la-btn-secondary" onClick={() => setCurrentIdx(9)}>
+                        ← Back to Question 10
                       </button>
                       <button className="la-btn-primary" onClick={() => setIsFinished(true)}>
                         Complete Journey &amp; Reveal The Naming Handover 🏆

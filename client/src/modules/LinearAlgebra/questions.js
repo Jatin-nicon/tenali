@@ -26,17 +26,23 @@ export const UNSEEN_OBJECTS_DESCRIPTIONS = {
   vehicle: 'behind you, where a seat sits'
 };
 
+export const UNSEEN_SPOTS_PRESETS = {
+  room: ['Behind me on the chair', 'Under the desk', 'Behind the wall'],
+  outside: ['Behind me on the bench', 'Behind the tree trunk', 'Across the path behind me'],
+  vehicle: ['Behind my seat', 'In the trunk / back', 'Under the seat']
+};
+
 export const PATH_META = {
   title: 'Understanding the Point',
   subtitle: 'A Discovery Journey: From Physical Observation to Pure Location',
-  totalQuestions: 13
+  totalQuestions: 11
 };
 
 export const PHASES = [
   { id: 1, name: 'Phase 1: Noticing the Spot', range: [1, 5] },
-  { id: 2, name: 'Phase 2: Why We Draw Marks', range: [6, 7] },
-  { id: 3, name: 'Phase 3: The Spot Has No Size', range: [8, 10] },
-  { id: 4, name: 'Phase 4: A Spot Exists Unseen', range: [11, 13] }
+  { id: 2, name: 'Phase 2: Why We Draw Marks', range: [6, 6] },
+  { id: 3, name: 'Phase 3: The Spot Has No Size', range: [7, 8] },
+  { id: 4, name: 'Phase 4: A Spot Exists Unseen', range: [9, 11] }
 ];
 
 export const POINT_PATH_QUESTIONS = [
@@ -96,18 +102,6 @@ export const POINT_PATH_QUESTIONS = [
     id: 6,
     phaseId: 2,
     phaseTitle: 'Phase 2: Why We Draw Marks',
-    title: 'Inspecting the Paper',
-    prompt: 'You have drawn a dot on a paper just now. What does the paper look like after?',
-    subtext: 'Inspect your paper closely. What do you see on it now?',
-    type: 'typed_paper_look',
-    placeholder: 'Describe in one short phrase (e.g. a small dark mark on a page...)',
-    creditKeywords: ['dot', 'mark', 'spot', 'speck', 'ink', 'paper', 'visible', 'blank', 'point', 'circle'],
-    creditFeedback: 'A visible mark has been placed on the paper!'
-  },
-  {
-    id: 7,
-    phaseId: 2,
-    phaseTitle: 'Phase 2: Why We Draw Marks',
     title: 'Why Draw Marks?',
     prompt: 'Why do we draw dots / marks on paper at all when we want to mark a spot?',
     subtext: 'Consider why mathematicians and humans put marks down when talking about locations:',
@@ -123,17 +117,7 @@ export const POINT_PATH_QUESTIONS = [
     noCreditExplanation: 'A pure spot has no color or ink — without drawing a visible stand-in, paper remains completely blank.'
   },
   {
-    id: 8,
-    phaseId: 3,
-    phaseTitle: 'Phase 3: The Spot Has No Size',
-    title: 'Memory of Object & Spot',
-    prompt: 'From earlier — do you remember the object you pointed at AND the spot your finger was at?',
-    subtext: 'Bring back that mental picture of your finger aiming toward the object:',
-    type: 'yes_no_memory',
-    choices: ['Yes, I remember both', 'No']
-  },
-  {
-    id: 9,
+    id: 7,
     phaseId: 3,
     phaseTitle: 'Phase 3: The Spot Has No Size',
     title: 'Body & Dimensions of the Object',
@@ -143,7 +127,7 @@ export const POINT_PATH_QUESTIONS = [
     choices: ['Yes, it has physical size / body', 'No']
   },
   {
-    id: 10,
+    id: 8,
     phaseId: 3,
     phaseTitle: 'Phase 3: The Spot Has No Size',
     title: 'Size of the Spot',
@@ -162,38 +146,47 @@ export const POINT_PATH_QUESTIONS = [
     noCreditExplanation: 'A spot is purely a location; it has no length, width, or thickness whatsoever.'
   },
   {
+    id: 9,
+    phaseId: 4,
+    phaseTitle: 'Phase 4: A Spot Exists Unseen',
+    title: 'A Spot You Aren’t Looking At',
+    prompt: 'Pick a spot in your surroundings that you are NOT looking at right now.',
+    subtext: 'It could be behind you, under something, or outside your forward line of sight. Select a location below or type your own:',
+    type: 'pick_unseen_spot',
+    creditExplanation: 'You have identified a real location in space outside your direct line of sight.'
+  },
+  {
+    id: 10,
+    phaseId: 4,
+    phaseTitle: 'Phase 4: A Spot Exists Unseen',
+    title: 'Picture It Mentally',
+    prompt: 'Without turning your head or looking away from the screen, can you picture that spot in your mind?',
+    subtext: 'Your physical eyes look straight ahead at the screen, but your mind can navigate 360° of space all around you:',
+    type: 'picture_mentally_mcq',
+    options: [
+      'Yes, I can picture and locate it in my mind',
+      'No, I cannot picture it'
+    ],
+    correct: 0,
+    creditExplanation: 'You can mentally hold and locate a spot in space without needing your physical eyes to look at it.',
+    noCreditExplanation: 'Try thinking of a familiar spot nearby, like the floor under your desk or the wall behind you.'
+  },
+  {
     id: 11,
     phaseId: 4,
     phaseTitle: 'Phase 4: A Spot Exists Unseen',
-    title: 'Closing Your Eyes',
-    prompt: 'Close your eyes. Done?',
-    subtext: 'Take a breath and close your physical eyes for a moment to shift into your mind’s eye:',
-    type: 'close_eyes_toggle',
-    choices: ['Yes, eyes are closed', 'No']
-  },
-  {
-    id: 12,
-    phaseId: 4,
-    phaseTitle: 'Phase 4: A Spot Exists Unseen',
-    title: 'Picture a Spot in Mind’s Eye',
-    prompt: 'Picture a spot: Can you picture it?',
-    subtext: 'You are facing forward. Without turning around, picture that exact location behind you:',
-    type: 'yes_no_picture',
-    choices: ['Yes, I can picture it clearly', 'No']
-  },
-  {
-    id: 13,
-    phaseId: 4,
-    phaseTitle: 'Phase 4: A Spot Exists Unseen',
-    title: 'Existence Without Sight',
-    prompt: 'Can you still point at that spot — even though you cannot see it?',
-    subtext: 'Does a spot need eyes or light to exist, or does space hold locations unconditionally?',
-    type: 'unseen_existence',
-    choices: ['Yes, I can point at it ✓', 'No'],
-    placeholder: 'Add one short phrase (e.g. Yes, spots exist in space even unseen...)',
-    creditKeywords: ['yes', 'can', 'unseen', 'think', 'mind', 'exists', 'know', 'still there', 'behind'],
-    creditExplanation: 'A spot exists whether you see it or not; you can think of one you are not looking at.',
-    noCreditExplanation: 'Even in total darkness or behind you, locations exist in space.'
+    title: 'The Spot Still Exists',
+    prompt: 'Does that spot exist in space right now, even though no one is looking at it?',
+    subtext: 'Does empty space depend on human eyes, or do locations exist unconditionally?',
+    type: 'spot_existence_mcq',
+    options: [
+      'Yes, the spot exists in space unseen',
+      'No, it only exists when seen'
+    ],
+    correct: 0,
+    placeholder: 'Add one short reflection (e.g. A spot is a real location in space; it doesn\'t need eyes...)',
+    creditExplanation: 'A spot is a location in space; it exists unconditionally and does not need eyes or light to exist.',
+    noCreditExplanation: 'Space and the locations within it do not disappear when nobody is looking.'
   }
 ];
 

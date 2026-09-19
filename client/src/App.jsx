@@ -44849,7 +44849,8 @@ function App() {
     geogebra: GeoGebraLabApp,      // GeoGebra Lab (Level 1: 33 hands-on practical challenges)
     kernel: KernelPlayground,      // The Zero Balance Studio (Null space & kernel equilibrium)
     'linear-algebra-studio': LinearAlgebraModule, // Visual intuition & interactive challenges
-    realworld: RealWorldHubApp,    // Real-World hub (Feature CR) — phenomenon pathway cards
+    'point-studio': LinearAlgebraModule,
+    point: LinearAlgebraModule,
     profitloss: ProfitLossApp,     // Profit & Loss
     rounding: RoundingApp,         // Rounding
     binomial: BinomialApp,         // Binomial Theorem
@@ -44958,7 +44959,7 @@ function App() {
         </AuthGate>
       );
     }
-    if (mode === 'linear-algebra-studio') {
+    if (mode === 'linear-algebra-studio' || mode === 'point-studio' || mode === 'point') {
       return (
         <LinearAlgebraModule
           onBack={() => setMode(null)}
@@ -45106,7 +45107,9 @@ function App() {
       fracaddgym: 'Fractions Gym', lineqgym: 'Linear Equations Gym',
       indicesgym: 'Indices Gym', polygym: 'Polynomials Gym',
       kernel: 'The Zero Balance (Kernel)',
-      'linear-algebra-studio': 'Linear Algebra Studio',
+      'linear-algebra-studio': 'Point Studio',
+      'point-studio': 'Point Studio',
+      point: 'Point Studio',
     }
     return labels[key] || key
   }
@@ -45508,7 +45511,7 @@ function App() {
       <div>
         {mode === 'vachana' ? (
           <Vachana onBack={() => setMode(null)} initialAdaptScore={diagnosticState[mode] || 0} />
-        ) : mode === 'geogebra' || mode === 'kernel' || mode === 'linear-algebra-studio' ? (
+        ) : mode === 'geogebra' || mode === 'kernel' || mode === 'linear-algebra-studio' || mode === 'point-studio' || mode === 'point' ? (
           renderContent()
         ) : (
           <div className={`card ${mode === 'contrastlist' ? 'is-wide' : ''}`}>

@@ -23,4 +23,20 @@
  * }
  */
 
-export const GEOGEBRA_LEVEL_1_QUESTIONS = [];
+export const GEOGEBRA_LEVEL_1_QUESTIONS = [
+  {
+    id: 1,
+    category: '2D Basics: The Point',
+    prompt: 'Now that you have earned the idea of a point as a pure location in space, let us plot one on a digital coordinate plane! Which input in GeoGebra will plot a point at x = 3 and y = 5 and assign it a standard label?',
+    options: [
+      { key: 'A', text: '(3, 5)' },
+      { key: 'B', text: 'P = [3, 5]' },
+      { key: 'C', text: 'point(3, 5)' },
+      { key: 'D', text: 'plot(3, 5)' }
+    ],
+    correct: 'A',
+    hint: 'Type standard coordinates inside parentheses: (3, 5) into the GeoGebra input bar.',
+    explanation: 'In GeoGebra, simply typing (3, 5) creates a geometric point at coordinates (3, 5) and automatically assigns it an uppercase letter label (A).',
+    perspective: 'G'
+  }
+];
