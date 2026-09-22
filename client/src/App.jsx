@@ -86,6 +86,7 @@ import CarJourneyApp from './CarJourneyApp';
 import GeoGebraLabApp from './GeoGebraLabApp';
 import KernelPlayground from './modules/KernelPlayground';
 import LinearAlgebraModule from './modules/LinearAlgebra';
+import LineStudioModule from './modules/LineStudio';
 import RealWorldHubApp from './RealWorldHub';
 import { cjTakeReco } from './cjReco'; // Feature CR — Road License difficulty hand-off
 const CJ_RECO_DIFFS = ['easy', 'medium', 'hard', 'extrahard'];
@@ -44851,6 +44852,8 @@ function App() {
     'linear-algebra-studio': LinearAlgebraModule, // Visual intuition & interactive challenges
     'point-studio': LinearAlgebraModule,
     point: LinearAlgebraModule,
+    'line-studio': LineStudioModule,
+    line: LineStudioModule,
     profitloss: ProfitLossApp,     // Profit & Loss
     rounding: RoundingApp,         // Rounding
     binomial: BinomialApp,         // Binomial Theorem
@@ -44962,6 +44965,14 @@ function App() {
     if (mode === 'linear-algebra-studio' || mode === 'point-studio' || mode === 'point') {
       return (
         <LinearAlgebraModule
+          onBack={() => setMode(null)}
+        />
+      );
+    }
+
+    if (mode === 'line-studio' || mode === 'line') {
+      return (
+        <LineStudioModule
           onBack={() => setMode(null)}
         />
       );
@@ -45110,6 +45121,8 @@ function App() {
       'linear-algebra-studio': 'Point Studio',
       'point-studio': 'Point Studio',
       point: 'Point Studio',
+      'line-studio': 'Line Studio',
+      line: 'Line Studio',
     }
     return labels[key] || key
   }
@@ -45511,7 +45524,7 @@ function App() {
       <div>
         {mode === 'vachana' ? (
           <Vachana onBack={() => setMode(null)} initialAdaptScore={diagnosticState[mode] || 0} />
-        ) : mode === 'geogebra' || mode === 'kernel' || mode === 'linear-algebra-studio' || mode === 'point-studio' || mode === 'point' ? (
+        ) : mode === 'geogebra' || mode === 'kernel' || mode === 'linear-algebra-studio' || mode === 'point-studio' || mode === 'point' || mode === 'line-studio' || mode === 'line' ? (
           renderContent()
         ) : (
           <div className={`card ${mode === 'contrastlist' ? 'is-wide' : ''}`}>
