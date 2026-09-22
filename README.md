@@ -137,7 +137,7 @@ It is built to run on a single VPS — `tenali.fun` — with one Node process se
 <p align="center">
   <table>
     <tr>
-      <td align="center"><b>1064</b><br/><sub>commits</sub></td>
+      <td align="center"><b>1065</b><br/><sub>commits</sub></td>
       <td align="center"><b>110</b><br/><sub>PRs merged</sub></td>
       <td align="center"><b>43</b><br/><sub>GitHub contributors</sub></td>
       <td align="center"><b>⭐ 0</b><br/><sub>stars</sub></td>
@@ -690,7 +690,7 @@ tenali.fun
 <!-- live-snapshot:start -->
 | 🏆 Commits | 🔀 Merged PRs | 👥 Contributors | 🧩 Puzzles | 📚 Vocab | 🌍 GK |
 |----------:|------------:|--------------:|---------:|-------:|----:|
-| **1064** | **110** | **43** | **93** | **7,662** | **991** |
+| **1065** | **110** | **43** | **93** | **7,662** | **991** |
 <!-- live-snapshot:end -->
 
 ### 🥇 Leaderboard
@@ -714,8 +714,8 @@ _Live data — last regenerated 2026-09-22 · auto-refreshed by [`github-actions
 | 12. | **Ahana Banerjee** | [ahana4banerjee](https://github.com/ahana4banerjee) | **20** | 2  | Goal Practice & Learning Journey |
 | 13. | **harshyy07** | [harshyy07](https://github.com/harshyy07) | **16** | 1  | — |
 | 14. | **Shubh Dixit**<br/><sub>↳ also commits as <b>Shubh dixit</b></sub> | [Shubhdix9](https://github.com/Shubhdix9) | **16** | 2  | Premium UI Suite + Word Games |
-| 15. | **athira**<br/><sub>↳ also commits as <b>Athira</b></sub> | [athira](https://github.com/athira) | **15** | 0  | — |
-| 16. | **jatin-kumar**<br/><sub>↳ also commits as <b>Jatin Kumar</b></sub> | [jatin-kumar](https://github.com/jatin-kumar) | **14** | 0  | — |
+| 15. | **jatin-kumar**<br/><sub>↳ also commits as <b>Jatin Kumar</b></sub> | [jatin-kumar](https://github.com/jatin-kumar) | **15** | 0  | — |
+| 16. | **athira**<br/><sub>↳ also commits as <b>Athira</b></sub> | [athira](https://github.com/athira) | **15** | 0  | — |
 | 17. | **jinal-gupta**<br/><sub>↳ also commits as <b>JINAL GUPTA</b></sub> | [jinal-gupta](https://github.com/jinal-gupta) | **12** | 0  | — |
 | 18. | **tanvish desai** | [tanvishdesai](https://github.com/tanvishdesai) | **9** | 2  | — |
 | 19. | **shreejal-bangera**<br/><sub>↳ also commits as <b>Shreejal Bangera</b></sub> | [shreejal-bangera](https://github.com/shreejal-bangera) | **8** | 0  | — |

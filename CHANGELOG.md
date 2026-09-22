@@ -19,9 +19,15 @@
 ---
 
 <!-- live-changelog:start -->
-### 📊 Total: 1064 commits · 81 active days · 43 unique authors
+### 📊 Total: 1065 commits · 82 active days · 43 unique authors
 
 > **📖 How to read this:** Each entry shows a clickable SHA, the author, and a one-line subject. Sub-bullets show the **exact files touched** with per-file `+additions −deletions`, the **total line stats**, and (when present) the **commit body** explaining what & why.
+
+#### 📅 2026-09-22  <sub>(1 commit)</sub>
+
+- ✨ [`3997dd11`](https://github.com/Jatin-nicon/tenali/commit/3997dd115ff021df56818d8523e25c663255a273) — **Jatin Kumar** — add Line Studio module for embodied line geometry (Cluster 2)
+    - 📁 **8 files:** `client/src/App.jsx` `+14 −1`, `client/src/features/tiles.js` `+1 −0`, `client/src/modules/LineStudio/GeoGebraLineLab.css` `+534 −0`, `client/src/modules/LineStudio/GeoGebraLineLab.jsx` `+597 −0`, `client/src/modules/LineStudio/LineStudioModule.css` `+831 −0`, `client/src/modules/LineStudio/LineStudioModule.jsx` `+1759 −0`, `client/src/modules/LineStudio/index.js` `+1 −0`, `client/src/modules/LineStudio/questions.js` `+287 −0`
+    - 📊 **`+4024 −1`** · 8 files
 
 #### 📅 2026-09-21  <sub>(1 commit)</sub>
 
