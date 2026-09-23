@@ -19,6 +19,7 @@ export default function GeoGebraLineLab({
   plottedPoints = [],
   onPointPlotted,
   onClearPoints,
+  onLineDrawn,
   showLineAB = false,
   showOriginLines = false,
   showParametricLine = true,
@@ -249,6 +250,9 @@ export default function GeoGebraLineLab({
             msg: `Line successfully drawn through points ${pt1} and ${pt2}!`
           });
           setInputVal('');
+          if (onLineDrawn) {
+            onLineDrawn({ pt1, pt2 });
+          }
         } catch (e) {
           setFeedback({ type: 'error', msg: 'Could not connect points. Make sure both points are plotted first.' });
         }

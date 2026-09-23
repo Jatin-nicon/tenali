@@ -51,47 +51,36 @@ export const LINE_PATH_QUESTIONS = [
     id: 2,
     phaseId: 1,
     phaseTitle: 'Phase 1: Plotting Points on a Pattern',
-    title: 'Observe & Plot More Points',
-    prompt: 'Observe points A and B on the canvas: which best describes their relationship, and what points come next?',
-    subtext: 'Observe their relationship below, then predict point C and plot points D, E, and F:',
-    type: 'mcq_and_predict',
-    options: [
-      { id: 'q2_ur', text: 'B is upper-right of A', isCorrect: true },
-      { id: 'q2_bel', text: 'B is below A', isCorrect: false },
-      { id: 'q2_left', text: 'B is to the left of A', isCorrect: false },
-      { id: 'q2_same', text: 'A and B are at the same spot', isCorrect: false }
-    ],
-    relExplanation: 'A = (1, 2) is lower-left and B = (2, 4) is upper-right: x grew from 1 to 2 (+1), and y grew from 2 to 4 (+2).',
-    targetCoords: { x: 3, y: 6 },
-    creditKeywords: ['(3, 6)', '(3,6)', '3, 6', '3,6', 'c = (3, 6)', 'c=(3,6)'],
-    creditExplanation: 'Same rhythm: x += 1 (2 → 3), y += 2 (4 → 6). Point C lands right at (3, 6), followed by D(4, 8), E(5, 10), and F(6, 12)!',
-    noCreditExplanation: 'Follow the same step: add 1 to x (2 + 1 = 3), and add 2 to y (4 + 2 = 6).',
-    earns: 'The rhythm from A to B predicts (3, 6), and continuing it plots (4, 8), (5, 10), and (6, 12) — consistent x += 1, y += 2 pattern.'
+    title: 'Plot More Points',
+    prompt: 'Now plot some more points that continue the pattern: point C at (3, 6), point D at (4, 8), and point E at (5, 10).',
+    subtext: 'Plot points C, D, and E on the coordinate grid using the input bar above:',
+    type: 'plot_points',
+    creditExplanation: 'Points C(3, 6), D(4, 8), and E(5, 10) plotted successfully on the grid!',
+    earns: 'Five points plotted along the pattern: (1, 2), (2, 4), (3, 6), (4, 8), and (5, 10).'
   },
   {
     id: 3,
     phaseId: 1,
     phaseTitle: 'Phase 1: Plotting Points on a Pattern',
-    title: 'Arrangement on the Canvas',
-    prompt: 'You now have six points: A = (1, 2), B = (2, 4), C = (3, 6), D = (4, 8), E = (5, 10), F = (6, 12). Which best describes how they are arranged on the canvas?',
-    subtext: 'Look at all six plotted points on the canvas above and observe the pattern:',
-    type: 'mcq',
+    title: 'Observe Pattern & Join Points',
+    prompt: 'Look at all the plotted points on the canvas: what pattern are they making? Then use the line function to join two points.',
+    subtext: 'Observe the pattern below, then use GeoGebra to join two points with a line:',
+    type: 'observe_and_line',
     options: [
-      { id: 'q3_diag', text: 'They all line up on a diagonal', isCorrect: true },
+      { id: 'q3_line', text: 'They form a straight line', isCorrect: true },
       { id: 'q3_circle', text: 'They form a circle', isCorrect: false },
-      { id: 'q3_random', text: 'They are scattered randomly', isCorrect: false },
-      { id: 'q3_split', text: 'Three are above the x-axis, three are below', isCorrect: false }
+      { id: 'q3_curve', text: 'They form a curved parabola', isCorrect: false },
+      { id: 'q3_random', text: 'They are scattered randomly', isCorrect: false }
     ],
-    creditExplanation: 'Every step was the exact same small movement; all six points line up on a single diagonal path.',
-    noCreditExplanation: 'Look at the dots on the plane: notice how none are scattered or curved — they form an unbroken straight diagonal line.',
-    earns: 'Six points with the same x-y rhythm all line up on a single straight path. Equal movement = straight line!'
+    creditExplanation: 'All five points form a straight line! Drawing Line(A, B) creates a line passing directly through every single point.',
+    earns: 'Five points with equal movement form a straight line. Joining two points with a line passes through all of them!'
   },
   {
     id: 4,
     phaseId: 2,
     phaseTitle: 'Phase 2: Seeing the Line',
     title: 'Why Do They Line Up?',
-    prompt: 'Pick any two adjacent points (like A to B, or D to E). How much did x grow, and how much did y grow? In one phrase — why do all six points line up?',
+    prompt: 'Pick any two adjacent points (like A to B, or D to E). How much did x grow, and how much did y grow? In one phrase — why do all five points line up?',
     subtext: 'Enter the step movement in x and y as two numbers, then select why the points fall on a straight path:',
     type: 'step_and_mcq',
     stepPlaceholder: 'e.g. Δx, Δy',

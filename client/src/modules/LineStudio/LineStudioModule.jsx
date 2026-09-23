@@ -51,10 +51,6 @@ export default function LineStudioModule({ onBack }) {
   // Strict prediction error message in Q2
   const [predictError, setPredictError] = useState(null);
 
-  // Hint toggle state
-  const [showHint, setShowHint] = useState(false);
-  const [showHintStep2, setShowHintStep2] = useState(false);
-
   // Observation state: tracks whether the learner has completed the observation for each question
   const [observedMap, setObservedMap] = useState({
     1: false,
@@ -72,9 +68,9 @@ export default function LineStudioModule({ onBack }) {
 
   // Question Answers State for Questions 1..11
   const [answers, setAnswers] = useState({
-    1: { isCompleted: false },
-    2: { relSelectedId: null, relSubmitted: false, relError: null, text: '', morePlotted: false, isSubmitted: false },
-    3: { selectedId: null, isSubmitted: false },
+    1: { isSubmitted: false, isCompleted: false },
+    2: { isSubmitted: false, isCompleted: false },
+    3: { patternSelectedId: null, patternSubmitted: false, patternError: null, lineDrawn: false, lineInput: '', lineError: null, isSubmitted: false },
     4: { stepVal: '', selectedId: null, isSubmitted: false },
     5: { selectedId: null, isSubmitted: false },
     6: { selectedId: null, isSubmitted: false },
@@ -103,7 +99,7 @@ export default function LineStudioModule({ onBack }) {
   useEffect(() => {
     if (activeStep >= 1 && activeStep <= 11) {
       const q = LINE_PATH_QUESTIONS.find((item) => item.id === activeStep);
-      if (q && q.options && !answers[activeStep]?.isSubmitted && !answers[activeStep]?.relSubmitted) {
+      if (q && q.options && !answers[activeStep]?.isSubmitted && !answers[activeStep]?.patternSubmitted) {
         setShuffledOptionsMap((prev) => ({
           ...prev,
           [activeStep]: shuffleArray(q.options)
@@ -127,7 +123,7 @@ export default function LineStudioModule({ onBack }) {
 
   // Mode conditions: Questions 7..11 are slider mode
   const isSliderMode = activeStep >= 7;
-  const showLineAB = activeStep === 5;
+  const showLineAB = (activeStep === 4 || activeStep === 5) || (activeStep === 3 && answers[3]?.lineDrawn);
   const showOriginLines = activeStep === 6;
   const showParametricLine = activeStep >= 7;
 
@@ -137,28 +133,34 @@ export default function LineStudioModule({ onBack }) {
   const hasPointC = plottedPoints.some((p) => p.x === 3 && p.y === 6);
   const hasPointD = plottedPoints.some((p) => p.x === 4 && p.y === 8);
   const hasPointE = plottedPoints.some((p) => p.x === 5 && p.y === 10);
-  const hasPointF = plottedPoints.some((p) => p.x === 6 && p.y === 12);
+
+  // Callback when a line is drawn via GeoGebra input bar
+  const handleLineDrawn = ({ pt1, pt2 }) => {
+    if (activeStep === 3) {
+      updateAnswer(3, { lineDrawn: true, isSubmitted: true, lineError: null });
+    }
+  };
 
   // Dynamic input placeholder to guide user typing
   const getInputPlaceholder = () => {
     if (activeStep === 1) {
       if (!hasPointA) return 'e.g. A = (x, y) or (x, y)';
       if (!hasPointB) return 'e.g. B = (x, y) or (x, y)';
-      return 'Points A & B plotted! Answer the question below';
+      return 'Points A & B plotted!';
     }
     if (activeStep === 2) {
-      if (!hasPointC) return 'Enter prediction e.g. C = (x, y)';
-      if (!hasPointD || !hasPointE || !hasPointF) return 'e.g. Name = (x, y) or (x, y)';
-      return 'Points plotted! Click Confirm below';
+      if (!hasPointC) return 'e.g. C = (x, y) or (x, y)';
+      if (!hasPointD) return 'e.g. D = (x, y) or (x, y)';
+      if (!hasPointE) return 'e.g. E = (x, y) or (x, y)';
+      return 'Points C, D, E plotted!';
     }
+    if (activeStep === 3) return 'e.g. Line(A, B)';
     if (activeStep === 5) return 'e.g. Line(Point1, Point2)';
     return 'e.g. (x, y) or Name = (x, y) or Line(A, B)';
   };
 
   // Auto-populate points depending on active question
   useEffect(() => {
-    setShowHint(false);
-    setShowHintStep2(false);
     if (activeStep === 1) {
       // In level 1, user must type to plot A and B
     } else if (activeStep === 2) {
@@ -176,8 +178,7 @@ export default function LineStudioModule({ onBack }) {
         { name: 'B', x: 2, y: 4 },
         { name: 'C', x: 3, y: 6 },
         { name: 'D', x: 4, y: 8 },
-        { name: 'E', x: 5, y: 10 },
-        { name: 'F', x: 6, y: 12 }
+        { name: 'E', x: 5, y: 10 }
       ]);
     } else if (activeStep === 6) {
       setPlottedPoints([]);
@@ -204,6 +205,12 @@ export default function LineStudioModule({ onBack }) {
     if (!a) return false;
     if (qId === 1) {
       return Boolean(a.isSubmitted || a.isCompleted || (hasPointA && hasPointB));
+    }
+    if (qId === 2) {
+      return Boolean(a.isSubmitted || a.isCompleted || (hasPointC && hasPointD && hasPointE));
+    }
+    if (qId === 3) {
+      return Boolean(a.isSubmitted || (a.patternSubmitted && a.lineDrawn));
     }
     return Boolean(a.isSubmitted);
   };
@@ -393,17 +400,7 @@ export default function LineStudioModule({ onBack }) {
           </span>
         </div>
 
-        {/* Step Intro: Prompt & Subtext */}
-        <div className="la-step-intro-block">
-          <h3 className="la-step-heading">
-            {currentQ?.prompt}
-          </h3>
-          <p className="la-step-subtext">
-            {currentQ?.subtext}
-          </p>
-        </div>
-
-        {/* GeoGebra 2D Cartesian Graph & Sliders/Controls (Integrated Lab) */}
+        {/* 1. GRAPH AT TOP & 2. INPUT BOX */}
         <GeoGebraLineLab
           sliderA={sliderA}
           sliderB={sliderB}
@@ -414,6 +411,7 @@ export default function LineStudioModule({ onBack }) {
           plottedPoints={plottedPoints}
           onPointPlotted={handlePointPlotted}
           onClearPoints={handleClearPoints}
+          onLineDrawn={handleLineDrawn}
           showLineAB={showLineAB}
           showOriginLines={showOriginLines}
           showParametricLine={showParametricLine}
@@ -423,156 +421,133 @@ export default function LineStudioModule({ onBack }) {
           inputPlaceholder={getInputPlaceholder()}
         />
 
+        {/* 3. QUESTION TO BE ANSWERED */}
+        <div className="la-step-intro-block" style={{ marginTop: '0.65rem' }}>
+          <h3 className="la-step-heading">
+            {currentQ?.prompt}
+          </h3>
+          <p className="la-step-subtext">
+            {currentQ?.subtext}
+          </p>
+        </div>
+
         <div className="la-step-container">
           {/* =================================================== */}
           {/* QUESTION 1: PLOT TWO POINTS                         */}
           {/* =================================================== */}
           {activeStep === 1 && (
             <div className="la-single-step-view">
-              {/* 1. Observation Section */}
-              <div className="la-observation-box">
-                <div className="la-observation-header">
-                  <span>👀 STEP 1 — TYPE TO PLOT POINTS A AND B</span>
-                  {hasPointA && hasPointB && <span className="la-credit-tag">✓ Both Points Plotted</span>}
-                </div>
-                <p className="la-observation-desc">
-                  Plot point <strong>A</strong> at (1, 2) and point <strong>B</strong> at (2, 4) on the canvas using the GeoGebra input bar above.
-                </p>
-
-                {/* Hint Button */}
-                <div style={{ marginTop: '0.35rem', marginBottom: '0.55rem' }}>
-                  <button
-                    type="button"
-                    className="la-hint-btn"
-                    onClick={() => setShowHint((prev) => !prev)}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.35rem',
-                      background: 'rgba(232, 134, 74, 0.12)',
-                      border: '1px solid rgba(232, 134, 74, 0.3)',
-                      color: 'var(--clr-accent, #e8864a)',
-                      borderRadius: '9999px',
-                      padding: '0.28rem 0.75rem',
-                      fontSize: '0.78rem',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      fontFamily: 'inherit'
-                    }}
-                  >
-                    💡 {showHint ? 'Hide Hint' : 'Hint'}
-                  </button>
-
-                  {showHint && (
-                    <div
-                      style={{
-                        marginTop: '0.5rem',
-                        padding: '0.65rem 0.85rem',
-                        background: 'rgba(245, 158, 11, 0.08)',
-                        border: '1px solid rgba(245, 158, 11, 0.25)',
-                        borderRadius: '8px',
-                        fontSize: '0.82rem',
-                        color: 'var(--clr-text, #ede8e3)',
-                        lineHeight: 1.45
-                      }}
-                    >
-                      <p style={{ margin: 0, fontWeight: 500 }}>
-                        Type the coordinates of two points into the <strong>GeoGebra Command / Coordinate Input</strong> bar above and click <strong>Plot on Canvas 🚀</strong>:
-                      </p>
-                      <ul style={{ margin: '0.35rem 0 0 1.2rem', padding: 0 }}>
-                        <li>Type <code>A = (1, 2)</code> (or <code>(1, 2)</code>)</li>
-                        <li>Type <code>B = (2, 4)</code> (or <code>(2, 4)</code>)</li>
-                      </ul>
-                    </div>
+              <div className="la-verification-bar">
+                <div className="la-verification-group">
+                  <span className="la-verification-label">Verification:</span>
+                  <div className={`la-verification-chip ${hasPointA ? 'verified' : ''}`}>
+                    <span>{hasPointA ? '✓' : '⏳'}</span>
+                    <span>Point A (1, 2)</span>
+                  </div>
+                  <div className={`la-verification-chip ${hasPointB ? 'verified' : ''}`}>
+                    <span>{hasPointB ? '✓' : '⏳'}</span>
+                    <span>Point B (2, 4)</span>
+                  </div>
+                  {hasPointA && hasPointB && (
+                    <span className="la-verification-tag">✓ Both Points Plotted</span>
                   )}
                 </div>
 
-                {/* Status chips indicating what user has typed */}
-                <div style={{ display: 'flex', gap: '0.65rem', flexWrap: 'wrap', margin: '0.75rem 0' }}>
-                  <div
+                <div className="la-verification-actions">
+                  <button
+                    className="la-btn-primary"
+                    disabled={!(hasPointA && hasPointB)}
+                    onClick={() => {
+                      updateAnswer(1, { isSubmitted: true, isCompleted: true });
+                      setActiveStep(2);
+                    }}
                     style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.4rem',
-                      padding: '0.4rem 0.85rem',
-                      borderRadius: '9999px',
-                      fontSize: '0.82rem',
-                      fontWeight: 600,
-                      background: hasPointA ? 'rgba(16, 185, 129, 0.15)' : 'var(--clr-surface, #2c2622)',
-                      border: `1px solid ${hasPointA ? '#10b981' : 'var(--clr-border, rgba(255, 245, 230, 0.15))'}`,
-                      color: hasPointA ? '#6ee7b7' : 'var(--clr-text-soft, #a89e94)'
+                      padding: '0.45rem 1.15rem',
+                      fontSize: '0.85rem',
+                      opacity: (hasPointA && hasPointB) ? 1 : 0.45,
+                      cursor: (hasPointA && hasPointB) ? 'pointer' : 'not-allowed'
                     }}
                   >
-                    <span>{hasPointA ? '✓' : '⏳'}</span>
-                    <span>Point A (1, 2): {hasPointA ? 'Plotted on Canvas' : 'Waiting for input'}</span>
-                  </div>
-
-                  <div
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.4rem',
-                      padding: '0.4rem 0.85rem',
-                      borderRadius: '9999px',
-                      fontSize: '0.82rem',
-                      fontWeight: 600,
-                      background: hasPointB ? 'rgba(16, 185, 129, 0.15)' : 'var(--clr-surface, #2c2622)',
-                      border: `1px solid ${hasPointB ? '#10b981' : 'var(--clr-border, rgba(255, 245, 230, 0.15))'}`,
-                      color: hasPointB ? '#6ee7b7' : 'var(--clr-text-soft, #a89e94)'
-                    }}
-                  >
-                    <span>{hasPointB ? '✓' : '⏳'}</span>
-                    <span>Point B (2, 4): {hasPointB ? 'Plotted on Canvas' : 'Waiting for input'}</span>
-                  </div>
+                    Continue to Next Level →
+                  </button>
                 </div>
-
-                {hasPointA && hasPointB ? (
-                  <div className="la-earns-card" style={{ marginTop: '0.85rem' }}>
-                    <div className="la-earns-badge">🎉 LEVEL 1 COMPLETE</div>
-                    <p className="la-earns-text">Point A at (1, 2) and Point B at (2, 4) are plotted on the canvas!</p>
-                    <p className="la-earns-sub">
-                      You have successfully placed both points on the coordinate grid. Continue to the next level to observe their relationship and find the pattern.
-                    </p>
-                    <div className="la-step-footer-actions end" style={{ marginTop: '0.75rem' }}>
-                      <button
-                        className="la-btn-primary"
-                        onClick={() => {
-                          updateAnswer(1, { isSubmitted: true, isCompleted: true });
-                          setActiveStep(2);
-                        }}
-                      >
-                        Continue to Next Level →
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div style={{ fontSize: '0.82rem', color: 'var(--clr-text-soft, #a89e94)', marginTop: '0.35rem' }}>
-                    Type both coordinates into the input bar above using strict syntax to proceed to the next level.
-                  </div>
-                )}
               </div>
             </div>
           )}
 
           {/* =================================================== */}
-          {/* QUESTION 2: PREDICT & PLOT MORE POINTS              */}
+          {/* QUESTION 2: PLOT MORE POINTS                        */}
           {/* =================================================== */}
           {activeStep === 2 && (
             <div className="la-single-step-view">
-              {/* 1. Observation Section: Observe Relationship Between A and B */}
+              <div className="la-verification-bar">
+                <div className="la-verification-group">
+                  <span className="la-verification-label">Verification:</span>
+                  <div className={`la-verification-chip ${hasPointC ? 'verified' : ''}`}>
+                    <span>{hasPointC ? '✓' : '⏳'}</span>
+                    <span>C (3, 6)</span>
+                  </div>
+                  <div className={`la-verification-chip ${hasPointD ? 'verified' : ''}`}>
+                    <span>{hasPointD ? '✓' : '⏳'}</span>
+                    <span>D (4, 8)</span>
+                  </div>
+                  <div className={`la-verification-chip ${hasPointE ? 'verified' : ''}`}>
+                    <span>{hasPointE ? '✓' : '⏳'}</span>
+                    <span>E (5, 10)</span>
+                  </div>
+                  {hasPointC && hasPointD && hasPointE && (
+                    <span className="la-verification-tag">✓ All Plotted</span>
+                  )}
+                </div>
+
+                <div className="la-verification-actions">
+                  <button
+                    className="la-btn-secondary"
+                    onClick={() => setActiveStep(1)}
+                    style={{ padding: '0.45rem 0.85rem', fontSize: '0.82rem' }}
+                  >
+                    ← Back
+                  </button>
+                  <button
+                    className="la-btn-primary"
+                    disabled={!(hasPointC && hasPointD && hasPointE)}
+                    onClick={() => {
+                      updateAnswer(2, { isSubmitted: true, isCompleted: true });
+                      setActiveStep(3);
+                    }}
+                    style={{
+                      padding: '0.45rem 1.15rem',
+                      fontSize: '0.85rem',
+                      opacity: (hasPointC && hasPointD && hasPointE) ? 1 : 0.45,
+                      cursor: (hasPointC && hasPointD && hasPointE) ? 'pointer' : 'not-allowed'
+                    }}
+                  >
+                    Continue to Next Level →
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* =================================================== */}
+          {/* QUESTION 3: OBSERVE PATTERN & JOIN POINTS           */}
+          {/* =================================================== */}
+          {activeStep === 3 && (
+            <div className="la-single-step-view">
+              {/* 1. Observation Section */}
               <div className="la-observation-box">
                 <div className="la-observation-header">
-                  <span>👀 STEP 1 — OBSERVE THE RELATIONSHIP BETWEEN A AND B</span>
-                  {answers[2]?.relSubmitted && <span className="la-credit-tag">✓ Observation Verified</span>}
+                  <span>👀 STEP 1 — WHAT PATTERN ARE THE POINTS MAKING?</span>
+                  {answers[3]?.patternSubmitted && <span className="la-credit-tag">✓ Pattern Verified: Straight Line</span>}
                 </div>
                 <p className="la-observation-desc">
-                  Look at points <strong>A(1, 2)</strong> and <strong>B(2, 4)</strong> on the canvas. Which statement best describes how point B sits relative to point A?
+                  Look at points <strong>A(1, 2)</strong>, <strong>B(2, 4)</strong>, <strong>C(3, 6)</strong>, <strong>D(4, 8)</strong>, and <strong>E(5, 10)</strong> plotted on the canvas. What pattern or geometric shape do they make?
                 </p>
 
                 <div className="la-options-stack" style={{ marginTop: '0.65rem' }}>
-                  {(shuffledOptionsMap[2] || currentQ.options).map((opt, i) => {
-                    const isSelected = answers[2]?.relSelectedId === opt.id;
-                    const isSubmitted = answers[2]?.relSubmitted;
+                  {(shuffledOptionsMap[3] || currentQ.options).map((opt, i) => {
+                    const isSelected = answers[3]?.patternSelectedId === opt.id;
+                    const isSubmitted = answers[3]?.patternSubmitted;
                     let cls = 'la-option-btn';
                     if (isSelected) cls += ' selected';
                     if (isSubmitted) {
@@ -585,7 +560,7 @@ export default function LineStudioModule({ onBack }) {
                         key={opt.id}
                         className={cls}
                         onClick={() => {
-                          if (!isSubmitted) updateAnswer(2, { relSelectedId: opt.id, relError: null });
+                          if (!isSubmitted) updateAnswer(3, { patternSelectedId: opt.id, patternError: null });
                         }}
                         disabled={isSubmitted}
                       >
@@ -596,17 +571,20 @@ export default function LineStudioModule({ onBack }) {
                   })}
                 </div>
 
-                {!answers[2]?.relSubmitted ? (
-                  <div className="la-step-footer-actions end" style={{ marginTop: '0.85rem' }}>
+                {!answers[3]?.patternSubmitted ? (
+                  <div className="la-step-footer-actions between" style={{ marginTop: '0.85rem' }}>
+                    <button className="la-btn-secondary" onClick={() => setActiveStep(2)}>
+                      ← Back to Level 2
+                    </button>
                     <button
                       className="la-btn-primary"
-                      disabled={!answers[2]?.relSelectedId}
+                      disabled={!answers[3]?.patternSelectedId}
                       onClick={() => {
-                        const opt = currentQ.options?.find((o) => o.id === answers[2]?.relSelectedId);
+                        const opt = currentQ.options?.find((o) => o.id === answers[3]?.patternSelectedId);
                         if (opt?.isCorrect) {
-                          updateAnswer(2, { relSubmitted: true, relError: null });
+                          updateAnswer(3, { patternSubmitted: true, patternError: null });
                         } else {
-                          updateAnswer(2, { relError: 'Check the grid: point B has a greater x (further right) and greater y (higher up) than point A.' });
+                          updateAnswer(3, { patternError: 'Look closely at the canvas: the dots do not curve or scatter randomly — they all line up in a single unbroken straight line.' });
                         }
                       }}
                     >
@@ -615,329 +593,94 @@ export default function LineStudioModule({ onBack }) {
                   </div>
                 ) : (
                   <div style={{ marginTop: '0.75rem', padding: '0.65rem 0.85rem', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '8px', fontSize: '0.82rem', color: '#6ee7b7' }}>
-                    ✓ <strong>Observed Rhythm:</strong> Point B sits upper-right of Point A: x grew from 1 to 2 (+1), and y grew from 2 to 4 (+2).
+                    ✓ <strong>Correct Pattern:</strong> All five points line up in a single straight line!
                   </div>
                 )}
 
-                {answers[2]?.relError && !answers[2]?.relSubmitted && (
+                {answers[3]?.patternError && !answers[3]?.patternSubmitted && (
                   <div style={{ color: '#f87171', fontSize: '0.82rem', marginTop: '0.4rem', fontWeight: 500 }}>
-                    {answers[2]?.relError}
+                    {answers[3]?.patternError}
                   </div>
                 )}
               </div>
 
-              {/* 2. Prediction Section (Unlocked after Step 1 is verified) */}
-              {answers[2]?.relSubmitted && (
+              {/* 2. Line Function Section (Unlocked after Step 1 is verified) */}
+              {answers[3]?.patternSubmitted && (
                 <div className="la-observation-box" style={{ marginTop: '0.85rem' }}>
                   <div className="la-observation-header">
-                    <span>🔮 STEP 2 — PREDICT POINT C</span>
-                    {(observedMap[2] || hasPointC) && <span className="la-credit-tag">✓ Point C Plotted</span>}
+                    <span>📏 STEP 2 — JOIN TWO POINTS USING GEOGEBRA'S LINE FUNCTION</span>
+                    {answers[3]?.lineDrawn && <span className="la-credit-tag">✓ Line Drawn</span>}
                   </div>
                   <p className="la-observation-desc">
-                    From A(1, 2) to B(2, 4), x grew by <strong>1</strong> (+1) and y grew by <strong>2</strong> (+2). If this rhythm keeps going from B(2, 4), what would point <strong>C</strong> be?
+                    Now use GeoGebra's line function to connect the points! In the <strong>GeoGebra Command / Coordinate Input</strong> bar above (or in the box below), type: <code>Line(A, B)</code> to draw a straight line passing through points A and B.
                   </p>
 
-                  {!(observedMap[2] || hasPointC) ? (
+                  {!answers[3]?.lineDrawn ? (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginTop: '0.5rem' }}>
                       <div style={{ display: 'flex', gap: '0.65rem' }}>
                         <input
                           type="text"
                           className="la-text-input"
-                          placeholder="Strict syntax e.g. (x, y) or C = (x, y)"
-                          value={answers[2]?.text || ''}
+                          placeholder="e.g. Line(A, B)"
+                          value={answers[3]?.lineInput || ''}
                           onChange={(e) => {
-                            updateAnswer(2, { text: e.target.value });
-                            if (predictError) setPredictError(null);
+                            updateAnswer(3, { lineInput: e.target.value, lineError: null });
                           }}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') {
-                              const val = answers[2]?.text?.trim() || '';
-                              if (/^(?:C\s*=\s*)?\(\s*3\s*,\s*6\s*\)$/i.test(val)) {
-                                setPredictError(null);
-                                handlePointPlotted({ name: 'C', x: 3, y: 6 });
-                                markObserved(2);
-                              } else if (!val.includes('(') || !val.includes(')')) {
-                                setPredictError('Strict syntax error: Coordinates must be enclosed in parentheses, e.g. (x, y) or C = (x, y).');
-                              } else if (!val.includes(',')) {
-                                setPredictError('Strict syntax error: Coordinates must be separated by a comma, e.g. (x, y).');
+                              const val = (answers[3]?.lineInput || '').trim();
+                              const match = val.match(/^line\s*\(\s*([a-zA-Z]+)\s*,\s*([a-zA-Z]+)\s*\)$/i);
+                              if (match) {
+                                updateAnswer(3, { lineDrawn: true, isSubmitted: true, lineError: null });
                               } else {
-                                setPredictError('Check the rhythm: x += 1 and y += 2 from point B(2, 4). Strict syntax: (x, y) or C = (x, y).');
+                                updateAnswer(3, { lineError: 'Strict syntax required: Use Line(A, B) with parentheses and comma to join points.' });
                               }
                             }
                           }}
                         />
                         <button
                           className="la-btn-primary"
-                          disabled={!answers[2]?.text?.trim()}
+                          disabled={!answers[3]?.lineInput?.trim()}
                           onClick={() => {
-                            const val = answers[2]?.text?.trim() || '';
-                            if (/^(?:C\s*=\s*)?\(\s*3\s*,\s*6\s*\)$/i.test(val)) {
-                              setPredictError(null);
-                              handlePointPlotted({ name: 'C', x: 3, y: 6 });
-                              markObserved(2);
-                            } else if (!val.includes('(') || !val.includes(')')) {
-                              setPredictError('Strict syntax error: Coordinates must be enclosed in parentheses, e.g. (x, y) or C = (x, y).');
-                            } else if (!val.includes(',')) {
-                              setPredictError('Strict syntax error: Coordinates must be separated by a comma, e.g. (x, y).');
+                            const val = (answers[3]?.lineInput || '').trim();
+                            const match = val.match(/^line\s*\(\s*([a-zA-Z]+)\s*,\s*([a-zA-Z]+)\s*\)$/i);
+                            if (match) {
+                              updateAnswer(3, { lineDrawn: true, isSubmitted: true, lineError: null });
                             } else {
-                              setPredictError('Check the rhythm: x += 1 and y += 2 from point B(2, 4). Strict syntax: (x, y) or C = (x, y).');
+                              updateAnswer(3, { lineError: 'Strict syntax required: Use Line(A, B) with parentheses and comma to join points.' });
                             }
                           }}
                         >
-                          Verify &amp; Plot C ✓
+                          Draw Line 🚀
                         </button>
                       </div>
-                      {predictError && (
+                      {answers[3]?.lineError && (
                         <div style={{ color: '#f87171', fontSize: '0.82rem', fontWeight: 500 }}>
-                          {predictError}
+                          {answers[3]?.lineError}
                         </div>
                       )}
                       <span style={{ fontSize: '0.8rem', color: 'var(--clr-text-soft, #a89e94)' }}>
-                        You can also type your prediction directly in the GeoGebra input bar above.
+                        You can also type <code>Line(A, B)</code> directly in the GeoGebra input bar above.
                       </span>
                     </div>
                   ) : (
-                    <span className="la-observation-unlocked-msg">
-                      ✓ Point C = (3, 6) predicted and plotted! Now type to plot the remaining points:
-                    </span>
-                  )}
-                </div>
-              )}
-
-              {/* 3. Plot More Points Section (Unlocked after C is predicted/plotted) */}
-              {(observedMap[2] || hasPointC) && (
-                <div className="la-observation-box" style={{ marginTop: '0.85rem' }}>
-                  <div className="la-observation-header">
-                    <span>📍 STEP 3 — TYPE TO PLOT POINTS D, E, AND F</span>
-                    {hasPointD && hasPointE && hasPointF && <span className="la-credit-tag">✓ Points Plotted</span>}
-                  </div>
-                  <p className="la-observation-desc">
-                    Continue the same rhythm (+1 in x, +2 in y). Use the <strong>GeoGebra Command / Coordinate Input</strong> bar above to type and plot points <strong>D</strong>, <strong>E</strong>, and <strong>F</strong> on the canvas.
-                  </p>
-
-                  {/* Hint Button */}
-                  <div style={{ marginTop: '0.35rem', marginBottom: '0.55rem' }}>
-                    <button
-                      type="button"
-                      className="la-hint-btn"
-                      onClick={() => setShowHintStep2((prev) => !prev)}
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.35rem',
-                        background: 'rgba(232, 134, 74, 0.12)',
-                        border: '1px solid rgba(232, 134, 74, 0.3)',
-                        color: 'var(--clr-accent, #e8864a)',
-                        borderRadius: '9999px',
-                        padding: '0.28rem 0.75rem',
-                        fontSize: '0.78rem',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        fontFamily: 'inherit'
-                      }}
-                    >
-                      💡 {showHintStep2 ? 'Hide Hint' : 'Hint'}
-                    </button>
-
-                    {showHintStep2 && (
-                      <div
-                        style={{
-                          marginTop: '0.5rem',
-                          padding: '0.65rem 0.85rem',
-                          background: 'rgba(245, 158, 11, 0.08)',
-                          border: '1px solid rgba(245, 158, 11, 0.25)',
-                          borderRadius: '8px',
-                          fontSize: '0.82rem',
-                          color: 'var(--clr-text, #ede8e3)',
-                          lineHeight: 1.45
-                        }}
-                      >
-                        <p style={{ margin: 0, fontWeight: 500 }}>
-                          Type each coordinate into the <strong>GeoGebra Command / Coordinate Input</strong> bar above and click <strong>Plot on Canvas 🚀</strong>:
-                        </p>
-                        <ul style={{ margin: '0.35rem 0 0 1.2rem', padding: 0 }}>
-                          <li>Type <code>D = (4, 8)</code> (or <code>(4, 8)</code>)</li>
-                          <li>Type <code>E = (5, 10)</code> (or <code>(5, 10)</code>)</li>
-                          <li>Type <code>F = (6, 12)</code> (or <code>(6, 12)</code>)</li>
-                        </ul>
+                    <div>
+                      <div style={{ padding: '0.65rem 0.85rem', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '8px', fontSize: '0.82rem', color: '#6ee7b7' }}>
+                        ✓ <strong>Line Connected:</strong> The line passes through points A and B, and passes straight through C, D, and E too!
                       </div>
-                    )}
-                  </div>
 
-                  {/* Status chips for D, E, F */}
-                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', margin: '0.75rem 0' }}>
-                    <div
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.4rem',
-                        padding: '0.4rem 0.85rem',
-                        borderRadius: '9999px',
-                        fontSize: '0.82rem',
-                        fontWeight: 600,
-                        background: hasPointD ? 'rgba(16, 185, 129, 0.15)' : 'var(--clr-surface, #2c2622)',
-                        border: `1px solid ${hasPointD ? '#10b981' : 'var(--clr-border, rgba(255, 245, 230, 0.15))'}`,
-                        color: hasPointD ? '#6ee7b7' : 'var(--clr-text-soft, #a89e94)'
-                      }}
-                    >
-                      <span>{hasPointD ? '✓' : '⏳'}</span>
-                      <span>Point D (4, 8): {hasPointD ? 'Plotted' : 'Waiting for input'}</span>
-                    </div>
-
-                    <div
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.4rem',
-                        padding: '0.4rem 0.85rem',
-                        borderRadius: '9999px',
-                        fontSize: '0.82rem',
-                        fontWeight: 600,
-                        background: hasPointE ? 'rgba(16, 185, 129, 0.15)' : 'var(--clr-surface, #2c2622)',
-                        border: `1px solid ${hasPointE ? '#10b981' : 'var(--clr-border, rgba(255, 245, 230, 0.15))'}`,
-                        color: hasPointE ? '#6ee7b7' : 'var(--clr-text-soft, #a89e94)'
-                      }}
-                    >
-                      <span>{hasPointE ? '✓' : '⏳'}</span>
-                      <span>Point E (5, 10): {hasPointE ? 'Plotted' : 'Waiting for input'}</span>
-                    </div>
-
-                    <div
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.4rem',
-                        padding: '0.4rem 0.85rem',
-                        borderRadius: '9999px',
-                        fontSize: '0.82rem',
-                        fontWeight: 600,
-                        background: hasPointF ? 'rgba(16, 185, 129, 0.15)' : 'var(--clr-surface, #2c2622)',
-                        border: `1px solid ${hasPointF ? '#10b981' : 'var(--clr-border, rgba(255, 245, 230, 0.15))'}`,
-                        color: hasPointF ? '#6ee7b7' : 'var(--clr-text-soft, #a89e94)'
-                      }}
-                    >
-                      <span>{hasPointF ? '✓' : '⏳'}</span>
-                      <span>Point F (6, 12): {hasPointF ? 'Plotted' : 'Waiting for input'}</span>
-                    </div>
-                  </div>
-
-                  {!answers[2]?.isSubmitted ? (
-                    <div className="la-step-footer-actions between" style={{ marginTop: '0.85rem' }}>
-                      <button className="la-btn-secondary" onClick={() => setActiveStep(1)}>
-                        ← Back to Level 1
-                      </button>
-                      <button
-                        className="la-btn-primary"
-                        disabled={!hasPointD || !hasPointE || !hasPointF}
-                        onClick={() => {
-                          updateAnswer(2, { morePlotted: true, isSubmitted: true });
-                        }}
-                      >
-                        Confirm Plotted Points ✓
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="la-earns-card" style={{ marginTop: '0.85rem' }}>
-                      <div className="la-earns-badge">🎉 EARNED INSIGHT</div>
-                      <p className="la-earns-text">{currentQ.earns}</p>
-                      <p className="la-earns-sub">
-                        {currentQ.creditExplanation}
-                      </p>
-                      <div className="la-step-footer-actions end" style={{ marginTop: '0.75rem' }}>
-                        <button className="la-btn-primary" onClick={() => setActiveStep(3)}>
-                          Continue to Next Level →
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* =================================================== */}
-          {/* QUESTION 3: ARRANGEMENT ON THE CANVAS               */}
-          {/* =================================================== */}
-          {activeStep === 3 && (
-            <div className="la-single-step-view">
-              {/* 1. Observation Section */}
-              <div className="la-observation-box">
-                <div className="la-observation-header">
-                  <span>👀 STEP 1 — OBSERVING ALL SIX POINTS</span>
-                  {observedMap[3] && <span className="la-credit-tag">✓ Observed</span>}
-                </div>
-                <p className="la-observation-desc">
-                  Look at the canvas: Points <strong>A(1, 2)</strong>, <strong>B(2, 4)</strong>, <strong>C(3, 6)</strong>, <strong>D(4, 8)</strong>, <strong>E(5, 10)</strong>, and <strong>F(6, 12)</strong> are now all plotted! Look at how they sit relative to one another.
-                </p>
-                {!observedMap[3] ? (
-                  <button
-                    className="la-choice-btn"
-                    style={{ width: '100%', justifyContent: 'center' }}
-                    onClick={() => markObserved(3)}
-                  >
-                    I have observed all six points A through F on the canvas ✓
-                  </button>
-                ) : (
-                  <span className="la-observation-unlocked-msg">
-                    ✓ Observation confirmed. How are they arranged?
-                  </span>
-                )}
-              </div>
-
-              {/* 2. Solve Question Section */}
-              {observedMap[3] && (
-                <div style={{ marginTop: '0.85rem' }}>
-                  <div className="la-options-stack">
-                    {(shuffledOptionsMap[3] || currentQ.options).map((opt, i) => {
-                      const isSelected = answers[3]?.selectedId === opt.id;
-                      const isSubmitted = answers[3]?.isSubmitted;
-                      let cls = 'la-option-btn';
-                      if (isSelected) cls += ' selected';
-                      if (isSubmitted) {
-                        if (opt.isCorrect) cls += ' correct';
-                        else if (isSelected) cls += ' incorrect';
-                      }
-
-                      return (
-                        <button
-                          key={opt.id}
-                          className={cls}
-                          onClick={() => {
-                            if (!isSubmitted) updateAnswer(3, { selectedId: opt.id });
-                          }}
-                          disabled={isSubmitted}
-                        >
-                          <span className="la-option-letter">{String.fromCharCode(65 + i)}</span>
-                          <span>{opt.text}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  {!answers[3]?.isSubmitted ? (
-                    <div className="la-step-footer-actions between" style={{ marginTop: '0.85rem' }}>
-                      <button className="la-btn-secondary" onClick={() => setActiveStep(2)}>
-                        ← Back to Q2
-                      </button>
-                      <button
-                        className="la-btn-primary"
-                        disabled={!answers[3]?.selectedId}
-                        onClick={() => updateAnswer(3, { isSubmitted: true })}
-                      >
-                        Confirm Arrangement
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="la-earns-card" style={{ marginTop: '0.85rem' }}>
-                      <div className="la-earns-badge">🎉 EARNED INSIGHT (PHASE 1)</div>
-                      <p className="la-earns-text">{currentQ.earns}</p>
-                      <p className="la-earns-sub">
-                        {currentQ.creditExplanation}
-                      </p>
-                      <div className="la-step-footer-actions end" style={{ marginTop: '0.75rem' }}>
-                        <button className="la-btn-primary" onClick={() => setActiveStep(4)}>
-                          Continue to Next Level →
-                        </button>
+                      <div className="la-earns-card" style={{ marginTop: '0.85rem' }}>
+                        <div className="la-earns-badge">🎉 LEVEL 3 COMPLETE (PHASE 1)</div>
+                        <p className="la-earns-text">{currentQ.earns}</p>
+                        <p className="la-earns-sub">{currentQ.creditExplanation}</p>
+                        <div className="la-step-footer-actions between" style={{ marginTop: '0.75rem' }}>
+                          <button className="la-btn-secondary" onClick={() => setActiveStep(2)}>
+                            ← Back to Level 2
+                          </button>
+                          <button className="la-btn-primary" onClick={() => setActiveStep(4)}>
+                            Continue to Next Level →
+                          </button>
+                        </div>
                       </div>
                     </div>
                   )}
@@ -1017,7 +760,7 @@ export default function LineStudioModule({ onBack }) {
                   {!answers[4]?.isSubmitted ? (
                     <div className="la-step-footer-actions between" style={{ marginTop: '0.85rem' }}>
                       <button className="la-btn-secondary" onClick={() => setActiveStep(3)}>
-                        ← Back to Q3
+                        ← Back to Level 3
                       </button>
                       <button
                         className="la-btn-primary"
