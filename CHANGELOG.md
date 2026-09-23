@@ -19,9 +19,21 @@
 ---
 
 <!-- live-changelog:start -->
-### 📊 Total: 1065 commits · 82 active days · 43 unique authors
+### 📊 Total: 1068 commits · 83 active days · 43 unique authors
 
 > **📖 How to read this:** Each entry shows a clickable SHA, the author, and a one-line subject. Sub-bullets show the **exact files touched** with per-file `+additions −deletions`, the **total line stats**, and (when present) the **commit body** explaining what & why.
+
+#### 📅 2026-09-23  <sub>(3 commits)</sub>
+
+- ✨ [`23964a54`](https://github.com/Jatin-nicon/tenali/commit/23964a54ef87e265eb87f2583787e029a1858337) — **Jatin Kumar** — refactor Line Studio to 6-question path and scaffold Function Studio
+    - 📁 **13 files:** `client/src/App.jsx` `+14 −1`, `client/src/features/tiles.js` `+1 −0`, `client/src/modules/FunctionStudio/FunctionStudioModule.css` `+622 −0`, `client/src/modules/FunctionStudio/FunctionStudioModule.jsx` `+1078 −0`, `client/src/modules/FunctionStudio/GeoGebraFunctionLab.css` `+271 −0`, `client/src/modules/FunctionStudio/GeoGebraFunctionLab.jsx` `+534 −0`, `client/src/modules/FunctionStudio/index.js` `+1 −0`, `client/src/modules/FunctionStudio/questions.js` `+276 −0` *(+5 more in [`23964a54`](https://github.com/Jatin-nicon/tenali/commit/23964a54ef87e265eb87f2583787e029a1858337))*
+    - 📊 **`+3436 −1173`** · 13 files
+- 🐛 [`d8ac3487`](https://github.com/Jatin-nicon/tenali/commit/d8ac3487708e8642e90e97df6b1eeb00bf2757fc) — **Jatin Kumar** — prevent auto-plotting points when navigating to Question 2
+    - 📁 **1 file:** `client/src/modules/LineStudio/LineStudioModule.jsx` `+9 −7`
+    - 📊 **`+9 −7`** · 1 file
+- ✨ [`3a2e5293`](https://github.com/Jatin-nicon/tenali/commit/3a2e52932c5bc072b0558e2200b3e5c0048bb4be) — **Jatin Kumar** — refine question flow, compact verification UI, and points up to E
+    - 📁 **4 files:** `client/src/modules/LineStudio/GeoGebraLineLab.jsx` `+4 −0`, `client/src/modules/LineStudio/LineStudioModule.css` `+84 −0`, `client/src/modules/LineStudio/LineStudioModule.jsx` `+171 −428`, `client/src/modules/LineStudio/questions.js` `+16 −27`
+    - 📊 **`+275 −455`** · 4 files
 
 #### 📅 2026-09-22  <sub>(1 commit)</sub>
 

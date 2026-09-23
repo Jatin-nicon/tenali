@@ -50,7 +50,7 @@
 <!-- live-snapshot:start -->
 | 🏆 Commits | 🔀 Merged PRs | 👥 Contributors | 🧩 Puzzles | 📚 Vocab | 🌍 GK |
 |----------:|------------:|--------------:|---------:|-------:|----:|
-| **1065** | **110** | **43** | **93** | **7,662** | **991** |
+| **1068** | **110** | **43** | **93** | **7,662** | **991** |
 <!-- live-snapshot:end -->
 
 ## 🥇 Leaderboard
@@ -72,9 +72,9 @@ _Live data — last regenerated 2026-09-23 · auto-refreshed by [`github-actions
 | 10. | **saniyajos**<br/><sub>↳ also commits as <b>SaniyaJos</b></sub> | [saniyajos](https://github.com/saniyajos) | **22** | 0  | — |
 | 11. | **K C Dharshan** | [KCDharshan9](https://github.com/KCDharshan9) | **21** | 1  | Tap-to-Define Word Glossary |
 | 12. | **Ahana Banerjee** | [ahana4banerjee](https://github.com/ahana4banerjee) | **20** | 2  | Goal Practice & Learning Journey |
-| 13. | **harshyy07** | [harshyy07](https://github.com/harshyy07) | **16** | 1  | — |
-| 14. | **Shubh Dixit**<br/><sub>↳ also commits as <b>Shubh dixit</b></sub> | [Shubhdix9](https://github.com/Shubhdix9) | **16** | 2  | Premium UI Suite + Word Games |
-| 15. | **jatin-kumar**<br/><sub>↳ also commits as <b>Jatin Kumar</b></sub> | [jatin-kumar](https://github.com/jatin-kumar) | **15** | 0  | — |
+| 13. | **jatin-kumar**<br/><sub>↳ also commits as <b>Jatin Kumar</b></sub> | [jatin-kumar](https://github.com/jatin-kumar) | **18** | 0  | — |
+| 14. | **harshyy07** | [harshyy07](https://github.com/harshyy07) | **16** | 1  | — |
+| 15. | **Shubh Dixit**<br/><sub>↳ also commits as <b>Shubh dixit</b></sub> | [Shubhdix9](https://github.com/Shubhdix9) | **16** | 2  | Premium UI Suite + Word Games |
 | 16. | **athira**<br/><sub>↳ also commits as <b>Athira</b></sub> | [athira](https://github.com/athira) | **15** | 0  | — |
 | 17. | **jinal-gupta**<br/><sub>↳ also commits as <b>JINAL GUPTA</b></sub> | [jinal-gupta](https://github.com/jinal-gupta) | **12** | 0  | — |
 | 18. | **tanvish desai** | [tanvishdesai](https://github.com/tanvishdesai) | **9** | 2  | — |
@@ -432,13 +432,35 @@ _Live data — last regenerated 2026-09-23 · auto-refreshed by [`github-actions
   <table>
     <tr>
       <td align="center" width="220">
+        <a href="https://github.com/jatin-kumar"><img src="https://github.com/jatin-kumar.png?size=120&s=120" width="120" style="border-radius:50%; border:3px solid #888888;" alt="jatin-kumar"/></a>
+        <br/><b>jatin-kumar</b>
+        <br/><a href="https://github.com/jatin-kumar">@jatin-kumar</a>
+        <br/><sub>🏆 18 commits · 0 PRs merged</sub>
+        <br/><sub>🔗 also commits as: <b>Jatin Kumar</b></sub>
+      </td>
+      <td valign="top" width="*">
+        <h4>13. New Contributor</h4>
+        <ul>
+          <li>🆕 <b>New contributor</b> — auto-added by the readme-bot</li>
+          <li>📊 <b>18 commits</b> across this repo's history</li>
+          <li>🔗 <i>Add a <code>FALLBACK_PROFILES</code> entry in <code>scripts/update-readme-contributors.js</code> to enrich this card with real name, avatar, location, and curated feature list</i></li>
+        </ul>
+      </td>
+    </tr>
+  </table>
+</p>
+
+<p align="center">
+  <table>
+    <tr>
+      <td align="center" width="220">
         <a href="https://github.com/harshyy07"><img src="https://avatars.githubusercontent.com/u/181761505?v=4&s=120" width="120" style="border-radius:50%; border:3px solid #888888;" alt="harshyy07"/></a>
         <br/><b>harshyy07</b>
         <br/><a href="https://github.com/harshyy07">@harshyy07</a>
         <br/><sub>🏆 16 commits · 1 PR merged</sub>
       </td>
       <td valign="top" width="*">
-        <h4>13. New Contributor</h4>
+        <h4>14. New Contributor</h4>
         <ul>
           <li>🆕 <b>New contributor</b> — auto-added by the readme-bot</li>
           <li>📊 <b>16 commits</b> across this repo's history</li>
@@ -461,7 +483,7 @@ _Live data — last regenerated 2026-09-23 · auto-refreshed by [`github-actions
         <br/><sub>🔗 also commits as: <b>Shubh dixit</b></sub>
       </td>
       <td valign="top" width="*">
-        <h4>14. Premium UI Suite + Word Games</h4>
+        <h4>15. Premium UI Suite + Word Games</h4>
         <ul>
           <li>🏆 <b>Premium Core Educational Suite (PR #53)</b> — UI standardization, premium dark theme, module layout improvements</li>
           <li>➕ <b>Addition crash fix</b> — fixed ReferenceError for <code>setIsGoalMode</code> and removed extra modes</li>
@@ -471,28 +493,6 @@ _Live data — last regenerated 2026-09-23 · auto-refreshed by [`github-actions
           <li>🖼️ <b>Lucide-react icons</b> — replaced emojis with standard icon library</li>
           <li>🧹 <b>Removed unused scripts</b> + addition/mensuration/coord-geom from hamburger menu</li>
           <li>🔀 <b>Merge conflict resolutions</b> — multiple upstream merges with syntax-error fixes</li>
-        </ul>
-      </td>
-    </tr>
-  </table>
-</p>
-
-<p align="center">
-  <table>
-    <tr>
-      <td align="center" width="220">
-        <a href="https://github.com/jatin-kumar"><img src="https://github.com/jatin-kumar.png?size=120&s=120" width="120" style="border-radius:50%; border:3px solid #888888;" alt="jatin-kumar"/></a>
-        <br/><b>jatin-kumar</b>
-        <br/><a href="https://github.com/jatin-kumar">@jatin-kumar</a>
-        <br/><sub>🏆 15 commits · 0 PRs merged</sub>
-        <br/><sub>🔗 also commits as: <b>Jatin Kumar</b></sub>
-      </td>
-      <td valign="top" width="*">
-        <h4>15. New Contributor</h4>
-        <ul>
-          <li>🆕 <b>New contributor</b> — auto-added by the readme-bot</li>
-          <li>📊 <b>15 commits</b> across this repo's history</li>
-          <li>🔗 <i>Add a <code>FALLBACK_PROFILES</code> entry in <code>scripts/update-readme-contributors.js</code> to enrich this card with real name, avatar, location, and curated feature list</i></li>
         </ul>
       </td>
     </tr>
