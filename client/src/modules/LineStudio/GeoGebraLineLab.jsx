@@ -21,12 +21,15 @@ export default function GeoGebraLineLab({
   onClearPoints,
   onLineDrawn,
   showLineAB = false,
+  linePoint1Name = 'A',
+  linePoint2Name = 'B',
   showOriginLines = false,
   showParametricLine = true,
   interactiveSliders = true,
   onSliderInteracted,
   inputPlaceholder = "e.g. (x, y) or Name = (x, y) or Line(A, B)",
-  showInputBar = true
+  showInputBar = true,
+  inputSubmitLabel = "Plot on Canvas 🚀"
 }) {
   const [inputVal, setInputVal] = useState('');
   const [feedback, setFeedback] = useState(null);
@@ -105,13 +108,15 @@ export default function GeoGebraLineLab({
         api.setLabelStyle(pt.name, 1);
       });
 
-      // 2. Line(A, B) connection
+      // 2. Line(A, B) connection - only connect if user has plotted the points
       if (showLineAB) {
-        api.evalCommand('A = (1, 2)');
-        api.evalCommand('B = (2, 4)');
-        api.evalCommand('lineAB: Line(A, B)');
-        api.setColor('lineAB', 20, 184, 166); // Teal
-        api.setLineThickness('lineAB', 4);
+        const p1 = linePoint1Name || 'A';
+        const p2 = linePoint2Name || 'B';
+        if (api.exists(p1) && api.exists(p2)) {
+          api.evalCommand(`lineAB: Line(${p1}, ${p2})`);
+          api.setColor('lineAB', 20, 184, 166); // Teal
+          api.setLineThickness('lineAB', 4);
+        }
       } else {
         try { api.deleteObject('lineAB'); } catch (e) {}
       }
@@ -230,6 +235,12 @@ export default function GeoGebraLineLab({
     }
   }, [syncCanvasObjects, isGgbLoading]);
 
+  // Reset feedback and input value when question/placeholder changes or input bar toggles
+  useEffect(() => {
+    setFeedback(null);
+    setInputVal('');
+  }, [inputPlaceholder, showInputBar]);
+
   // Strict Point or Command Plot Handler
   const handlePlotInput = (explicitStr) => {
     const raw = (typeof explicitStr === 'string' ? explicitStr : inputVal).trim();
@@ -340,7 +351,19 @@ export default function GeoGebraLineLab({
   const handleRecenter = () => {
     if (ggbApiRef.current) {
       try {
-        ggbApiRef.current.setCoordSystem(-6, 12, -3, 13);
+        if (plottedPoints && plottedPoints.length >= 2) {
+          const xs = plottedPoints.map((p) => p.x);
+          const ys = plottedPoints.map((p) => p.y);
+          const minX = Math.min(...xs, 0);
+          const maxX = Math.max(...xs, 5);
+          const minY = Math.min(...ys, 0);
+          const maxY = Math.max(...ys, 5);
+          const padX = Math.max(3, (maxX - minX) * 0.35);
+          const padY = Math.max(3, (maxY - minY) * 0.35);
+          ggbApiRef.current.setCoordSystem(minX - padX, maxX + padX, minY - padY, maxY + padY);
+        } else {
+          ggbApiRef.current.setCoordSystem(-6, 12, -3, 13);
+        }
         ggbApiRef.current.evalCommand('SetAxesRatio(1, 1)');
       } catch (e) {}
     }
@@ -581,7 +604,7 @@ export default function GeoGebraLineLab({
               onClick={() => handlePlotInput()}
               disabled={!inputVal.trim() || isGgbLoading}
             >
-              Plot on Canvas 🚀
+              {inputSubmitLabel}
             </button>
           </div>
 

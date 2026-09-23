@@ -913,3 +913,82 @@
   color: #059669;
 }
 
+/* ==========================================================================
+   LINE STUDIO SPECIFIC UTILITIES (Q2 & Q6)
+   ========================================================================== */
+.line-equation-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(232, 134, 74, 0.12);
+  border: 1px solid rgba(232, 134, 74, 0.3);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #f6ad55;
+  letter-spacing: 0.02em;
+  margin: 0.5rem 0;
+  text-align: center;
+}
+
+.line-delta-inputs-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.85rem;
+  margin: 0.65rem 0;
+}
+
+@media (max-width: 550px) {
+  .line-delta-inputs-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.line-delta-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.line-delta-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--clr-text, #ede8e3);
+}
+
+.line-observation-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--clr-surface, #231e1a);
+  border: 1px solid var(--clr-border, rgba(255, 245, 230, 0.2));
+  border-radius: 8px;
+  padding: 0.65rem 0.85rem;
+  color: var(--clr-text, #ede8e3);
+  font-size: 0.88rem;
+  line-height: 1.5;
+  resize: vertical;
+  min-height: 80px;
+  outline: none;
+  font-family: inherit;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.line-observation-textarea:focus {
+  border-color: var(--clr-accent, #e8864a);
+  box-shadow: 0 0 0 2px rgba(232, 134, 74, 0.2);
+}
+
+[data-theme="light"] .line-equation-display {
+  background: rgba(224, 122, 58, 0.12);
+  border-color: rgba(224, 122, 58, 0.3);
+  color: #c25e1a;
+}
+
+[data-theme="light"] .line-observation-textarea {
+  background: #ffffff;
+  border-color: rgba(60, 45, 30, 0.22);
+  color: #2c2420;
+}
+
+

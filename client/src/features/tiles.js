@@ -112,6 +112,7 @@ export const TILES = [
     { key: 'kernel', name: '⚖️ The Zero Balance', subtitle: 'Null space & equilibrium discovery in 2D & 3D', color: 'teal', category: 'linear-algebra' },
     { key: 'point-studio', name: '📍 Point Studio', subtitle: 'Visual intuition: From physical spot to pure location', color: 'orange', category: 'linear-algebra' },
     { key: 'line-studio', name: '📏 Line Studio', subtitle: 'Embodied geometry: The equation of a line', color: 'teal', category: 'linear-algebra' },
+    { key: 'function-studio', name: '⚡ Function Studio', subtitle: 'Rules beyond the line: The one-input-one-output pattern', color: 'purple', category: 'linear-algebra' },
 ]
 
 // Hamburger-only entries (#190). Data only -- composition stays in App.jsx.
