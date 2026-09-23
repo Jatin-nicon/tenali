@@ -162,15 +162,17 @@ export default function LineStudioModule({ onBack }) {
   // Auto-populate points depending on active question
   useEffect(() => {
     if (activeStep === 1) {
-      // In level 1, user must type to plot A and B
+      // In level 1, only keep points A and B if the learner plotted them; never auto-plot
+      setPlottedPoints((prev) => prev.filter((p) => p.name === 'A' || p.name === 'B'));
     } else if (activeStep === 2) {
+      // In level 2, user must type to plot C, D, and E.
+      // Do NOT auto-plot any points when navigating to Question 2.
+      // If returning from Q3..5 and Q2 is not completed, remove unearned C, D, E.
       setPlottedPoints((prev) => {
-        const hasA = prev.some((p) => p.x === 1 && p.y === 2);
-        const hasB = prev.some((p) => p.x === 2 && p.y === 4);
-        const pts = [...prev];
-        if (!hasA) pts.push({ name: 'A', x: 1, y: 2 });
-        if (!hasB) pts.push({ name: 'B', x: 2, y: 4 });
-        return pts;
+        if (!answers[2]?.isCompleted) {
+          return prev.filter((p) => p.name === 'A' || p.name === 'B');
+        }
+        return prev;
       });
     } else if (activeStep >= 3 && activeStep <= 5) {
       setPlottedPoints([
