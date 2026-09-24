@@ -18,6 +18,7 @@ export default function GeoGebraLineLab({
   onSliderChange,
   plottedPoints = [],
   onPointPlotted,
+  validatePoint,
   onClearPoints,
   onLineDrawn,
   showLineAB = false,
@@ -25,11 +26,13 @@ export default function GeoGebraLineLab({
   linePoint2Name = 'B',
   showOriginLines = false,
   showParametricLine = true,
+  showEquationDisplay = true,
   interactiveSliders = true,
   onSliderInteracted,
   inputPlaceholder = "e.g. (x, y) or Name = (x, y) or Line(A, B)",
   showInputBar = true,
-  inputSubmitLabel = "Plot on Canvas 🚀"
+  inputSubmitLabel = "Plot on Canvas 🚀",
+  taskHeader = null
 }) {
   const [inputVal, setInputVal] = useState('');
   const [feedback, setFeedback] = useState(null);
@@ -116,6 +119,7 @@ export default function GeoGebraLineLab({
           api.evalCommand(`lineAB: Line(${p1}, ${p2})`);
           api.setColor('lineAB', 20, 184, 166); // Teal
           api.setLineThickness('lineAB', 4);
+          api.setLabelVisible('lineAB', false);
         }
       } else {
         try { api.deleteObject('lineAB'); } catch (e) {}
@@ -126,14 +130,17 @@ export default function GeoGebraLineLab({
         api.evalCommand('line1: y = x');
         api.setColor('line1', 59, 130, 246); // Blue
         api.setLineThickness('line1', 3);
+        api.setLabelVisible('line1', false);
 
         api.evalCommand('line2: y = 2*x');
         api.setColor('line2', 232, 134, 74); // Orange
         api.setLineThickness('line2', 4);
+        api.setLabelVisible('line2', false);
 
         api.evalCommand('line3: y = 10*x');
         api.setColor('line3', 168, 85, 247); // Purple
         api.setLineThickness('line3', 3);
+        api.setLabelVisible('line3', false);
       } else {
         try {
           api.deleteObject('line1');
@@ -148,6 +155,7 @@ export default function GeoGebraLineLab({
         api.evalCommand(cmd);
         api.setColor('paramLine', 232, 134, 74);
         api.setLineThickness('paramLine', 4);
+        api.setLabelVisible('paramLine', false);
 
         api.evalCommand(`yInterceptPt = (0, ${sliderB})`);
         api.setColor('yInterceptPt', 20, 184, 166);
@@ -323,6 +331,22 @@ export default function GeoGebraLineLab({
       return;
     }
 
+    // Custom validation (e.g. for Question 3 pattern movement validation)
+    if (validatePoint) {
+      const validation = validatePoint({ name: ptName, x, y });
+      if (validation && !validation.isValid) {
+        setFeedback({
+          type: 'error',
+          title: validation.title || '⚠️ MOVEMENT NOT CORRECT',
+          msg: validation.error || 'The entered point does not follow the correct movement pattern.'
+        });
+        return; // Reject plotting: do not draw on canvas or register point
+      }
+      if (validation && validation.correctedName) {
+        ptName = validation.correctedName;
+      }
+    }
+
     const newPoint = { name: ptName, x, y };
 
     if (ggbApiRef.current) {
@@ -418,7 +442,7 @@ export default function GeoGebraLineLab({
           </span>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {showParametricLine && (
+            {showParametricLine && showEquationDisplay && (
               <span className="kp-badge" style={{ background: '#fef3c7', color: '#92400e', borderColor: '#fcd34d', fontWeight: 600 }}>
                 {formatEquationDisplay(sliderA, sliderB)}
               </span>
@@ -467,14 +491,25 @@ export default function GeoGebraLineLab({
         </div>
       </div>
 
+      {/* Task Prompt / Header (Placed directly ABOVE the input boxes) */}
+      {taskHeader && (
+        <div className="line-lab-task-header-block" style={{ marginTop: '0.65rem', marginBottom: '0.35rem' }}>
+          {taskHeader}
+        </div>
+      )}
+
       {/* 2. Interactive Sliders Tray (When in slider mode) */}
       {interactiveSliders && showParametricLine && (
         <div className="line-lab-sliders-tray">
           <div className="line-lab-tray-header">
-            <span className="line-lab-tray-title">Live Knobs: y = a·x + b</span>
-            <span className="line-lab-formula-pill">
-              {formatEquationDisplay(sliderA, sliderB)}
+            <span className="line-lab-tray-title">
+              {showEquationDisplay ? 'Live Knobs: y = a·x + b' : 'Live Knobs: "a" and "b"'}
             </span>
+            {showEquationDisplay && (
+              <span className="line-lab-formula-pill">
+                {formatEquationDisplay(sliderA, sliderB)}
+              </span>
+            )}
           </div>
 
           <div className="line-lab-sliders-grid">
@@ -482,7 +517,7 @@ export default function GeoGebraLineLab({
             <div className="line-lab-slider-row">
               <div className="line-lab-slider-meta">
                 <span className="line-lab-knob-name">
-                  Knob <strong>a</strong> (Steepness &amp; Tilt)
+                  Knob <strong>a</strong>
                 </span>
                 <span className="line-lab-val-badge">a = {sliderA > 0 ? `+${sliderA}` : sliderA}</span>
               </div>
@@ -519,20 +554,13 @@ export default function GeoGebraLineLab({
                   +
                 </button>
               </div>
-              <div className="line-lab-subtext">
-                {sliderA > 0
-                  ? '↗ Tilts upward as x moves right'
-                  : sliderA < 0
-                  ? '↘ Tilts downward as x moves right'
-                  : '— Flat horizontal line (constant y)'}
-              </div>
             </div>
 
             {/* Slider b: Where the line crosses y-axis */}
             <div className="line-lab-slider-row">
               <div className="line-lab-slider-meta">
                 <span className="line-lab-knob-name">
-                  Knob <strong>b</strong> (Crosses y-axis at)
+                  Knob <strong>b</strong>
                 </span>
                 <span className="line-lab-val-badge">b = {sliderB > 0 ? `+${sliderB}` : sliderB}</span>
               </div>
@@ -568,9 +596,6 @@ export default function GeoGebraLineLab({
                 >
                   +
                 </button>
-              </div>
-              <div className="line-lab-subtext">
-                Crosses the y-axis at point <strong>(0, {sliderB})</strong>
               </div>
             </div>
           </div>
@@ -612,7 +637,7 @@ export default function GeoGebraLineLab({
           {feedback && (
             <div className={`line-lab-feedback-card ${feedback.type}`}>
               <div className="line-lab-feedback-header">
-                <span>{feedback.type === 'success' ? '✨ SUCCESS' : '💡 NOTICE'}</span>
+                <span>{feedback.title || (feedback.type === 'success' ? '✨ SUCCESS' : '💡 NOTICE')}</span>
               </div>
               <p className="line-lab-feedback-text">{feedback.msg}</p>
             </div>

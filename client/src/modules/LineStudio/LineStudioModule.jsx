@@ -6,6 +6,7 @@ import {
   CLUSTER_2_SUMMARY
 } from './questions';
 import GeoGebraLineLab from './GeoGebraLineLab';
+import { evaluateAnswer, evaluateEquationAnswer } from './answerEvaluator';
 import './LineStudioModule.css';
 
 // Fisher-Yates shuffle helper
@@ -41,21 +42,24 @@ export default function LineStudioModule({ onBack }) {
   // GeoGebra Points State
   const [plottedPoints, setPlottedPoints] = useState([]);
 
-  // Free Play challenge tracking
-  const [completedChallenges, setCompletedChallenges] = useState(new Set());
+  // Free Play interaction tracking
   const [freePlayInteracted, setFreePlayInteracted] = useState(false);
 
   // Shuffled options map for all MCQ questions (e.g. Q4)
   const [shuffledOptionsMap, setShuffledOptionsMap] = useState(() => initShuffledOptions());
 
-  // Question Answers State for Questions 1..6
+  // Question Answers State for Questions 1..10
   const [answers, setAnswers] = useState({
     1: { isSubmitted: false, isCompleted: false },
     2: { deltaX: '', deltaY: '', isSubmitted: false, isCompleted: false, error: null },
     3: { isSubmitted: false, isCompleted: false },
     4: { selectedId: null, isSubmitted: false, error: null },
     5: { lineDrawn: false, lineInput: '', lineError: null, isSubmitted: false },
-    6: { observation: '', isSubmitted: false }
+    6: { observation: '', isSubmitted: false, evalResult: null, error: null },
+    7: { selectedId: null, isSubmitted: false, error: null },
+    8: { selectedId: null, isSubmitted: false, error: null },
+    9: { input: '', isSubmitted: false, isCompleted: false, error: null, feedback: null, normalizedEquation: '' },
+    10: { selectedId: null, isSubmitted: false, error: null }
   });
 
   const updateAnswer = (qId, updates) => {
@@ -65,36 +69,72 @@ export default function LineStudioModule({ onBack }) {
     }));
   };
 
+  // Conceptual verification of Question 6 observation (matching Point Studio)
+  const handleCheckObservation = () => {
+    const rawAnswer = answers[6]?.observation || '';
+    const evalResult = evaluateAnswer(rawAnswer);
+    if (evalResult.result === 'PASS') {
+      updateAnswer(6, {
+        isSubmitted: true,
+        evalResult,
+        error: null
+      });
+    } else {
+      updateAnswer(6, {
+        isSubmitted: false,
+        evalResult,
+        error: evalResult.feedback
+      });
+    }
+  };
+
+  // Equation verification for Question 9 (y = 3x + 2)
+  const handleCheckEquation = () => {
+    const raw = answers[9]?.input || '';
+    const evalResult = evaluateEquationAnswer(raw, 3, 2);
+
+    if (evalResult.status === 'PASS') {
+      setSliderA(evalResult.parsedA);
+      setSliderB(evalResult.parsedB);
+      updateAnswer(9, {
+        isSubmitted: true,
+        isCompleted: true,
+        error: null,
+        feedback: evalResult.feedback,
+        normalizedEquation: evalResult.normalizedEquation
+      });
+    } else {
+      updateAnswer(9, {
+        error: evalResult.feedback
+      });
+    }
+  };
+
   // Re-shuffle unsubmitted MCQs when entering
   useEffect(() => {
-    if (activeStep === 4) {
-      const q = LINE_PATH_QUESTIONS.find((item) => item.id === 4);
-      if (q && q.options && !answers[4]?.isSubmitted) {
+    if (activeStep === 4 || activeStep === 7 || activeStep === 8 || activeStep === 10) {
+      const q = LINE_PATH_QUESTIONS.find((item) => item.id === activeStep);
+      if (q && q.options && !answers[activeStep]?.isSubmitted) {
         setShuffledOptionsMap((prev) => ({
           ...prev,
-          4: shuffleArray(q.options)
+          [activeStep]: shuffleArray(q.options)
         }));
       }
     }
   }, [activeStep]);
 
-  // Handle slider interaction in Question 6 or Free Play
+  // Handle slider interaction in Questions 6..8, 10 or Free Play
   const handleSliderInteracted = (knob, val) => {
-    if (activeStep === 7 || isFinished) {
+    if (activeStep > 10 || isFinished) {
       setFreePlayInteracted(true);
-      CLUSTER_2_SUMMARY.challenges.forEach((ch) => {
-        if (ch.targetA === (knob === 'a' ? val : sliderA) && ch.targetB === (knob === 'b' ? val : sliderB)) {
-          setCompletedChallenges((prev) => new Set([...prev, ch.id]));
-        }
-      });
     }
   };
 
-  // Mode conditions: Question 6 and Graduation (7) are slider mode
-  const isSliderMode = activeStep === 6;
+  // Mode conditions: Questions 6, 7, 8, 10 and Graduation are slider mode
+  const isSliderMode = (activeStep >= 6 && activeStep <= 8) || activeStep === 10;
   const showLineAB = (activeStep === 5 && answers[5]?.lineDrawn) || (activeStep > 5 && activeStep < 6);
   const showOriginLines = false;
-  const showParametricLine = activeStep === 6;
+  const showParametricLine = (activeStep >= 6 && activeStep !== 9) || (activeStep === 9 && answers[9]?.isSubmitted);
 
   // Only show GeoGebra command input bar when the question requires plotting on GeoGebra:
   // Q1: Plot two points (required)
@@ -150,44 +190,50 @@ export default function LineStudioModule({ onBack }) {
   // Dynamic prompts that adapt to the learner's chosen points
   const getDynamicPrompt = () => {
     if (activeStep === 1) {
-      return 'Plot any two different points of your choice on the canvas.';
+      return 'Plot any two different points of your choice on the canvas:';
     }
     if (activeStep === 2) {
-      return 'Tell me how much you moved in X, and how much shift happened in Y.';
+      return `Find the movement step from ${ptA.name}(${ptA.x}, ${ptA.y}) to ${ptB.name}(${ptB.x}, ${ptB.y}):`;
     }
     if (activeStep === 3) {
-      return 'Move in the same pattern 3 more times: plot points C, D, and E using the exact same step.';
+      return `Plot points C, D, and E using step (Δx = ${dx >= 0 ? '+' : ''}${dx}, Δy = ${dy >= 0 ? '+' : ''}${dy}):`;
     }
     if (activeStep === 4) {
-      return 'What pattern is becoming visible across the points, can you guess?';
+      return 'What pattern do these 5 points form?';
     }
     if (activeStep === 5) {
-      return `You can draw that pattern using exactly the pattern name: in GeoGebra, type Line(${ptA.name}, ${ptB.name}).`;
+      return 'Connect the points with a line:';
     }
     if (activeStep === 6) {
-      return 'Now let\'s explore something amazing: change "a" and "b" and type your observation.';
+      return 'Change sliders "a" and "b" and type your observation:';
+    }
+    if (activeStep === 7) {
+      return 'What happens when "a" is gradually increased?';
+    }
+    if (activeStep === 8) {
+      return 'What is "b" doing here?';
     }
     return currentQ?.prompt;
   };
 
   const getDynamicSubtext = () => {
     if (activeStep === 1) {
-      return 'Type two distinct points into the input bar above (e.g. A = (x, y) or (x, y)):';
+      return 'Type points into the input bar below (e.g. (1, 2) or A = (1, 2)):';
     }
     if (activeStep === 2) {
-      return `Enter the change in x (Δx) and change in y (Δy) from ${ptA.name}(${ptA.x}, ${ptA.y}) to ${ptB.name}(${ptB.x}, ${ptB.y}):`;
+      return null;
     }
     if (activeStep === 3) {
-      return `With movement step (Δx = ${dx >= 0 ? '+' : ''}${dx}, Δy = ${dy >= 0 ? '+' : ''}${dy}), plot points C, D, and E in the input bar above:`;
+      return null;
     }
     if (activeStep === 4) {
-      return 'Observe all five plotted points on the canvas and choose the geometric pattern they make:';
+      return null;
     }
     if (activeStep === 5) {
-      return `Type Line(${ptA.name}, ${ptB.name}) in the input bar above to connect the points:`;
+      return `Type Line(${ptA.name}, ${ptB.name}) in the input bar below:`;
     }
-    if (activeStep === 6) {
-      return 'The equation of the line is y = a·x + b. Move sliders "a" and "b" above and write down what you observe:';
+    if (activeStep >= 6) {
+      return null;
     }
     return currentQ?.subtext;
   };
@@ -242,6 +288,169 @@ export default function LineStudioModule({ onBack }) {
     setPlottedPoints([]);
   };
 
+  // Validates point inputs for Question 1, Question 3, and Question 5
+  const handleValidatePoint = ({ name, x, y }) => {
+    if (activeStep === 1) {
+      if (userPtA && Math.abs(x - userPtA.x) < 0.05 && Math.abs(y - userPtA.y) < 0.05) {
+        return {
+          isValid: false,
+          title: '⚠️ IDENTICAL POINT',
+          error: `Point (${x}, ${y}) has the exact same coordinates as Point A! Please choose a different second point.`
+        };
+      }
+      return { isValid: true };
+    }
+
+    if (activeStep === 3) {
+      const formatDelta = (v) => {
+        if (v > 0) return `+${v}`;
+        if (v === 0) return '0';
+        return `${v}`;
+      };
+
+      if (hasPointC && hasPointD && hasPointE) {
+        return {
+          isValid: false,
+          title: '✓ ALL POINTS PLOTTED',
+          error: "All 3 points (C, D, and E) have already been plotted in pattern! Click 'Continue to Next Level' to proceed."
+        };
+      }
+
+      // Determine which point is next in sequence
+      let refPoint;
+      let targetPoint;
+      let expectedName;
+
+      if (!hasPointC) {
+        refPoint = ptB;
+        targetPoint = targetC;
+        expectedName = 'C';
+      } else if (!hasPointD) {
+        refPoint = targetC;
+        targetPoint = targetD;
+        expectedName = 'D';
+      } else {
+        refPoint = targetD;
+        targetPoint = targetE;
+        expectedName = 'E';
+      }
+
+      // Check if re-entering existing points
+      if (Math.abs(x - ptA.x) < 0.05 && Math.abs(y - ptA.y) < 0.05) {
+        const err = {
+          title: '⚠️ POINT ALREADY PLOTTED',
+          msg: `Point ${ptA.name}(${ptA.x}, ${ptA.y}) is already plotted! Please plot point ${expectedName} by stepping from ${refPoint.name}(${refPoint.x}, ${refPoint.y}).`
+        };
+        updateAnswer(3, { validationError: err });
+        return { isValid: false, title: err.title, error: err.msg };
+      }
+
+      if (Math.abs(x - ptB.x) < 0.05 && Math.abs(y - ptB.y) < 0.05) {
+        const err = {
+          title: '⚠️ POINT ALREADY PLOTTED',
+          msg: `Point ${ptB.name}(${ptB.x}, ${ptB.y}) is already plotted! Please plot point ${expectedName} by stepping from ${refPoint.name}(${refPoint.x}, ${refPoint.y}).`
+        };
+        updateAnswer(3, { validationError: err });
+        return { isValid: false, title: err.title, error: err.msg };
+      }
+
+      if (hasPointC && Math.abs(x - targetC.x) < 0.05 && Math.abs(y - targetC.y) < 0.05) {
+        const err = {
+          title: '⚠️ POINT ALREADY PLOTTED',
+          msg: `Point C(${targetC.x}, ${targetC.y}) is already plotted! Next, please plot point ${expectedName} by stepping from ${refPoint.name}(${refPoint.x}, ${refPoint.y}).`
+        };
+        updateAnswer(3, { validationError: err });
+        return { isValid: false, title: err.title, error: err.msg };
+      }
+
+      if (hasPointD && Math.abs(x - targetD.x) < 0.05 && Math.abs(y - targetD.y) < 0.05) {
+        const err = {
+          title: '⚠️ POINT ALREADY PLOTTED',
+          msg: `Point D(${targetD.x}, ${targetD.y}) is already plotted! Next, please plot point ${expectedName} by stepping from ${refPoint.name}(${refPoint.x}, ${refPoint.y}).`
+        };
+        updateAnswer(3, { validationError: err });
+        return { isValid: false, title: err.title, error: err.msg };
+      }
+
+      // Check if jumping ahead to future target points out of order
+      if (!hasPointC) {
+        if (Math.abs(x - targetD.x) < 0.05 && Math.abs(y - targetD.y) < 0.05) {
+          const err = {
+            title: '⚠️ PLOT IN SEQUENCE',
+            msg: `That is point D (2 steps away)! Please plot point C first by taking 1 step (Δx = ${formatDelta(dx)}, Δy = ${formatDelta(dy)}) from point B(${ptB.x}, ${ptB.y}).`
+          };
+          updateAnswer(3, { validationError: err });
+          return { isValid: false, title: err.title, error: err.msg };
+        }
+        if (Math.abs(x - targetE.x) < 0.05 && Math.abs(y - targetE.y) < 0.05) {
+          const err = {
+            title: '⚠️ PLOT IN SEQUENCE',
+            msg: `That is point E (3 steps away)! Please plot point C first by taking 1 step (Δx = ${formatDelta(dx)}, Δy = ${formatDelta(dy)}) from point B(${ptB.x}, ${ptB.y}).`
+          };
+          updateAnswer(3, { validationError: err });
+          return { isValid: false, title: err.title, error: err.msg };
+        }
+      } else if (!hasPointD) {
+        if (Math.abs(x - targetE.x) < 0.05 && Math.abs(y - targetE.y) < 0.05) {
+          const err = {
+            title: '⚠️ PLOT IN SEQUENCE',
+            msg: `That is point E (2 steps from C)! Please plot point D first by taking 1 step (Δx = ${formatDelta(dx)}, Δy = ${formatDelta(dy)}) from point C(${targetC.x}, ${targetC.y}).`
+          };
+          updateAnswer(3, { validationError: err });
+          return { isValid: false, title: err.title, error: err.msg };
+        }
+      }
+
+      // Calculate actual movement deltas from the reference point
+      const actualDx = Number((x - refPoint.x).toFixed(2));
+      const actualDy = Number((y - refPoint.y).toFixed(2));
+
+      const isXCorrect = Math.abs(x - targetPoint.x) < 0.05;
+      const isYCorrect = Math.abs(y - targetPoint.y) < 0.05;
+
+      if (isXCorrect && isYCorrect) {
+        // Clear any previous validation error on success
+        updateAnswer(3, { validationError: null });
+        return {
+          isValid: true,
+          correctedName: expectedName
+        };
+      }
+
+      // Axis-specific feedback when movement is incorrect:
+      let errTitle = '';
+      let errMsg = '';
+
+      if (!isXCorrect && isYCorrect) {
+        errTitle = '❌ INCORRECT MOVEMENT ON X-AXIS';
+        errMsg = `The movement is not correct on the X-axis: your shift in Y is correct (${formatDelta(actualDy)}), but your movement in X is ${formatDelta(actualDx)} (should be ${formatDelta(dx)} from point ${refPoint.name}(${refPoint.x}, ${refPoint.y})).`;
+      } else if (isXCorrect && !isYCorrect) {
+        errTitle = '❌ INCORRECT MOVEMENT ON Y-AXIS';
+        errMsg = `The movement is not correct on the Y-axis: your movement in X is correct (${formatDelta(actualDx)}), but your shift in Y is ${formatDelta(actualDy)} (should be ${formatDelta(dy)} from point ${refPoint.name}(${refPoint.x}, ${refPoint.y})).`;
+      } else {
+        errTitle = '❌ INCORRECT MOVEMENT ON BOTH AXES';
+        errMsg = `The movement is not correct on both the X-axis and Y-axis: from point ${refPoint.name}(${refPoint.x}, ${refPoint.y}), you moved ${formatDelta(actualDx)} in X (should be ${formatDelta(dx)}) and ${formatDelta(actualDy)} in Y (should be ${formatDelta(dy)}).`;
+      }
+
+      updateAnswer(3, { validationError: { title: errTitle, msg: errMsg } });
+      return {
+        isValid: false,
+        title: errTitle,
+        error: errMsg
+      };
+    }
+
+    if (activeStep === 5) {
+      return {
+        isValid: false,
+        title: '💡 USE LINE COMMAND',
+        error: `In this level, connect the points using the line command: Line(${ptA.name}, ${ptB.name}).`
+      };
+    }
+
+    return { isValid: true };
+  };
+
   const isQuestionComplete = (qId) => {
     const a = answers[qId];
     if (!a) return false;
@@ -263,6 +472,12 @@ export default function LineStudioModule({ onBack }) {
     if (qId === 6) {
       return Boolean(a.isSubmitted);
     }
+    if (qId === 7) {
+      return Boolean(a.isSubmitted);
+    }
+    if (qId === 8) {
+      return Boolean(a.isSubmitted);
+    }
     return Boolean(a.isSubmitted);
   };
 
@@ -274,7 +489,8 @@ export default function LineStudioModule({ onBack }) {
   const getActivePhaseName = () => {
     if (activeStep <= 3) return 'Phase 1: Plotting & Stepping';
     if (activeStep <= 5) return 'Phase 2: Seeing & Drawing the Line';
-    return 'Phase 3: The Equation of a Line';
+    if (activeStep <= 8) return 'Phase 3: Knobs & Exploration';
+    return 'Phase 4: The Equation y = ax + b';
   };
 
   // Q2 Step Verification
@@ -313,9 +529,9 @@ export default function LineStudioModule({ onBack }) {
   };
 
   // ========================================================
-  // RENDER: GRADUATION / FREE-PLAY LAB (Level 7)
+  // RENDER: GRADUATION / FREE-PLAY LAB (After Level 10)
   // ========================================================
-  if (isFinished || activeStep === 7) {
+  if (isFinished || activeStep > (PATH_META.totalQuestions || 10)) {
     return (
       <div className="la-studio-wrapper">
         <div className="la-top-nav">
@@ -324,99 +540,60 @@ export default function LineStudioModule({ onBack }) {
               ← Back to Dashboard
             </button>
           )}
-          <span className="la-progress-badge">Graduation &amp; Free Play 🏆</span>
+          <span className="la-progress-badge">Destination Achieved 🏆</span>
         </div>
 
         <div className="la-header">
-          <span className="la-phase-pill">Destination Achieved</span>
+          <span className="la-phase-pill">The Naming Handover</span>
           <h1 className="la-title">{CLUSTER_2_SUMMARY.title}</h1>
-          <p className="la-subtitle">
-            You walked the entire path from equal movement along points to mastering the algebraic shape of a line.
-          </p>
         </div>
 
         {/* The Naming Handover */}
-        <div className="line-handover-box">
+        <div className="line-handover-box" style={{ textAlign: 'center', padding: '1.5rem 1.75rem' }}>
           <span className="line-handover-badge">✨ THE NAMING HANDOVER</span>
-          <blockquote className="line-handover-quote">
-            "{CLUSTER_2_SUMMARY.namingHandover.quote}"
-          </blockquote>
-        </div>
-
-        {/* Free-Play Graph Card */}
-        <GeoGebraLineLab
-          sliderA={sliderA}
-          sliderB={sliderB}
-          onSliderChange={(newA, newB) => {
-            setSliderA(newA);
-            setSliderB(newB);
-          }}
-          showParametricLine={true}
-          interactiveSliders={true}
-          onSliderInteracted={handleSliderInteracted}
-        />
-
-        {/* Memory & Intuition Challenges */}
-        <div className="kp-card" style={{ marginTop: '0.5rem' }}>
-          <div className="kp-card-header">
-            <span className="kp-card-title">Memory &amp; Intuition Challenges</span>
-            <span className="kp-badge">
-              {completedChallenges.size} of {CLUSTER_2_SUMMARY.challenges.length} Solved
-            </span>
+          <div style={{
+            fontSize: '2.1rem',
+            fontWeight: 800,
+            fontFamily: 'serif',
+            color: '#e8864a',
+            margin: '0.6rem 0 0.4rem 0',
+            letterSpacing: '0.04em'
+          }}>
+            y = a·x + b
           </div>
+          <p style={{ margin: '0 0 1.25rem 0', fontSize: '0.98rem', color: '#f3efe6', lineHeight: 1.5 }}>
+            Whatever you were doing with knobs <strong>a</strong> and <strong>b</strong> is actually this equation!
+          </p>
 
-          <div className="line-challenges-grid">
-            {CLUSTER_2_SUMMARY.challenges.map((ch) => {
-              const isDone = completedChallenges.has(ch.id);
-              return (
-                <div key={ch.id} className={`line-challenge-card ${isDone ? 'completed' : ''}`}>
-                  <div className="line-challenge-top">
-                    <span className="line-challenge-title">{ch.title}</span>
-                    {isDone && <span className="line-ch-badge">✓ Solved</span>}
-                  </div>
-                  <p className="line-challenge-desc">{ch.description}</p>
-                  <button
-                    className="line-ch-preset-btn"
-                    onClick={() => {
-                      setSliderA(ch.targetA);
-                      setSliderB(ch.targetB);
-                      setCompletedChallenges((prev) => new Set([...prev, ch.id]));
-                      setFreePlayInteracted(true);
-                    }}
-                  >
-                    Set Knobs to Target
-                  </button>
-                </div>
-              );
-            })}
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.75rem',
+            textAlign: 'left',
+            background: 'rgba(0, 0, 0, 0.28)',
+            padding: '1.1rem 1.35rem',
+            borderRadius: '12px',
+            border: '1px solid rgba(232, 134, 74, 0.22)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.65rem' }}>
+              <span style={{ color: '#e8864a', fontWeight: 800, fontSize: '1.1rem', lineHeight: 1.2 }}>•</span>
+              <span style={{ fontSize: '0.95rem', color: '#f3efe6', lineHeight: 1.5 }}>
+                <strong>Knob 'a' controls rotation &amp; steepness:</strong> Increasing 'a' rotates the line anti-clockwise.
+              </span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.65rem' }}>
+              <span style={{ color: '#e8864a', fontWeight: 800, fontSize: '1.1rem', lineHeight: 1.2 }}>•</span>
+              <span style={{ fontSize: '0.95rem', color: '#f3efe6', lineHeight: 1.5 }}>
+                <strong>Knob 'b' gives where the line passes at 'y':</strong> When b = 0, the line passes directly through the origin (0, 0).
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* What You Earned Checklist */}
-        <div className="la-card">
-          <div className="kp-card-header">
-            <span className="kp-card-title">What You Earned Across the Journey</span>
-          </div>
-          <ul className="la-takeaways-list">
-            {CLUSTER_2_SUMMARY.takeaways.map((item, idx) => (
-              <li key={idx} className="la-takeaway-item">
-                <span className="la-takeaway-check">✓</span>
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="la-credit-box" style={{ background: 'rgba(232, 134, 74, 0.1)', borderColor: 'rgba(232, 134, 74, 0.3)' }}>
-          <span>⏭️ <strong>Path Forward:</strong> {CLUSTER_2_SUMMARY.nextCluster || 'Cluster 3: Functions & Transformations'}</span>
-        </div>
-
-        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '1rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '1.5rem', marginBottom: '2rem' }}>
           <button
             className="la-btn-primary large"
             onClick={onBack}
-            disabled={!freePlayInteracted && completedChallenges.size === 0}
-            title={!freePlayInteracted ? 'Move the sliders above to complete your journey' : 'Finish module'}
           >
             Complete Journey 🏆
           </button>
@@ -438,7 +615,7 @@ export default function LineStudioModule({ onBack }) {
           </button>
         )}
         <span className="la-progress-badge">
-          {`Question ${activeStep} of 6`}
+          {`Question ${activeStep} of ${PATH_META.totalQuestions || 10}`}
         </span>
       </div>
 
@@ -481,43 +658,60 @@ export default function LineStudioModule({ onBack }) {
             </span>
           </div>
           <span className="la-question-num">
-            {`Question ${activeStep} of 6`}
+            {`Question ${activeStep} of ${PATH_META.totalQuestions || 10}`}
           </span>
         </div>
 
-        {/* 1. GRAPH AT TOP & 2. INPUT BOX */}
-        <GeoGebraLineLab
-          sliderA={sliderA}
-          sliderB={sliderB}
-          onSliderChange={(newA, newB) => {
-            setSliderA(newA);
-            setSliderB(newB);
-          }}
-          plottedPoints={plottedPoints}
-          onPointPlotted={handlePointPlotted}
-          onClearPoints={handleClearPoints}
-          onLineDrawn={handleLineDrawn}
-          showLineAB={showLineAB}
-          linePoint1Name={ptA.name}
-          linePoint2Name={ptB.name}
-          showOriginLines={showOriginLines}
-          showParametricLine={showParametricLine}
-          interactiveSliders={isSliderMode}
-          onSliderInteracted={handleSliderInteracted}
-          showInputBar={showGeoGebraInputBar}
-          inputSubmitLabel={activeStep === 5 ? 'Draw Line 🚀' : 'Plot on Canvas 🚀'}
-          inputPlaceholder={getInputPlaceholder()}
-        />
-
-        {/* 3. QUESTION TO BE ANSWERED */}
-        <div className="la-step-intro-block" style={{ marginTop: '0.65rem' }}>
-          <h3 className="la-step-heading">
-            {getDynamicPrompt()}
-          </h3>
-          <p className="la-step-subtext">
-            {getDynamicSubtext()}
-          </p>
-        </div>
+        {/* 1. GRAPH AT TOP & ASKED TASK DIRECTLY ABOVE INPUT BOX */}
+        {activeStep !== 9 ? (
+          <GeoGebraLineLab
+            sliderA={sliderA}
+            sliderB={sliderB}
+            onSliderChange={(newA, newB) => {
+              setSliderA(newA);
+              setSliderB(newB);
+            }}
+            plottedPoints={plottedPoints}
+            onPointPlotted={handlePointPlotted}
+            validatePoint={handleValidatePoint}
+            onClearPoints={handleClearPoints}
+            onLineDrawn={handleLineDrawn}
+            showLineAB={showLineAB}
+            linePoint1Name={ptA.name}
+            linePoint2Name={ptB.name}
+            showOriginLines={showOriginLines}
+            showParametricLine={showParametricLine}
+            showEquationDisplay={false}
+            interactiveSliders={isSliderMode}
+            onSliderInteracted={handleSliderInteracted}
+            showInputBar={showGeoGebraInputBar}
+            inputSubmitLabel={activeStep === 5 ? 'Draw Line 🚀' : 'Plot on Canvas 🚀'}
+            inputPlaceholder={getInputPlaceholder()}
+            taskHeader={
+              <div className="la-step-intro-block" style={{ margin: '0.45rem 0' }}>
+                <h3 className="la-step-heading">
+                  {getDynamicPrompt()}
+                </h3>
+                {getDynamicSubtext() && (
+                  <p className="la-step-subtext">
+                    {getDynamicSubtext()}
+                  </p>
+                )}
+              </div>
+            }
+          />
+        ) : (
+          <div className="la-step-intro-block" style={{ margin: '0.45rem 0 1rem 0' }}>
+            <h3 className="la-step-heading">
+              {getDynamicPrompt()}
+            </h3>
+            {getDynamicSubtext() && (
+              <p className="la-step-subtext">
+                {getDynamicSubtext()}
+              </p>
+            )}
+          </div>
+        )}
 
         <div className="la-step-container">
           {/* =================================================== */}
@@ -570,33 +764,30 @@ export default function LineStudioModule({ onBack }) {
             <div className="la-single-step-view">
               <div className="la-observation-box">
                 <div className="la-observation-header">
-                  <span>📏 MEASURE THE STEP DELTA BETWEEN YOUR POINTS</span>
+                  <span>📏 MEASURE STEP DELTA</span>
                   {answers[2]?.isSubmitted && <span className="la-credit-tag">✓ Step Verified</span>}
                 </div>
-                <p className="la-observation-desc">
-                  Starting from your first point <strong>{ptA.name}({ptA.x}, {ptA.y})</strong> to your second point <strong>{ptB.name}({ptB.x}, {ptB.y})</strong>:
-                </p>
 
                 <div className="line-delta-inputs-grid">
                   <div className="line-delta-field">
-                    <label className="line-delta-label">How much did you move in X (Δx = x₂ - x₁)?</label>
+                    <label className="line-delta-label">Change in X (Δx = x₂ − x₁)</label>
                     <input
                       type="number"
                       step="any"
                       className="la-text-input"
-                      placeholder={`e.g. ${dx}`}
+                      placeholder="e.g. 2"
                       value={answers[2]?.deltaX || ''}
                       onChange={(e) => updateAnswer(2, { deltaX: e.target.value, error: null })}
                       disabled={answers[2]?.isSubmitted}
                     />
                   </div>
                   <div className="line-delta-field">
-                    <label className="line-delta-label">How much shift happened in Y (Δy = y₂ - y₁)?</label>
+                    <label className="line-delta-label">Change in Y (Δy = y₂ − y₁)</label>
                     <input
                       type="number"
                       step="any"
                       className="la-text-input"
-                      placeholder={`e.g. ${dy}`}
+                      placeholder="e.g. 3"
                       value={answers[2]?.deltaY || ''}
                       onChange={(e) => updateAnswer(2, { deltaY: e.target.value, error: null })}
                       disabled={answers[2]?.isSubmitted}
@@ -711,6 +902,26 @@ export default function LineStudioModule({ onBack }) {
                 </div>
               </div>
 
+              {answers[3]?.validationError && !(hasPointC && hasPointD && hasPointE) && (
+                <div
+                  style={{
+                    marginTop: '0.75rem',
+                    padding: '0.65rem 0.95rem',
+                    background: 'rgba(239, 68, 68, 0.12)',
+                    border: '1px solid rgba(239, 68, 68, 0.35)',
+                    borderRadius: '8px',
+                    fontSize: '0.84rem',
+                    color: '#fca5a5',
+                    lineHeight: '1.45'
+                  }}
+                >
+                  <strong style={{ display: 'block', marginBottom: '0.2rem', color: '#f87171' }}>
+                    {answers[3].validationError.title}
+                  </strong>
+                  <span>{answers[3].validationError.msg}</span>
+                </div>
+              )}
+
               {hasPointC && hasPointD && hasPointE && (
                 <div className="la-earns-card" style={{ marginTop: '0.75rem' }}>
                   <div className="la-earns-badge">🎉 LEVEL 3 COMPLETE (PHASE 1)</div>
@@ -728,12 +939,9 @@ export default function LineStudioModule({ onBack }) {
             <div className="la-single-step-view">
               <div className="la-observation-box">
                 <div className="la-observation-header">
-                  <span>👀 GUESS THE VISIBLE GEOMETRIC PATTERN</span>
+                  <span>👀 GEOMETRIC PATTERN</span>
                   {answers[4]?.isSubmitted && <span className="la-credit-tag">✓ Pattern Identified</span>}
                 </div>
-                <p className="la-observation-desc">
-                  Look at points <strong>{ptA.name}({ptA.x}, {ptA.y})</strong>, <strong>{ptB.name}({ptB.x}, {ptB.y})</strong>, <strong>C({targetC.x}, {targetC.y})</strong>, <strong>D({targetD.x}, {targetD.y})</strong>, and <strong>E({targetE.x}, {targetE.y})</strong> plotted on the canvas. What geometric pattern are they making?
-                </p>
 
                 <div className="la-options-stack" style={{ marginTop: '0.65rem' }}>
                   {(shuffledOptionsMap[4] || currentQ.options).map((opt, i) => {
@@ -816,17 +1024,14 @@ export default function LineStudioModule({ onBack }) {
             <div className="la-single-step-view">
               <div className="la-observation-box">
                 <div className="la-observation-header">
-                  <span>📏 DRAW THE PATTERN: Line({ptA.name}, {ptB.name})</span>
+                  <span>📏 CONNECT POINTS: Line({ptA.name}, {ptB.name})</span>
                   {answers[5]?.lineDrawn && <span className="la-credit-tag">✓ Line Drawn</span>}
                 </div>
-                <p className="la-observation-desc">
-                  You can draw that pattern using exactly the pattern name: in GeoGebra, type <code>Line({ptA.name}, {ptB.name})</code> into the input bar above to draw the line!
-                </p>
 
                 {!answers[5]?.lineDrawn ? (
                   <div style={{ marginTop: '0.65rem' }}>
                     <span style={{ fontSize: '0.82rem', color: 'var(--clr-text-soft, #a89e94)' }}>
-                      ⏳ Type <code>Line({ptA.name}, {ptB.name})</code> in the GeoGebra command input bar above and click Draw Line.
+                      ⏳ Type <code>Line({ptA.name}, {ptB.name})</code> in the input bar and click Draw Line.
                     </span>
                     {answers[5]?.lineError && (
                       <div style={{ color: '#f87171', fontSize: '0.82rem', marginTop: '0.4rem', fontWeight: 500 }}>
@@ -837,7 +1042,7 @@ export default function LineStudioModule({ onBack }) {
                 ) : (
                   <div>
                     <div style={{ padding: '0.65rem 0.85rem', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '8px', fontSize: '0.82rem', color: '#6ee7b7' }}>
-                      ✓ <strong>Line Connected:</strong> The line passes through points {ptA.name} and {ptB.name}, and passes straight through C, D, and E as well!
+                      ✓ <strong>Line Connected:</strong> Passes straight through all plotted points!
                     </div>
 
                     <div className="la-earns-card" style={{ marginTop: '0.85rem' }}>
@@ -860,64 +1065,262 @@ export default function LineStudioModule({ onBack }) {
           )}
 
           {/* =================================================== */}
-          {/* QUESTION 6: EXPLORE y = a·x + b AND OBSERVATION    */}
+          {/* QUESTION 6: EXPLORE KNOBS "a" AND "b"               */}
           {/* =================================================== */}
           {activeStep === 6 && (
             <div className="la-single-step-view">
-              {/* Equation Display Banner */}
-              <div className="line-equation-display">
-                <span>
-                  y = a · x + b &nbsp; ➔ &nbsp;{' '}
-                  <strong style={{ color: '#fff' }}>
-                    y = {sliderA === 1 ? '' : sliderA === -1 ? '-' : sliderA}x {sliderB > 0 ? `+ ${sliderB}` : sliderB < 0 ? `- ${Math.abs(sliderB)}` : ''}
-                  </strong>
-                </span>
-              </div>
-
               <div className="la-observation-box">
                 <div className="la-observation-header">
-                  <span>👀 STEP &amp; SLIDER OBSERVATION</span>
-                  {answers[6]?.isSubmitted && <span className="la-credit-tag">✓ Observation Saved</span>}
-                </div>
-                <p className="la-observation-desc">
-                  Now let's explore something amazing: change sliders <strong>"a"</strong> and <strong>"b"</strong> directly above the canvas, watch how the line moves and tilts, and type your observation below:
-                </p>
-
-                {/* Quick exploration helper presets */}
-                <div style={{ display: 'flex', gap: '0.45rem', flexWrap: 'wrap', marginBottom: '0.65rem' }}>
-                  <button className="la-choice-btn" onClick={() => { setSliderA(3); setSliderB(1); }}>
-                    Try: a = 3, b = 1 (Steep)
-                  </button>
-                  <button className="la-choice-btn" onClick={() => { setSliderA(-2); setSliderB(0); }}>
-                    Try: a = -2, b = 0 (Downward)
-                  </button>
-                  <button className="la-choice-btn" onClick={() => { setSliderA(0); setSliderB(3); }}>
-                    Try: a = 0, b = 3 (Flat Horizontal)
-                  </button>
-                </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  <label className="line-delta-label">Type your observation of what "a" and "b" do:</label>
-                  <textarea
-                    className="line-observation-textarea"
-                    placeholder="e.g. As I change 'a', the steepness and tilt of the line changes. When I change 'b', the line shifts up and down where it crosses the y-axis..."
-                    value={answers[6]?.observation || ''}
-                    onChange={(e) => updateAnswer(6, { observation: e.target.value })}
-                    disabled={answers[6]?.isSubmitted}
-                  />
+                  <span>👀 SLIDER OBSERVATION</span>
+                  {answers[6]?.isSubmitted && <span className="la-credit-tag">✓ Observation Verified</span>}
                 </div>
 
                 {!answers[6]?.isSubmitted ? (
+                  <>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', marginTop: '0.35rem' }}>
+                      <label className="line-delta-label">What do you observe as you change "a" and "b"?</label>
+                      <textarea
+                        className="line-observation-textarea"
+                        placeholder="Describe what happens to the line when you change 'a' and 'b'..."
+                        value={answers[6]?.observation || ''}
+                        onChange={(e) => updateAnswer(6, { observation: e.target.value, evalResult: null, error: null })}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && answers[6]?.observation?.trim()) {
+                            e.preventDefault();
+                            handleCheckObservation();
+                          }
+                        }}
+                      />
+                    </div>
+
+                    {answers[6]?.evalResult && answers[6].evalResult.result !== 'PASS' && (
+                      <div
+                        style={{
+                          marginTop: '0.65rem',
+                          padding: '0.65rem 0.85rem',
+                          background: answers[6].evalResult.result === 'UNCERTAIN' ? 'rgba(245, 158, 11, 0.12)' : 'rgba(239, 68, 68, 0.12)',
+                          border: `1px solid ${answers[6].evalResult.result === 'UNCERTAIN' ? 'rgba(245, 158, 11, 0.35)' : 'rgba(239, 68, 68, 0.35)'}`,
+                          borderRadius: '8px',
+                          fontSize: '0.825rem',
+                          color: answers[6].evalResult.result === 'UNCERTAIN' ? '#fcd34d' : '#fca5a5',
+                          lineHeight: '1.45'
+                        }}
+                      >
+                        <strong style={{ display: 'block', marginBottom: '0.2rem' }}>
+                          {answers[6].evalResult.result === 'UNCERTAIN' ? '💡 Almost there:' : '💡 Check Observation:'}
+                        </strong>
+                        <span>{answers[6].evalResult.feedback}</span>
+                      </div>
+                    )}
+
+                    <div className="la-step-footer-actions between" style={{ marginTop: '0.85rem' }}>
+                      <button className="la-btn-secondary" onClick={() => setActiveStep(5)}>
+                        ← Back to Level 5
+                      </button>
+                      <button
+                        className="la-btn-primary"
+                        disabled={!answers[6]?.observation?.trim()}
+                        onClick={handleCheckObservation}
+                      >
+                        Check Observation ✓
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="la-submitted-step-box" style={{ marginTop: '0.5rem' }}>
+                    <div className="la-submitted-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+                      <span className="la-submitted-tag" style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--clr-text-soft, #a89e94)' }}>Your Verified Observation:</span>
+                      <button
+                        type="button"
+                        onClick={() => updateAnswer(6, { isSubmitted: false })}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: 'var(--clr-text-soft, #a89e94)',
+                          fontSize: '0.75rem',
+                          cursor: 'pointer',
+                          textDecoration: 'underline'
+                        }}
+                      >
+                        Edit ✎
+                      </button>
+                    </div>
+                    <p className="la-submitted-quote" style={{ fontStyle: 'italic', color: 'var(--clr-text, #ede8e3)', margin: '0 0 0.5rem 0', lineHeight: 1.45 }}>
+                      "{answers[6]?.observation}"
+                    </p>
+                    <div style={{ padding: '0.65rem 0.85rem', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '8px', fontSize: '0.825rem', color: '#6ee7b7', lineHeight: 1.45 }}>
+                      ✓ <strong>Spot on:</strong> {answers[6]?.evalResult?.feedback || 'Changing "a" rotates/tilts the line, and changing "b" shifts it up and down!'}
+                    </div>
+
+                    <div className="la-earns-card" style={{ marginTop: '0.85rem' }}>
+                      <div className="la-earns-badge">🎉 DISCOVERY COMPLETE (PHASE 3)</div>
+                      <p className="la-earns-text">{currentQ.earns}</p>
+                      <p className="la-earns-sub">{currentQ.creditExplanation}</p>
+                      <div className="la-step-footer-actions between" style={{ marginTop: '0.75rem' }}>
+                        <button className="la-btn-secondary" onClick={() => setActiveStep(5)}>
+                          ← Back to Level 5
+                        </button>
+                        <button
+                          className="la-btn-primary"
+                          onClick={() => setActiveStep(7)}
+                        >
+                          Continue to Question 7 →
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* =================================================== */}
+          {/* QUESTION 7: WHAT HAPPENS WHEN "a" INCREASES?       */}
+          {/* =================================================== */}
+          {activeStep === 7 && (
+            <div className="la-single-step-view">
+              <div className="la-observation-box">
+                <div className="la-observation-header">
+                  <span>👀 OBSERVATION: INCREASING "a"</span>
+                  {answers[7]?.isSubmitted && <span className="la-credit-tag">✓ Answer Verified</span>}
+                </div>
+
+                <div className="la-options-stack" style={{ marginTop: '0.65rem' }}>
+                  {(shuffledOptionsMap[7] || currentQ.options).map((opt, i) => {
+                    const isSelected = answers[7]?.selectedId === opt.id;
+                    const isSubmitted = answers[7]?.isSubmitted;
+                    let cls = 'la-option-btn';
+                    if (isSelected) cls += ' selected';
+                    if (isSubmitted) {
+                      if (opt.isCorrect) cls += ' correct';
+                      else if (isSelected) cls += ' incorrect';
+                    }
+
+                    return (
+                      <button
+                        key={opt.id}
+                        className={cls}
+                        onClick={() => {
+                          if (!isSubmitted) updateAnswer(7, { selectedId: opt.id, error: null });
+                        }}
+                        disabled={isSubmitted}
+                      >
+                        <span className="la-option-letter">{String.fromCharCode(65 + i)}</span>
+                        <span>{opt.text}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {answers[7]?.error && !answers[7]?.isSubmitted && (
+                  <div style={{ color: '#f87171', fontSize: '0.82rem', marginTop: '0.4rem', fontWeight: 500 }}>
+                    {answers[7]?.error}
+                  </div>
+                )}
+
+                {!answers[7]?.isSubmitted ? (
                   <div className="la-step-footer-actions between" style={{ marginTop: '0.85rem' }}>
-                    <button className="la-btn-secondary" onClick={() => setActiveStep(5)}>
-                      ← Back to Level 5
+                    <button className="la-btn-secondary" onClick={() => setActiveStep(6)}>
+                      ← Back to Question 6
                     </button>
                     <button
                       className="la-btn-primary"
-                      disabled={!answers[6]?.observation?.trim()}
-                      onClick={() => updateAnswer(6, { isSubmitted: true })}
+                      disabled={!answers[7]?.selectedId}
+                      onClick={() => {
+                        const opt = currentQ.options?.find((o) => o.id === answers[7]?.selectedId);
+                        if (opt?.isCorrect) {
+                          updateAnswer(7, { isSubmitted: true, error: null });
+                        } else {
+                          updateAnswer(7, { error: 'Look at the canvas as you drag slider "a" to higher values: notice which direction it turns — the line moves anti-clockwise!' });
+                        }
+                      }}
                     >
-                      Confirm Observation ✓
+                      Check Observation ✓
+                    </button>
+                  </div>
+                ) : (
+                  <div>
+                    <div className="la-earns-card" style={{ marginTop: '0.85rem' }}>
+                      <div className="la-earns-badge">🎉 EARNED INSIGHT</div>
+                      <p className="la-earns-text">{currentQ.earns}</p>
+                      <p className="la-earns-sub">{currentQ.creditExplanation}</p>
+                      <div className="la-step-footer-actions between" style={{ marginTop: '0.75rem' }}>
+                        <button className="la-btn-secondary" onClick={() => setActiveStep(6)}>
+                          ← Back to Question 6
+                        </button>
+                        <button className="la-btn-primary" onClick={() => setActiveStep(8)}>
+                          Continue to Question 8 →
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* =================================================== */}
+          {/* QUESTION 8: WHAT IS "b" DOING HERE?               */}
+          {/* =================================================== */}
+          {activeStep === 8 && (
+            <div className="la-single-step-view">
+              <div className="la-observation-box">
+                <div className="la-observation-header">
+                  <span>👀 OBSERVATION: WHAT IS "b" DOING?</span>
+                  {answers[8]?.isSubmitted && <span className="la-credit-tag">✓ Answer Verified</span>}
+                </div>
+
+                <div className="la-options-stack" style={{ marginTop: '0.65rem' }}>
+                  {(shuffledOptionsMap[8] || currentQ.options).map((opt, i) => {
+                    const isSelected = answers[8]?.selectedId === opt.id;
+                    const isSubmitted = answers[8]?.isSubmitted;
+                    let cls = 'la-option-btn';
+                    if (isSelected) cls += ' selected';
+                    if (isSubmitted) {
+                      if (opt.isCorrect) cls += ' correct';
+                      else if (isSelected) cls += ' incorrect';
+                    }
+
+                    return (
+                      <button
+                        key={opt.id}
+                        className={cls}
+                        onClick={() => {
+                          if (!isSubmitted) updateAnswer(8, { selectedId: opt.id, error: null });
+                        }}
+                        disabled={isSubmitted}
+                      >
+                        <span className="la-option-letter">{String.fromCharCode(65 + i)}</span>
+                        <span>{opt.text}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {answers[8]?.error && !answers[8]?.isSubmitted && (
+                  <div style={{ color: '#f87171', fontSize: '0.82rem', marginTop: '0.4rem', fontWeight: 500 }}>
+                    {answers[8]?.error}
+                  </div>
+                )}
+
+                {!answers[8]?.isSubmitted ? (
+                  <div className="la-step-footer-actions between" style={{ marginTop: '0.85rem' }}>
+                    <button className="la-btn-secondary" onClick={() => setActiveStep(7)}>
+                      ← Back to Question 7
+                    </button>
+                    <button
+                      className="la-btn-primary"
+                      disabled={!answers[8]?.selectedId}
+                      onClick={() => {
+                        const opt = currentQ.options?.find((o) => o.id === answers[8]?.selectedId);
+                        if (opt?.isCorrect) {
+                          updateAnswer(8, { isSubmitted: true, error: null });
+                        } else {
+                          updateAnswer(8, { error: 'Look at where the line crosses the vertical axis as you change slider "b": notice that "b" gives where the line will pass at "y"!' });
+                        }
+                      }}
+                    >
+                      Check Observation ✓
                     </button>
                   </div>
                 ) : (
@@ -927,8 +1330,234 @@ export default function LineStudioModule({ onBack }) {
                       <p className="la-earns-text">{currentQ.earns}</p>
                       <p className="la-earns-sub">{currentQ.creditExplanation}</p>
                       <div className="la-step-footer-actions between" style={{ marginTop: '0.75rem' }}>
-                        <button className="la-btn-secondary" onClick={() => setActiveStep(5)}>
-                          ← Back to Level 5
+                        <button className="la-btn-secondary" onClick={() => setActiveStep(7)}>
+                          ← Back to Question 7
+                        </button>
+                        <button
+                          className="la-btn-primary large"
+                          onClick={() => setActiveStep(9)}
+                        >
+                          Meet The Equation y = ax + b →
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* =================================================== */}
+          {/* QUESTION 9: THE NAMING HANDOVER & WRITE EQUATION    */}
+          {/* =================================================== */}
+          {activeStep === 9 && (
+            <div className="la-single-step-view">
+              {/* THE NAMING HANDOVER BANNER */}
+              <div className="la-naming-handover-banner" style={{
+                background: 'linear-gradient(135deg, rgba(232, 134, 74, 0.12) 0%, rgba(20, 184, 166, 0.08) 100%)',
+                border: '1px solid rgba(232, 134, 74, 0.35)',
+                borderRadius: '12px',
+                padding: '1rem 1.25rem',
+                marginBottom: '1rem',
+                textAlign: 'center'
+              }}>
+                <div style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#e8864a', marginBottom: '0.25rem' }}>
+                  ✨ THE NAMING HANDOVER
+                </div>
+                <div style={{
+                  fontSize: '1.75rem',
+                  fontWeight: 800,
+                  fontFamily: 'serif',
+                  color: '#e8864a',
+                  marginBottom: '0.35rem',
+                  letterSpacing: '0.04em'
+                }}>
+                  y = a·x + b
+                </div>
+                <p style={{ margin: '0 0 0.65rem 0', fontSize: '0.92rem', color: '#f3efe6', lineHeight: 1.45 }}>
+                  Whatever you were doing with knobs <strong>a</strong> and <strong>b</strong> is actually this equation:
+                </p>
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.45rem',
+                  textAlign: 'left',
+                  background: 'rgba(0, 0, 0, 0.22)',
+                  padding: '0.75rem 1rem',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(232, 134, 74, 0.18)'
+                }}>
+                  <div style={{ fontSize: '0.88rem', color: '#f3efe6', lineHeight: 1.4 }}>
+                    • <strong>a controls rotation &amp; steepness:</strong> increasing 'a' rotates the line anti-clockwise.
+                  </div>
+                  <div style={{ fontSize: '0.88rem', color: '#f3efe6', lineHeight: 1.4 }}>
+                    • <strong>b gives where the line passes at 'y'</strong>.
+                  </div>
+                </div>
+              </div>
+
+              {/* EQUATION INPUT & SUBMISSION */}
+              <div className="la-observation-box">
+                <div className="la-observation-header">
+                  <span>✍️ EQUATION BUILDER</span>
+                  {answers[9]?.isSubmitted && <span className="la-credit-tag">✓ Equation Verified</span>}
+                </div>
+
+                <div style={{ marginTop: '0.75rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.84rem', color: '#a89e94', marginBottom: '0.4rem' }}>
+                    Type the equation (rotation/steepness = 3, passes through 2 at y):
+                  </label>
+                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    <input
+                      type="text"
+                      className="la-text-input"
+                      value={answers[9]?.input ?? ''}
+                      onChange={(e) => {
+                        if (!answers[9]?.isSubmitted) {
+                          updateAnswer(9, { input: e.target.value, error: null });
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !answers[9]?.isSubmitted) {
+                          handleCheckEquation();
+                        }
+                      }}
+                      placeholder="e.g. y = 5x + 4"
+                      disabled={answers[9]?.isSubmitted}
+                      style={{
+                        flex: 1,
+                        padding: '0.65rem 0.9rem',
+                        fontSize: '1rem',
+                        fontFamily: 'monospace',
+                        borderRadius: '8px',
+                        border: answers[9]?.error ? '1.5px solid #f87171' : '1.5px solid rgba(232, 134, 74, 0.4)',
+                        background: '#1a1816',
+                        color: '#fbf7ee'
+                      }}
+                    />
+                    {!answers[9]?.isSubmitted && (
+                      <button
+                        className="la-btn-primary"
+                        onClick={handleCheckEquation}
+                        disabled={!answers[9]?.input?.trim()}
+                      >
+                        Check Equation ✓
+                      </button>
+                    )}
+                  </div>
+
+                  {answers[9]?.error && !answers[9]?.isSubmitted && (
+                    <div style={{ color: '#f87171', fontSize: '0.82rem', marginTop: '0.45rem', fontWeight: 500 }}>
+                      {answers[9]?.error}
+                    </div>
+                  )}
+
+                  {!answers[9]?.isSubmitted ? (
+                    <div className="la-step-footer-actions between" style={{ marginTop: '0.85rem' }}>
+                      <button className="la-btn-secondary" onClick={() => setActiveStep(8)}>
+                        ← Back to Question 8
+                      </button>
+                    </div>
+                  ) : (
+                    <div>
+                      <div className="la-earns-card" style={{ marginTop: '0.85rem' }}>
+                        <div className="la-earns-badge">🎉 EQUATION VERIFIED: {answers[9]?.normalizedEquation || 'y = 3x + 2'}</div>
+                        <p className="la-earns-text">{currentQ.earns}</p>
+                        <p className="la-earns-sub">{answers[9]?.feedback || currentQ.creditExplanation}</p>
+                        <div className="la-step-footer-actions between" style={{ marginTop: '0.75rem' }}>
+                          <button className="la-btn-secondary" onClick={() => setActiveStep(8)}>
+                            ← Back to Question 8
+                          </button>
+                          <button className="la-btn-primary" onClick={() => setActiveStep(10)}>
+                            Continue to Question 10 →
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* =================================================== */}
+          {/* QUESTION 10: WHEN WILL LINE PASS THROUGH ORIGIN?   */}
+          {/* =================================================== */}
+          {activeStep === 10 && (
+            <div className="la-single-step-view">
+              <div className="la-observation-box">
+                <div className="la-observation-header">
+                  <span>👀 OBSERVATION: PASSING THROUGH ORIGIN</span>
+                  {answers[10]?.isSubmitted && <span className="la-credit-tag">✓ Answer Verified</span>}
+                </div>
+
+                <div className="la-options-stack" style={{ marginTop: '0.65rem' }}>
+                  {(shuffledOptionsMap[10] || currentQ.options).map((opt, i) => {
+                    const isSelected = answers[10]?.selectedId === opt.id;
+                    const isSubmitted = answers[10]?.isSubmitted;
+                    let cls = 'la-option-btn';
+                    if (isSelected) cls += ' selected';
+                    if (isSubmitted) {
+                      if (opt.isCorrect) cls += ' correct';
+                      else if (isSelected) cls += ' incorrect';
+                    }
+
+                    return (
+                      <button
+                        key={opt.id}
+                        className={cls}
+                        onClick={() => {
+                          if (!isSubmitted) updateAnswer(10, { selectedId: opt.id, error: null });
+                        }}
+                        disabled={isSubmitted}
+                      >
+                        <span className="la-option-letter">{String.fromCharCode(65 + i)}</span>
+                        <span>{opt.text}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {answers[10]?.error && !answers[10]?.isSubmitted && (
+                  <div style={{ color: '#f87171', fontSize: '0.82rem', marginTop: '0.4rem', fontWeight: 500 }}>
+                    {answers[10]?.error}
+                  </div>
+                )}
+
+                {!answers[10]?.isSubmitted ? (
+                  <div className="la-step-footer-actions between" style={{ marginTop: '0.85rem' }}>
+                    <button className="la-btn-secondary" onClick={() => setActiveStep(9)}>
+                      ← Back to Question 9
+                    </button>
+                    <button
+                      className="la-btn-primary"
+                      disabled={!answers[10]?.selectedId}
+                      onClick={() => {
+                        const opt = currentQ.options?.find((o) => o.id === answers[10]?.selectedId);
+                        if (opt?.isCorrect) {
+                          setSliderB(0);
+                          updateAnswer(10, { isSubmitted: true, error: null });
+                        } else if (answers[10]?.selectedId === 'q10_a_zero') {
+                          updateAnswer(10, { error: 'When a = 0, the line is flat horizontal (y = b). It only passes through the origin if b = 0!' });
+                        } else if (answers[10]?.selectedId === 'q10_a_one') {
+                          updateAnswer(10, { error: 'When a = 1, the equation is y = x + b. It only passes through the origin if b = 0!' });
+                        } else {
+                          updateAnswer(10, { error: 'Look at slider "b": since "b" gives where the line passes at y, what must "b" be to pass through (0, 0)?' });
+                        }
+                      }}
+                    >
+                      Check Answer ✓
+                    </button>
+                  </div>
+                ) : (
+                  <div>
+                    <div className="la-earns-card" style={{ marginTop: '0.85rem' }}>
+                      <div className="la-earns-badge">🎉 JOURNEY COMPLETE: CLUSTER 2 MASTERED</div>
+                      <p className="la-earns-text">{currentQ.earns}</p>
+                      <p className="la-earns-sub">{currentQ.creditExplanation}</p>
+                      <div className="la-step-footer-actions between" style={{ marginTop: '0.75rem' }}>
+                        <button className="la-btn-secondary" onClick={() => setActiveStep(9)}>
+                          ← Back to Question 9
                         </button>
                         <button
                           className="la-btn-primary large"
@@ -957,19 +1586,30 @@ export default function LineStudioModule({ onBack }) {
         </button>
 
         <span style={{ fontSize: '0.8rem', color: 'var(--clr-text-soft, #a89e94)' }}>
-          {PATH_META.title} ({completedCount} of 6 questions answered)
+          {PATH_META.title} ({completedCount} of {PATH_META.totalQuestions || 10} questions answered)
         </span>
 
         <button
           className="la-nav-btn"
           onClick={() => {
-            if (activeStep < 6) {
+            if (activeStep < (PATH_META.totalQuestions || 10)) {
               setActiveStep((prev) => prev + 1);
             } else {
               setIsFinished(true);
             }
           }}
-          disabled={activeStep === 6 && !answers[6]?.isSubmitted}
+          disabled={
+            (activeStep === 1 && !hasTwoPoints) ||
+            (activeStep === 2 && !answers[2]?.isSubmitted) ||
+            (activeStep === 3 && !(hasPointC && hasPointD && hasPointE)) ||
+            (activeStep === 4 && !answers[4]?.isSubmitted) ||
+            (activeStep === 5 && !answers[5]?.lineDrawn) ||
+            (activeStep === 6 && !answers[6]?.isSubmitted) ||
+            (activeStep === 7 && !answers[7]?.isSubmitted) ||
+            (activeStep === 8 && !answers[8]?.isSubmitted) ||
+            (activeStep === 9 && !answers[9]?.isSubmitted) ||
+            (activeStep === 10 && !answers[10]?.isSubmitted)
+          }
         >
           Next Step →
         </button>
