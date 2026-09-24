@@ -1,299 +1,378 @@
-import React, { useState, useEffect } from 'react';
-import {
-  PATH_META,
-  PHASES,
-  FUNCTION_PATH_QUESTIONS,
-  CLUSTER_3_SUMMARY
-} from './questions';
+import React, { useState, useRef, useEffect } from 'react';
 import GeoGebraFunctionLab from './GeoGebraFunctionLab';
+import { parseLineEquation } from './equationParser';
 import './FunctionStudioModule.css';
 
+/**
+ * Question definitions for Function Studio Journey
+ * Following the exact stepper architecture and design principles of Line Studio & Point Studio.
+ */
+const QUESTIONS_META = [
+  {
+    id: 1,
+    phase: 'Phase 1: Line Foundation',
+    title: 'Draw Your Line',
+    prompt: 'Enter the equation of a line to draw on the canvas:',
+    subtext: 'Type any linear equation starting with y = (for example: y = 2x + 3 or y = -x + 1):'
+  },
+  {
+    id: 2,
+    phase: 'Phase 2: One-to-One Mapping',
+    title: 'Evaluate First Point',
+    prompt: 'What is the value of y when x = ',
+    subtext: 'Trace vertically along the dashed guideline on the coordinate grid, or calculate using the equation.'
+  },
+  {
+    id: 3,
+    phase: 'Phase 2: One-to-One Mapping',
+    title: 'Evaluate Second Point',
+    prompt: 'Now, what is the value of y when x = ',
+    subtext: 'Find where x meets your line on the grid, or substitute x into the equation.'
+  },
+  {
+    id: 4,
+    phase: 'Phase 2: One-to-One Mapping',
+    title: 'Evaluate Third Point',
+    prompt: 'Finally, what is the value of y when x = ',
+    subtext: 'Find where x meets your line on the grid, or substitute x into the equation.'
+  },
+  {
+    id: 5,
+    phase: 'Phase 3: The Big Intuition',
+    title: 'Role of x',
+    prompt: 'What do you think x is acting as on your line?',
+    subtext: 'Think about how you started with x each time to determine y on your line.'
+  },
+  {
+    id: 6,
+    phase: 'Phase 3: The Big Intuition',
+    title: 'Introducing f(x)',
+    prompt: 'Meet the Function Notation: f(x)',
+    subtext: 'A cleaner way to show that x goes inside the rule.'
+  }
+];
+
+const Q5_OPTIONS = [
+  {
+    id: 'input',
+    label: 'Input',
+    description: 'The starting value you feed into the rule',
+    isCorrect: true,
+    feedback: null
+  },
+  {
+    id: 'output',
+    label: 'Output',
+    description: 'The final result produced by the rule',
+    isCorrect: false,
+    feedback: 'Not quite! Notice the direction: you were given x first and used the rule to find y. The result you get back (y) is the output, while x is the input.'
+  },
+  {
+    id: 'constant',
+    label: 'Fixed Constant',
+    description: 'A number that never changes',
+    isCorrect: false,
+    feedback: 'Notice that x changed across every question (x = 1, then x = -2, then x = 2). Because its value changes freely, it is a variable input, not a constant.'
+  },
+  {
+    id: 'slope',
+    label: 'Slope',
+    description: 'The steepness or tilt of the line',
+    isCorrect: false,
+    feedback: 'The slope is the multiplier in front of x (the steepness). But x itself is the variable value you plug in as the input.'
+  }
+];
+
+const Q6_OPTIONS = [
+  {
+    id: 'input',
+    label: 'Input entering the rule',
+    description: 'They show that x is going inside function f as the input',
+    isCorrect: true,
+    feedback: null
+  },
+  {
+    id: 'multiply',
+    label: 'Multiply f times x',
+    description: 'They mean f multiplied by x',
+    isCorrect: false,
+    feedback: 'Careful! In function notation, f(x) does NOT mean multiplication. The parentheses show that x is entering inside the machine f as the input.'
+  },
+  {
+    id: 'constant',
+    label: 'Fixed number',
+    description: 'They mean x is locked to one constant value',
+    isCorrect: false,
+    feedback: 'x is still a flexible input that you can change anytime. The parentheses show where the input goes.'
+  }
+];
+
+const DEFAULT_LINE = parseLineEquation('y = 2x + 1');
+
 export default function FunctionStudioModule({ onBack }) {
-  // activeStep: 1..11 are Questions 1..11; 12 is Graduation / Free Play
+  // activeStep: 1..6 corresponding to Questions 1..6
   const [activeStep, setActiveStep] = useState(1);
-  const [isFinished, setIsFinished] = useState(false);
 
-  // Plotted points and rules state — STRICTLY USER-DRIVEN (no auto-plotting)
-  const [plottedPoints, setPlottedPoints] = useState([]);
-  const [plottedRules, setPlottedRules] = useState([]);
+  // Question 1: Line input text (empty by default)
+  const [lineEquationInput, setLineEquationInput] = useState('');
+  // Active parsed line object: { m, c, equationDisplay, ggbCmd, inquiries }
+  const [activeLine, setActiveLine] = useState(null);
+  // Fallback to DEFAULT_LINE if user navigates freely before plotting
+  const effectiveLine = activeLine || DEFAULT_LINE;
+  // Feedback for Question 1
+  const [lineError, setLineError] = useState(null);
 
-  // Answers state for Questions 1..11
+  // Answers for Questions 2, 3, 4, 5, and 6
   const [answers, setAnswers] = useState({
-    1: { selectedId: null, isSubmitted: false },
-    2: { selectedId: null, isSubmitted: false },
-    3: { selectedId: null, isSubmitted: false },
-    4: { selectedId: null, isSubmitted: false },
-    5: { selectedId: null, isSubmitted: false },
-    6: { part1Id: null, part2Id: null, isSubmitted: false },
-    7: { selectedId: null, isSubmitted: false },
-    8: { selectedId: null, isSubmitted: false },
-    9: { f_3: '', f_neg2: '', isSubmitted: false },
-    10: { g_0: '', g_neg2: '', mcqId: null, isSubmitted: false },
-    11: { selectedId: null, isSubmitted: false }
+    2: { yVal: '', isSubmitted: false, isCorrect: false, error: null },
+    3: { yVal: '', isSubmitted: false, isCorrect: false, error: null },
+    4: { yVal: '', isSubmitted: false, isCorrect: false, error: null },
+    5: { selectedId: null, isSubmitted: false, isCorrect: false, error: null },
+    6: { selectedId: null, isSubmitted: false, isCorrect: false, error: null }
   });
 
-  const updateAnswer = (qId, updates) => {
-    setAnswers((prev) => ({
-      ...prev,
-      [qId]: { ...prev[qId], ...updates }
-    }));
-  };
+  // Track session completed journeys
+  const [completedLinesCount, setCompletedLinesCount] = useState(0);
 
-  const currentQ = FUNCTION_PATH_QUESTIONS.find((q) => q.id === activeStep);
+  const lineInputRef = useRef(null);
+  const q2InputRef = useRef(null);
+  const q3InputRef = useRef(null);
+  const q4InputRef = useRef(null);
 
-  const getActivePhaseName = () => {
-    if (activeStep > 11 || isFinished) return '🏆 Graduation & Lab';
-    const phase = PHASES.find((p) => activeStep >= p.range[0] && activeStep <= p.range[1]);
-    return phase ? phase.name : '';
-  };
-
-  // Canvas callbacks
-  const handlePointPlotted = (pt) => {
-    setPlottedPoints((prev) => {
-      const filtered = prev.filter((p) => p.name !== pt.name);
-      return [...filtered, pt];
-    });
-  };
-
-  const handleRuleEntered = (rule) => {
-    setPlottedRules((prev) => {
-      const filtered = prev.filter((r) => r.id !== rule.id);
-      return [...filtered, rule];
-    });
-  };
-
-  const handleClearCanvas = () => {
-    setPlottedPoints([]);
-    setPlottedRules([]);
-  };
-
-  // Live detection checks for plotted objects
-  const hasPointA = plottedPoints.some((p) => p.x === -2 && p.y === 4);
-  const hasPointB = plottedPoints.some((p) => p.x === 0 && p.y === 0);
-  const hasPointC = plottedPoints.some((p) => p.x === 2 && p.y === 4);
-
-  const hasRuleX2 = plottedRules.some(
-    (r) => r.cmd.includes('x^2') || r.name.includes('x²') || r.raw?.includes('x^2') || r.raw?.includes('x²')
-  );
-  const hasRuleXPlus5 = plottedRules.some(
-    (r) => r.cmd.includes('x + 5') || r.cmd.includes('x+5') || r.raw?.includes('x+5') || r.raw?.includes('x + 5')
-  );
-  const hasRuleAbsX = plottedRules.some(
-    (r) => r.cmd.includes('abs') || r.name.includes('|x|') || r.raw?.includes('abs')
-  );
-  const hasRuleY2X = plottedRules.some(
-    (r) => r.cmd.includes('y^2 = x') || r.isBreaker || r.raw?.includes('y^2') || r.raw?.includes('y²')
-  );
-  const hasNamedF = plottedRules.some(
-    (r) => (r.funcName === 'f' && r.cmd.includes('x^2')) || r.name?.includes('f(x)')
-  );
-  const hasNamedG = plottedRules.some(
-    (r) => (r.funcName === 'g' && r.cmd.includes('abs')) || r.name?.includes('g(x)')
-  );
-
-  // Suggested shortcuts per level
-  const getShortcutsForStep = () => {
-    switch (activeStep) {
-      case 1:
-        return ['y = x^2', 'A = (-2, 4)', 'B = (0, 0)', 'C = (2, 4)'];
-      case 2:
-        return ['y = x^2'];
-      case 3:
-        return ['y = x + 5'];
-      case 4:
-        return ['y = abs(x)'];
-      case 7:
-        return ['y^2 = x'];
-      case 9:
-        return ['f(x) = x^2'];
-      case 10:
-        return ['g(x) = abs(x) + 1'];
-      case 11:
-        return ['f(x) = x^2', 'g(x) = abs(x) + 1'];
-      default:
-        return [];
+  // Auto-focus inputs on question change
+  useEffect(() => {
+    if (activeStep === 1 && !activeLine && lineInputRef.current) {
+      lineInputRef.current.focus();
+    } else if (activeStep === 2 && q2InputRef.current && !answers[2].isCorrect) {
+      q2InputRef.current.focus();
+    } else if (activeStep === 3 && q3InputRef.current && !answers[3].isCorrect) {
+      q3InputRef.current.focus();
+    } else if (activeStep === 4 && q4InputRef.current && !answers[4].isCorrect) {
+      q4InputRef.current.focus();
     }
-  };
+  }, [activeStep, activeLine, answers]);
 
-  const getInputPlaceholder = () => {
-    switch (activeStep) {
-      case 1:
-        if (!hasRuleX2) return 'Type: y = x^2';
-        if (!hasPointA) return 'Type: A = (-2, 4)';
-        if (!hasPointB) return 'Type: B = (0, 0)';
-        if (!hasPointC) return 'Type: C = (2, 4)';
-        return 'Rule and points plotted!';
-      case 3:
-        return 'Type: y = x + 5';
-      case 4:
-        return 'Type: y = abs(x)';
-      case 7:
-        return 'Type: y^2 = x';
-      case 9:
-        return 'Type: f(x) = x^2';
-      case 10:
-        return 'Type: g(x) = abs(x) + 1';
-      default:
-        return 'e.g. y = x^2 or f(x) = x^2 or A = (x, y)';
-    }
-  };
-
-  // Completion criteria for stepper badges
+  // Question completion criteria
   const isQuestionComplete = (qId) => {
-    const ans = answers[qId];
-    if (!ans) return false;
-    switch (qId) {
-      case 1:
-        return hasRuleX2 && hasPointA && hasPointB && hasPointC && ans.selectedId === 'q1_curve';
-      case 2:
-        return ans.selectedId === 'q2_one_y';
-      case 3:
-        return hasRuleXPlus5 && ans.selectedId === 'q3_line';
-      case 4:
-        return hasRuleAbsX && ans.selectedId === 'q4_one_y';
-      case 5:
-        return ans.selectedId === 'q5_common';
-      case 6:
-        return ans.part1Id === 'q6_p1_c' && ans.part2Id === 'q6_p2_b';
-      case 7:
-        return hasRuleY2X && ans.selectedId === 'q7_branches';
-      case 8:
-        return ans.selectedId === 'q8_deciding';
-      case 9:
-        return hasNamedF && ans.f_3?.trim() === '9' && ans.f_neg2?.trim() === '4';
-      case 10:
-        return hasNamedG && ans.g_0?.trim() === '1' && ans.g_neg2?.trim() === '3' && ans.mcqId === 'q10_true';
-      case 11:
-        return ans.selectedId === 'q11_both';
-      default:
-        return false;
-    }
+    if (qId === 1) return Boolean(activeLine);
+    return Boolean(answers[qId]?.isCorrect);
   };
 
-  const completedCount = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].filter(isQuestionComplete).length;
+  // Question unlock criteria (unrestricted for free navigation)
+  const isQuestionUnlocked = (_qId) => true;
 
-  // ========================================================
-  // RENDER: LEVEL 12 — THE NAMING HANDOVER & FREE-PLAY LAB
-  // ========================================================
-  if (activeStep === 12 || isFinished) {
-    return (
-      <div className="fs-studio-wrapper">
-        <div className="fs-top-nav">
-          {onBack && (
-            <button className="fs-back-btn" onClick={onBack}>
-              ← Dashboard
-            </button>
-          )}
-          <span className="fs-progress-badge">🏆 Graduation & Lab</span>
-        </div>
+  // Inquiry points from effective line
+  const inq1 = effectiveLine.inquiries[0];
+  const inq2 = effectiveLine.inquiries[1];
+  const inq3 = effectiveLine.inquiries[2];
 
-        {/* Ceremony Card */}
-        <div className="fs-ceremony-card">
-          <div className="fs-ceremony-icon">✨</div>
-          <h2 className="fs-ceremony-title">{CLUSTER_3_SUMMARY.ceremony.title}</h2>
-          <p className="fs-ceremony-subtitle">{CLUSTER_3_SUMMARY.ceremony.subtitle}</p>
-
-          <div className="fs-ceremony-banner">
-            {CLUSTER_3_SUMMARY.ceremony.proclamation.map((text, idx) => (
-              <p key={idx} className="fs-ceremony-proclamation">
-                {text}
-              </p>
-            ))}
-          </div>
-
-          <h3 style={{ fontSize: '0.95rem', fontWeight: 800, marginTop: '1.25rem', textAlign: 'left', color: '#c4b5fd' }}>
-            What You Earned Across the Path:
-          </h3>
-          <ul className="fs-takeaways-list">
-            {CLUSTER_3_SUMMARY.ceremony.earnedInsights.map((insight, idx) => (
-              <li key={idx} className="fs-takeaway-item">
-                <span className="fs-takeaway-check">✓</span>
-                <span>{insight}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* Free-Play Function Explorer Lab */}
-        <div className="fs-card" style={{ marginTop: '0.5rem' }}>
-          <div className="fs-card-header">
-            <span className="fs-question-badge">LAB</span>
-            <span className="fs-topic-badge">{CLUSTER_3_SUMMARY.lab.title}</span>
-            <span className="fs-question-num">Free Exploration</span>
-          </div>
-
-          <p style={{ fontSize: '0.85rem', color: 'var(--clr-text-soft, #a89e94)', margin: '0' }}>
-            {CLUSTER_3_SUMMARY.lab.instructions}
-          </p>
-
-          <GeoGebraFunctionLab
-            plottedPoints={plottedPoints}
-            plottedRules={plottedRules}
-            onPointPlotted={handlePointPlotted}
-            onRuleEntered={handleRuleEntered}
-            onClearCanvas={handleClearCanvas}
-            inputPlaceholder="Type any rule, e.g. h(x) = 2*x + 3 or y^2 = x"
-            suggestedShortcuts={['h(x) = 2*x + 3', 'p(x) = x^3', 'q(x) = sin(x)', 'y^2 = x']}
-          />
-
-          <div className="fs-lab-suggestions">
-            {CLUSTER_3_SUMMARY.lab.suggestedRules.map((rule, idx) => (
-              <button
-                key={idx}
-                type="button"
-                className="fs-lab-suggestion-card"
-                onClick={() => {
-                  handleRuleEntered({
-                    id: `suggested_${idx}`,
-                    name: rule.cmd,
-                    cmd: rule.cmd,
-                    raw: rule.cmd,
-                    color: rule.cmd.includes('y^2') ? [239, 68, 68] : [124, 58, 237]
-                  });
-                }}
-              >
-                <h4 className="fs-lab-suggestion-title">{rule.name}</h4>
-                <div className="fs-lab-suggestion-cmd">{rule.cmd}</div>
-                <span className="fs-lab-suggestion-tag">{rule.tag}</span>
-              </button>
-            ))}
-          </div>
-
-          <div style={{ display: 'flex', justifyContent: 'center', marginTop: '1.25rem' }}>
-            <button className="fs-btn-primary" style={{ padding: '0.65rem 2rem' }} onClick={onBack}>
-              Complete Function Studio Journey 🏆
-            </button>
-          </div>
-        </div>
-      </div>
-    );
+  // Compute verified points for GeoGebra canvas
+  const verifiedPoints = [];
+  if (answers[2]?.isCorrect && inq1) {
+    verifiedPoints.push({ name: 'P_1', x: inq1.x, y: inq1.y });
+  }
+  if (answers[3]?.isCorrect && inq2) {
+    verifiedPoints.push({ name: 'P_2', x: inq2.x, y: inq2.y });
+  }
+  if (answers[4]?.isCorrect && inq3) {
+    verifiedPoints.push({ name: 'P_3', x: inq3.x, y: inq3.y });
   }
 
-  // ========================================================
-  // RENDER: STEPPER JOURNEY (Questions 1..11)
-  // ========================================================
+  // Target X for vertical guideline
+  const getTargetX = () => {
+    if (activeStep === 2 && !answers[2]?.isCorrect && inq1) return inq1.x;
+    if (activeStep === 3 && !answers[3]?.isCorrect && inq2) return inq2.x;
+    if (activeStep === 4 && !answers[4]?.isCorrect && inq3) return inq3.x;
+    return null;
+  };
+
+  // Handle Q1 Line Submission
+  const handlePlotLine = (e) => {
+    if (e) e.preventDefault();
+    const raw = lineEquationInput.trim();
+    const parsed = parseLineEquation(raw);
+
+    if (!parsed.success) {
+      setLineError(parsed.error);
+      return;
+    }
+
+    setActiveLine(parsed);
+    setLineError(null);
+
+    // Reset downstream answers when line is re-plotted
+    setAnswers({
+      2: { yVal: '', isSubmitted: false, isCorrect: false, error: null },
+      3: { yVal: '', isSubmitted: false, isCorrect: false, error: null },
+      4: { yVal: '', isSubmitted: false, isCorrect: false, error: null },
+      5: { selectedId: null, isSubmitted: false, isCorrect: false, error: null },
+      6: { selectedId: null, isSubmitted: false, isCorrect: false, error: null }
+    });
+  };
+
+  // Handle Q2..Q4 Point Answer Submission
+  const handleCheckPointAnswer = (stepNum, targetInquiry, e) => {
+    if (e) e.preventDefault();
+    if (!targetInquiry) return;
+
+    const currentAns = answers[stepNum];
+    if (currentAns.isCorrect) return;
+
+    const trimmed = currentAns.yVal.trim();
+    if (!trimmed) {
+      setAnswers((prev) => ({
+        ...prev,
+        [stepNum]: { ...prev[stepNum], error: 'Please enter a numeric value for y.' }
+      }));
+      return;
+    }
+
+    const val = parseFloat(trimmed);
+    if (isNaN(val)) {
+      setAnswers((prev) => ({
+        ...prev,
+        [stepNum]: { ...prev[stepNum], error: 'Please enter a valid number for y.' }
+      }));
+      return;
+    }
+
+    if (val === targetInquiry.y) {
+      setAnswers((prev) => ({
+        ...prev,
+        [stepNum]: {
+          ...prev[stepNum],
+          isSubmitted: true,
+          isCorrect: true,
+          error: null
+        }
+      }));
+    } else {
+      setAnswers((prev) => ({
+        ...prev,
+        [stepNum]: {
+          ...prev[stepNum],
+          error: `Not quite. Substitute x = ${targetInquiry.x} into ${effectiveLine.equationDisplay}, or trace where the dashed vertical line touches your line on the grid.`
+        }
+      }));
+    }
+  };
+
+  // Handle Q5 Intuition Answer Submission
+  const handleCheckQ5Answer = () => {
+    const selectedId = answers[5]?.selectedId;
+    if (!selectedId) {
+      setAnswers((prev) => ({
+        ...prev,
+        5: { ...prev[5], error: 'Please select an option to check.' }
+      }));
+      return;
+    }
+
+    const selectedOpt = Q5_OPTIONS.find((opt) => opt.id === selectedId);
+    if (!selectedOpt) return;
+
+    if (selectedOpt.isCorrect) {
+      setAnswers((prev) => ({
+        ...prev,
+        5: { ...prev[5], isSubmitted: true, isCorrect: true, error: null }
+      }));
+    } else {
+      setAnswers((prev) => ({
+        ...prev,
+        5: {
+          ...prev[5],
+          isSubmitted: true,
+          isCorrect: false,
+          error: selectedOpt.feedback
+        }
+      }));
+    }
+  };
+
+  // Handle Q6 Function Notation Submission
+  const handleCheckQ6Answer = () => {
+    const selectedId = answers[6]?.selectedId;
+    if (!selectedId) {
+      setAnswers((prev) => ({
+        ...prev,
+        6: { ...prev[6], error: 'Please select an option to check.' }
+      }));
+      return;
+    }
+
+    const selectedOpt = Q6_OPTIONS.find((opt) => opt.id === selectedId);
+    if (!selectedOpt) return;
+
+    if (selectedOpt.isCorrect) {
+      setAnswers((prev) => ({
+        ...prev,
+        6: { ...prev[6], isSubmitted: true, isCorrect: true, error: null }
+      }));
+      setCompletedLinesCount((prev) => prev + 1);
+    } else {
+      setAnswers((prev) => ({
+        ...prev,
+        6: {
+          ...prev[6],
+          isSubmitted: true,
+          isCorrect: false,
+          error: selectedOpt.feedback
+        }
+      }));
+    }
+  };
+
+  // Reset to input another line
+  const handleResetNewJourney = () => {
+    setActiveLine(null);
+    setLineEquationInput('');
+    setLineError(null);
+    setAnswers({
+      2: { yVal: '', isSubmitted: false, isCorrect: false, error: null },
+      3: { yVal: '', isSubmitted: false, isCorrect: false, error: null },
+      4: { yVal: '', isSubmitted: false, isCorrect: false, error: null },
+      5: { selectedId: null, isSubmitted: false, isCorrect: false, error: null },
+      6: { selectedId: null, isSubmitted: false, isCorrect: false, error: null }
+    });
+    setActiveStep(1);
+  };
+
+  const currentQ = QUESTIONS_META.find((q) => q.id === activeStep) || QUESTIONS_META[0];
+
   return (
     <div className="fs-studio-wrapper">
-      {/* Top Nav */}
+      {/* 1. TOP NAVIGATION */}
       <div className="fs-top-nav">
         {onBack && (
           <button className="fs-back-btn" onClick={onBack}>
             ← Dashboard
           </button>
         )}
-        <span className="fs-progress-badge">{`Question ${activeStep} of 11`}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          {completedLinesCount > 0 && (
+            <span
+              className="fs-progress-badge"
+              style={{ color: '#34d399', borderColor: 'rgba(16, 185, 129, 0.35)' }}
+            >
+              ✓ Lines Completed: {completedLinesCount}
+            </span>
+          )}
+          <span className="fs-progress-badge">{`Question ${activeStep} of ${QUESTIONS_META.length}`}</span>
+        </div>
       </div>
 
-      {/* Header */}
+      {/* 2. HEADER */}
       <div className="fs-header">
-        <span className="fs-phase-pill">{getActivePhaseName()}</span>
-        <h1 className="fs-title">{PATH_META.title}</h1>
-        <p className="fs-subtitle">{currentQ?.subtext || PATH_META.subtitle}</p>
+        <span className="fs-phase-pill">{currentQ.phase}</span>
+        <h1 className="fs-title">The Function Studio</h1>
+        <p className="fs-subtitle">
+          Building mathematical intuition for rules, inputs, and outputs.
+        </p>
       </div>
 
-      {/* Unified Stepper Bar */}
+      {/* 3. STEPPER BAR (Unrestricted free navigation) */}
       <div className="fs-stepper-bar">
-        {FUNCTION_PATH_QUESTIONS.map((q) => {
+        {QUESTIONS_META.map((q) => {
           const isDone = isQuestionComplete(q.id);
           const isActive = activeStep === q.id;
           return (
@@ -301,6 +380,7 @@ export default function FunctionStudioModule({ onBack }) {
               key={q.id}
               className={`fs-step-pill ${isActive ? 'active' : ''} ${isDone ? 'completed' : ''}`}
               onClick={() => setActiveStep(q.id)}
+              title={`Question ${q.id}: ${q.title}`}
             >
               <span>{q.id}</span>
             </button>
@@ -308,770 +388,677 @@ export default function FunctionStudioModule({ onBack }) {
         })}
       </div>
 
-      {/* Main Unified Card: Header + Graph at Top + Input Box + Question */}
+      {/* 4. MAIN CARD: Header + Graph at Top + Question Content */}
       <div className="fs-card">
         {/* Card Header */}
         <div className="fs-card-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-            <span className="fs-question-badge">{`Q${currentQ?.id || activeStep}`}</span>
-            <span className="fs-topic-badge">{currentQ?.title || ''}</span>
+            <span className="fs-question-badge">{`Q${activeStep}`}</span>
+            <span className="fs-topic-badge">{currentQ.title}</span>
+            {(activeLine || activeStep > 1) && (
+              <span className="fs-card-line-badge">
+                {activeStep === 6 ? `f(x) = ${effectiveLine.equationDisplay.replace(/^y\s*=\s*/, '')}` : effectiveLine.equationDisplay}
+              </span>
+            )}
           </div>
-          <span className="fs-question-num">{`Question ${activeStep} of 11`}</span>
+          <span className="fs-question-num">{`Question ${activeStep} of ${QUESTIONS_META.length}`}</span>
         </div>
 
-        {/* 1. GRAPH AT TOP & 2. INPUT BOX (MIDDLE) */}
+        {/* 1. GRAPH AT TOP (Centered isometric Cartesian canvas) */}
         <GeoGebraFunctionLab
-          plottedPoints={plottedPoints}
-          plottedRules={plottedRules}
-          onPointPlotted={handlePointPlotted}
-          onRuleEntered={handleRuleEntered}
-          onClearCanvas={handleClearCanvas}
-          inputPlaceholder={getInputPlaceholder()}
-          suggestedShortcuts={getShortcutsForStep()}
+          activeLine={
+            (activeLine || activeStep > 1)
+              ? {
+                  id: effectiveLine.id,
+                  cmd: effectiveLine.ggbCmd,
+                  label: activeStep === 6 ? `f(x) = ${effectiveLine.equationDisplay.replace(/^y\s*=\s*/, '')}` : effectiveLine.equationDisplay
+                }
+              : null
+          }
+          targetX={getTargetX()}
+          verifiedPoints={verifiedPoints}
+          showInputBar={false}
         />
 
-        {/* 3. QUESTION TO BE ANSWERED (BOTTOM) */}
-        <div className="fs-step-intro-block">
-          <h3 className="fs-step-heading">{currentQ?.prompt}</h3>
-          <p className="fs-step-subtext">{currentQ?.subtext}</p>
-        </div>
+        {/* 2. QUESTION CONTENT */}
 
-        {/* Question Interactions */}
-        <div className="fs-step-container">
-          {/* =================================================== */}
-          {/* QUESTION 1: TRY A DIFFERENT RULE (y = x^2)          */}
-          {/* =================================================== */}
-          {activeStep === 1 && (
-            <div>
-              <div className="fs-verification-bar">
-                <div className="fs-verification-group">
-                  <span className="fs-verification-label">Required:</span>
-                  <div className={`fs-verification-chip ${hasRuleX2 ? 'verified' : ''}`}>
-                    <span>{hasRuleX2 ? '✓' : '⏳'}</span>
-                    <span>Rule y = x²</span>
+        {/* =================================================== */}
+        {/* QUESTION 1: DRAW YOUR LINE                          */}
+        {/* =================================================== */}
+        {activeStep === 1 && (
+          <div className="fs-step-intro-block">
+            {activeLine ? (
+              <>
+                <div className="fs-equation-pill-bar">
+                  <span className="fs-equation-pill-label">Line Equation:</span>
+                  <span className="fs-equation-pill-val">{activeLine.equationDisplay}</span>
+                </div>
+                <h3 className="fs-step-heading">
+                  Your Line: <span className="fs-equation-highlight">{activeLine.equationDisplay}</span>
+                </h3>
+                <p className="fs-step-subtext">
+                  Your line <strong style={{ color: '#e8864a' }}>{activeLine.equationDisplay}</strong> is drawn on the canvas. Click Continue to evaluate points on it.
+                </p>
+              </>
+            ) : (
+              <>
+                <h3 className="fs-step-heading">
+                  Enter the equation of a line to draw on the canvas:
+                </h3>
+                <p className="fs-step-subtext">{currentQ.subtext}</p>
+              </>
+            )}
+
+            {!activeLine && (
+              <>
+                <form className="fs-tray-input-row" onSubmit={handlePlotLine} style={{ marginTop: '0.85rem' }}>
+                  <input
+                    ref={lineInputRef}
+                    type="text"
+                    className="fs-tray-input-box"
+                    placeholder="e.g. y = 2x + 3 or y = -x + 1"
+                    value={lineEquationInput}
+                    onChange={(e) => {
+                      setLineEquationInput(e.target.value);
+                      setLineError(null);
+                    }}
+                  />
+                  <button type="submit" className="fs-tray-submit-btn">
+                    Plot Line 🚀
+                  </button>
+                </form>
+
+                {lineError && (
+                  <div className="fs-inquiry-feedback error" style={{ marginTop: '0.65rem' }}>
+                    <span>⚠️</span>
+                    <span>{lineError}</span>
                   </div>
-                  <div className={`fs-verification-chip ${hasPointA ? 'verified' : ''}`}>
-                    <span>{hasPointA ? '✓' : '⏳'}</span>
-                    <span>A (-2, 4)</span>
-                  </div>
-                  <div className={`fs-verification-chip ${hasPointB ? 'verified' : ''}`}>
-                    <span>{hasPointB ? '✓' : '⏳'}</span>
-                    <span>B (0, 0)</span>
-                  </div>
-                  <div className={`fs-verification-chip ${hasPointC ? 'verified' : ''}`}>
-                    <span>{hasPointC ? '✓' : '⏳'}</span>
-                    <span>C (2, 4)</span>
-                  </div>
-                  {hasRuleX2 && hasPointA && hasPointB && hasPointC && (
-                    <span className="fs-verification-tag">✓ Curve & Points Ready</span>
-                  )}
-                </div>
-              </div>
+                )}
+              </>
+            )}
 
-              <div style={{ marginTop: '0.85rem' }}>
-                <span style={{ fontSize: '0.825rem', fontWeight: 700, color: 'var(--clr-text-soft, #a89e94)' }}>
-                  Look at points A, B, and C. Are they on a straight line?
-                </span>
-                <div className="fs-options-grid">
-                  {currentQ.options.map((opt, i) => {
-                    const isSelected = answers[1]?.selectedId === opt.id;
-                    const isDone = isQuestionComplete(1);
-                    let cls = 'fs-option-btn';
-                    if (isSelected) cls += ' selected';
-                    if (isDone) {
-                      if (opt.isCorrect) cls += ' correct';
-                      else if (isSelected) cls += ' incorrect';
-                    }
-                    return (
-                      <button
-                        key={opt.id}
-                        className={cls}
-                        onClick={() => updateAnswer(1, { selectedId: opt.id })}
-                      >
-                        <span className="fs-option-letter">{String.fromCharCode(65 + i)}</span>
-                        <span>{opt.text}</span>
-                      </button>
-                    );
-                  })}
-                </div>
+            {activeLine && (
+              <div className="fs-inquiry-feedback success" style={{ marginTop: '0.65rem' }}>
+                <span>✓</span>
+                <span>Line <strong>{activeLine.equationDisplay}</strong> plotted on canvas! Click Continue to evaluate points on it.</span>
               </div>
+            )}
 
-              <div className="fs-verification-bar" style={{ marginTop: '0.75rem' }}>
-                <div className="fs-verification-group">
-                  <span className="fs-verification-label">Status:</span>
-                  <span style={{ fontSize: '0.825rem', color: isQuestionComplete(1) ? '#4ade80' : '#a89e94' }}>
-                    {isQuestionComplete(1) ? '✓ Level Complete!' : 'Plot curve + 3 points, then choose your answer'}
-                  </span>
-                </div>
+            {/* Step Footer Navigation */}
+            <div className={`fs-step-footer-actions ${activeLine ? 'between' : 'end'}`}>
+              {activeLine && (
                 <button
-                  className="fs-btn-primary"
-                  disabled={!isQuestionComplete(1)}
-                  onClick={() => setActiveStep(2)}
-                >
-                  Continue to Next Level →
-                </button>
-              </div>
-
-              {isQuestionComplete(1) && (
-                <div className="fs-earns-card">
-                  <div className="fs-earns-badge">Earned Insight</div>
-                  <p className="fs-earns-text">{currentQ.earns}</p>
-                  <p className="fs-earns-sub">{currentQ.creditExplanation}</p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* =================================================== */}
-          {/* QUESTION 2: ONE Y PER X, STILL                      */}
-          {/* =================================================== */}
-          {activeStep === 2 && (
-            <div>
-              <div className="fs-options-grid">
-                {currentQ.options.map((opt, i) => {
-                  const isSelected = answers[2]?.selectedId === opt.id;
-                  const isDone = isQuestionComplete(2);
-                  let cls = 'fs-option-btn';
-                  if (isSelected) cls += ' selected';
-                  if (isDone) {
-                    if (opt.isCorrect) cls += ' correct';
-                    else if (isSelected) cls += ' incorrect';
-                  }
-                  return (
-                    <button
-                      key={opt.id}
-                      className={cls}
-                      onClick={() => updateAnswer(2, { selectedId: opt.id })}
-                    >
-                      <span className="fs-option-letter">{String.fromCharCode(65 + i)}</span>
-                      <span>{opt.text}</span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div className="fs-verification-bar" style={{ marginTop: '0.75rem' }}>
-                <button className="fs-btn-secondary" onClick={() => setActiveStep(1)}>
-                  ← Back to Q1
-                </button>
-                <button
-                  className="fs-btn-primary"
-                  disabled={!isQuestionComplete(2)}
-                  onClick={() => setActiveStep(3)}
-                >
-                  Continue to Next Level →
-                </button>
-              </div>
-
-              {isQuestionComplete(2) && (
-                <div className="fs-earns-card">
-                  <div className="fs-earns-badge">Earned Insight</div>
-                  <p className="fs-earns-text">{currentQ.earns}</p>
-                  <p className="fs-earns-sub">{currentQ.creditExplanation}</p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* =================================================== */}
-          {/* QUESTION 3: ANOTHER RULE (y = x + 5)                */}
-          {/* =================================================== */}
-          {activeStep === 3 && (
-            <div>
-              <div className="fs-verification-bar">
-                <div className="fs-verification-group">
-                  <span className="fs-verification-label">Canvas Check:</span>
-                  <div className={`fs-verification-chip ${hasRuleXPlus5 ? 'verified' : ''}`}>
-                    <span>{hasRuleXPlus5 ? '✓' : '⏳'}</span>
-                    <span>Rule y = x + 5</span>
-                  </div>
-                </div>
-              </div>
-
-              <div style={{ marginTop: '0.85rem' }}>
-                <span style={{ fontSize: '0.825rem', fontWeight: 700, color: 'var(--clr-text-soft, #a89e94)' }}>
-                  Does this rule draw a straight line or a curve?
-                </span>
-                <div className="fs-options-grid">
-                  {currentQ.options.map((opt, i) => {
-                    const isSelected = answers[3]?.selectedId === opt.id;
-                    const isDone = isQuestionComplete(3);
-                    let cls = 'fs-option-btn';
-                    if (isSelected) cls += ' selected';
-                    if (isDone) {
-                      if (opt.isCorrect) cls += ' correct';
-                      else if (isSelected) cls += ' incorrect';
-                    }
-                    return (
-                      <button
-                        key={opt.id}
-                        className={cls}
-                        onClick={() => updateAnswer(3, { selectedId: opt.id })}
-                      >
-                        <span className="fs-option-letter">{String.fromCharCode(65 + i)}</span>
-                        <span>{opt.text}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="fs-verification-bar" style={{ marginTop: '0.75rem' }}>
-                <button className="fs-btn-secondary" onClick={() => setActiveStep(2)}>
-                  ← Back to Q2
-                </button>
-                <button
-                  className="fs-btn-primary"
-                  disabled={!isQuestionComplete(3)}
-                  onClick={() => setActiveStep(4)}
-                >
-                  Continue to Next Level →
-                </button>
-              </div>
-
-              {isQuestionComplete(3) && (
-                <div className="fs-earns-card">
-                  <div className="fs-earns-badge">Earned Insight</div>
-                  <p className="fs-earns-text">{currentQ.earns}</p>
-                  <p className="fs-earns-sub">{currentQ.creditExplanation}</p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* =================================================== */}
-          {/* QUESTION 4: TRY YET ANOTHER RULE: y = abs(x)        */}
-          {/* =================================================== */}
-          {activeStep === 4 && (
-            <div>
-              <div className="fs-verification-bar">
-                <div className="fs-verification-group">
-                  <span className="fs-verification-label">Canvas Check:</span>
-                  <div className={`fs-verification-chip ${hasRuleAbsX ? 'verified' : ''}`}>
-                    <span>{hasRuleAbsX ? '✓' : '⏳'}</span>
-                    <span>Rule y = abs(x)</span>
-                  </div>
-                </div>
-              </div>
-
-              <div style={{ marginTop: '0.85rem' }}>
-                <span style={{ fontSize: '0.825rem', fontWeight: 700, color: 'var(--clr-text-soft, #a89e94)' }}>
-                  For every x you pick, does y = abs(x) give exactly one y?
-                </span>
-                <div className="fs-options-grid">
-                  {currentQ.options.map((opt, i) => {
-                    const isSelected = answers[4]?.selectedId === opt.id;
-                    const isDone = isQuestionComplete(4);
-                    let cls = 'fs-option-btn';
-                    if (isSelected) cls += ' selected';
-                    if (isDone) {
-                      if (opt.isCorrect) cls += ' correct';
-                      else if (isSelected) cls += ' incorrect';
-                    }
-                    return (
-                      <button
-                        key={opt.id}
-                        className={cls}
-                        onClick={() => updateAnswer(4, { selectedId: opt.id })}
-                      >
-                        <span className="fs-option-letter">{String.fromCharCode(65 + i)}</span>
-                        <span>{opt.text}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="fs-verification-bar" style={{ marginTop: '0.75rem' }}>
-                <button className="fs-btn-secondary" onClick={() => setActiveStep(3)}>
-                  ← Back to Q3
-                </button>
-                <button
-                  className="fs-btn-primary"
-                  disabled={!isQuestionComplete(4)}
-                  onClick={() => setActiveStep(5)}
-                >
-                  Continue to Next Level →
-                </button>
-              </div>
-
-              {isQuestionComplete(4) && (
-                <div className="fs-earns-card">
-                  <div className="fs-earns-badge">Earned Insight</div>
-                  <p className="fs-earns-text">{currentQ.earns}</p>
-                  <p className="fs-earns-sub">{currentQ.creditExplanation}</p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* =================================================== */}
-          {/* QUESTION 5: WHAT'S THE COMMON THREAD?               */}
-          {/* =================================================== */}
-          {activeStep === 5 && (
-            <div>
-              <div className="fs-options-grid">
-                {currentQ.options.map((opt, i) => {
-                  const isSelected = answers[5]?.selectedId === opt.id;
-                  const isDone = isQuestionComplete(5);
-                  let cls = 'fs-option-btn';
-                  if (isSelected) cls += ' selected';
-                  if (isDone) {
-                    if (opt.isCorrect) cls += ' correct';
-                    else if (isSelected) cls += ' incorrect';
-                  }
-                  return (
-                    <button
-                      key={opt.id}
-                      className={cls}
-                      onClick={() => updateAnswer(5, { selectedId: opt.id })}
-                    >
-                      <span className="fs-option-letter">{String.fromCharCode(65 + i)}</span>
-                      <span>{opt.text}</span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div className="fs-verification-bar" style={{ marginTop: '0.75rem' }}>
-                <button className="fs-btn-secondary" onClick={() => setActiveStep(4)}>
-                  ← Back to Q4
-                </button>
-                <button
-                  className="fs-btn-primary"
-                  disabled={!isQuestionComplete(5)}
-                  onClick={() => setActiveStep(6)}
-                >
-                  Continue to Next Level →
-                </button>
-              </div>
-
-              {isQuestionComplete(5) && (
-                <div className="fs-earns-card">
-                  <div className="fs-earns-badge">Phase 2 Milestone Earned</div>
-                  <p className="fs-earns-text">{currentQ.earns}</p>
-                  <p className="fs-earns-sub">{currentQ.creditExplanation}</p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* =================================================== */}
-          {/* QUESTION 6: A RULE GIVING TWO Y'S (y² = x)          */}
-          {/* =================================================== */}
-          {activeStep === 6 && (
-            <div>
-              <div style={{ marginBottom: '0.75rem' }}>
-                <span style={{ fontSize: '0.825rem', fontWeight: 700, color: '#c4b5fd' }}>
-                  {currentQ.part1.question}
-                </span>
-                <div className="fs-options-grid">
-                  {currentQ.part1.options.map((opt, i) => {
-                    const isSelected = answers[6]?.part1Id === opt.id;
-                    const isCorrect = opt.isCorrect;
-                    let cls = 'fs-option-btn';
-                    if (isSelected) cls += ' selected';
-                    if (answers[6]?.part1Id && isCorrect) cls += ' correct';
-                    else if (isSelected && !isCorrect) cls += ' incorrect';
-                    return (
-                      <button
-                        key={opt.id}
-                        className={cls}
-                        onClick={() => updateAnswer(6, { part1Id: opt.id })}
-                      >
-                        <span className="fs-option-letter">{String.fromCharCode(65 + i)}</span>
-                        <span>{opt.text}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div style={{ marginTop: '0.75rem' }}>
-                <span style={{ fontSize: '0.825rem', fontWeight: 700, color: '#c4b5fd' }}>
-                  {currentQ.part2.question}
-                </span>
-                <div className="fs-options-grid">
-                  {currentQ.part2.options.map((opt, i) => {
-                    const isSelected = answers[6]?.part2Id === opt.id;
-                    const isCorrect = opt.isCorrect;
-                    let cls = 'fs-option-btn';
-                    if (isSelected) cls += ' selected';
-                    if (answers[6]?.part2Id && isCorrect) cls += ' correct';
-                    else if (isSelected && !isCorrect) cls += ' incorrect';
-                    return (
-                      <button
-                        key={opt.id}
-                        className={cls}
-                        onClick={() => updateAnswer(6, { part2Id: opt.id })}
-                      >
-                        <span className="fs-option-letter">{String.fromCharCode(65 + i)}</span>
-                        <span>{opt.text}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="fs-verification-bar" style={{ marginTop: '0.75rem' }}>
-                <button className="fs-btn-secondary" onClick={() => setActiveStep(5)}>
-                  ← Back to Q5
-                </button>
-                <button
-                  className="fs-btn-primary"
-                  disabled={!isQuestionComplete(6)}
-                  onClick={() => setActiveStep(7)}
-                >
-                  Continue to Next Level →
-                </button>
-              </div>
-
-              {isQuestionComplete(6) && (
-                <div className="fs-earns-card">
-                  <div className="fs-earns-badge">Earned Insight</div>
-                  <p className="fs-earns-text">{currentQ.earns}</p>
-                  <p className="fs-earns-sub">{currentQ.creditExplanation}</p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* =================================================== */}
-          {/* QUESTION 7: PLOT y² = x                             */}
-          {/* =================================================== */}
-          {activeStep === 7 && (
-            <div>
-              <div className="fs-verification-bar">
-                <div className="fs-verification-group">
-                  <span className="fs-verification-label">Canvas Check:</span>
-                  <div className={`fs-verification-chip ${hasRuleY2X ? 'verified' : ''}`}>
-                    <span>{hasRuleY2X ? '✓' : '⏳'}</span>
-                    <span>Rule y² = x</span>
-                  </div>
-                  {hasRuleY2X && <span className="fs-verification-tag">✓ Sideways Curve Plotted</span>}
-                </div>
-              </div>
-
-              <div style={{ marginTop: '0.85rem' }}>
-                <span style={{ fontSize: '0.825rem', fontWeight: 700, color: 'var(--clr-text-soft, #a89e94)' }}>
-                  What is the shape of y² = x on the canvas?
-                </span>
-                <div className="fs-options-grid">
-                  {currentQ.options.map((opt, i) => {
-                    const isSelected = answers[7]?.selectedId === opt.id;
-                    const isDone = isQuestionComplete(7);
-                    let cls = 'fs-option-btn';
-                    if (isSelected) cls += ' selected';
-                    if (isDone) {
-                      if (opt.isCorrect) cls += ' correct';
-                      else if (isSelected) cls += ' incorrect';
-                    }
-                    return (
-                      <button
-                        key={opt.id}
-                        className={cls}
-                        onClick={() => updateAnswer(7, { selectedId: opt.id })}
-                      >
-                        <span className="fs-option-letter">{String.fromCharCode(65 + i)}</span>
-                        <span>{opt.text}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="fs-verification-bar" style={{ marginTop: '0.75rem' }}>
-                <button className="fs-btn-secondary" onClick={() => setActiveStep(6)}>
-                  ← Back to Q6
-                </button>
-                <button
-                  className="fs-btn-primary"
-                  disabled={!isQuestionComplete(7)}
-                  onClick={() => setActiveStep(8)}
-                >
-                  Continue to Next Level →
-                </button>
-              </div>
-
-              {isQuestionComplete(7) && (
-                <div className="fs-earns-card">
-                  <div className="fs-earns-badge">Earned Insight</div>
-                  <p className="fs-earns-text">{currentQ.earns}</p>
-                  <p className="fs-earns-sub">{currentQ.creditExplanation}</p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* =================================================== */}
-          {/* QUESTION 8: THE DECIDING QUESTION                   */}
-          {/* =================================================== */}
-          {activeStep === 8 && (
-            <div>
-              <div className="fs-options-grid">
-                {currentQ.options.map((opt, i) => {
-                  const isSelected = answers[8]?.selectedId === opt.id;
-                  const isDone = isQuestionComplete(8);
-                  let cls = 'fs-option-btn';
-                  if (isSelected) cls += ' selected';
-                  if (isDone) {
-                    if (opt.isCorrect) cls += ' correct';
-                    else if (isSelected) cls += ' incorrect';
-                  }
-                  return (
-                    <button
-                      key={opt.id}
-                      className={cls}
-                      onClick={() => updateAnswer(8, { selectedId: opt.id })}
-                    >
-                      <span className="fs-option-letter">{String.fromCharCode(65 + i)}</span>
-                      <span>{opt.text}</span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div className="fs-verification-bar" style={{ marginTop: '0.75rem' }}>
-                <button className="fs-btn-secondary" onClick={() => setActiveStep(7)}>
-                  ← Back to Q7
-                </button>
-                <button
-                  className="fs-btn-primary"
-                  disabled={!isQuestionComplete(8)}
-                  onClick={() => setActiveStep(9)}
-                >
-                  Continue to Next Level →
-                </button>
-              </div>
-
-              {isQuestionComplete(8) && (
-                <div className="fs-earns-card">
-                  <div className="fs-earns-badge">Phase 3 Milestone Earned</div>
-                  <p className="fs-earns-text">{currentQ.earns}</p>
-                  <p className="fs-earns-sub">{currentQ.creditExplanation}</p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* =================================================== */}
-          {/* QUESTION 9: A RULE WITH A NAME: f(x) = x²           */}
-          {/* =================================================== */}
-          {activeStep === 9 && (
-            <div>
-              <div className="fs-verification-bar">
-                <div className="fs-verification-group">
-                  <span className="fs-verification-label">Canvas Check:</span>
-                  <div className={`fs-verification-chip ${hasNamedF ? 'verified' : ''}`}>
-                    <span>{hasNamedF ? '✓' : '⏳'}</span>
-                    <span>Named Rule f(x) = x²</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="fs-inputs-grid">
-                {currentQ.inputs.map((inp) => (
-                  <div key={inp.id} className="fs-input-box">
-                    <label className="fs-input-label">{inp.label}</label>
-                    <input
-                      type="text"
-                      className="fs-input-control"
-                      value={answers[9]?.[inp.id] || ''}
-                      onChange={(e) => updateAnswer(9, { [inp.id]: e.target.value })}
-                      placeholder={inp.placeholder}
-                    />
-                  </div>
-                ))}
-              </div>
-
-              <div className="fs-verification-bar" style={{ marginTop: '0.75rem' }}>
-                <button className="fs-btn-secondary" onClick={() => setActiveStep(8)}>
-                  ← Back to Q8
-                </button>
-                <button
-                  className="fs-btn-primary"
-                  disabled={!isQuestionComplete(9)}
-                  onClick={() => setActiveStep(10)}
-                >
-                  Continue to Next Level →
-                </button>
-              </div>
-
-              {isQuestionComplete(9) && (
-                <div className="fs-earns-card">
-                  <div className="fs-earns-badge">Earned Insight</div>
-                  <p className="fs-earns-text">{currentQ.earns}</p>
-                  <p className="fs-earns-sub">{currentQ.creditExplanation}</p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* =================================================== */}
-          {/* QUESTION 10: DIFFERENT RULES, DIFFERENT NAMES       */}
-          {/* =================================================== */}
-          {activeStep === 10 && (
-            <div>
-              <div className="fs-verification-bar">
-                <div className="fs-verification-group">
-                  <span className="fs-verification-label">Canvas Check:</span>
-                  <div className={`fs-verification-chip ${hasNamedG ? 'verified' : ''}`}>
-                    <span>{hasNamedG ? '✓' : '⏳'}</span>
-                    <span>Named Rule g(x) = abs(x) + 1</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="fs-inputs-grid">
-                {currentQ.inputs.map((inp) => (
-                  <div key={inp.id} className="fs-input-box">
-                    <label className="fs-input-label">{inp.label}</label>
-                    <input
-                      type="text"
-                      className="fs-input-control"
-                      value={answers[10]?.[inp.id] || ''}
-                      onChange={(e) => updateAnswer(10, { [inp.id]: e.target.value })}
-                      placeholder={inp.placeholder}
-                    />
-                  </div>
-                ))}
-              </div>
-
-              <div style={{ marginTop: '0.85rem' }}>
-                <span style={{ fontSize: '0.825rem', fontWeight: 700, color: 'var(--clr-text-soft, #a89e94)' }}>
-                  {currentQ.mcq.question}
-                </span>
-                <div className="fs-options-grid">
-                  {currentQ.mcq.options.map((opt, i) => {
-                    const isSelected = answers[10]?.mcqId === opt.id;
-                    const isDone = isQuestionComplete(10);
-                    let cls = 'fs-option-btn';
-                    if (isSelected) cls += ' selected';
-                    if (isDone) {
-                      if (opt.isCorrect) cls += ' correct';
-                      else if (isSelected) cls += ' incorrect';
-                    }
-                    return (
-                      <button
-                        key={opt.id}
-                        className={cls}
-                        onClick={() => updateAnswer(10, { mcqId: opt.id })}
-                      >
-                        <span className="fs-option-letter">{String.fromCharCode(65 + i)}</span>
-                        <span>{opt.text}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="fs-verification-bar" style={{ marginTop: '0.75rem' }}>
-                <button className="fs-btn-secondary" onClick={() => setActiveStep(9)}>
-                  ← Back to Q9
-                </button>
-                <button
-                  className="fs-btn-primary"
-                  disabled={!isQuestionComplete(10)}
-                  onClick={() => setActiveStep(11)}
-                >
-                  Continue to Next Level →
-                </button>
-              </div>
-
-              {isQuestionComplete(10) && (
-                <div className="fs-earns-card">
-                  <div className="fs-earns-badge">Earned Insight</div>
-                  <p className="fs-earns-text">{currentQ.earns}</p>
-                  <p className="fs-earns-sub">{currentQ.creditExplanation}</p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* =================================================== */}
-          {/* QUESTION 11: VERIFY: EVERY X GETS ONE Y             */}
-          {/* =================================================== */}
-          {activeStep === 11 && (
-            <div>
-              <div className="fs-options-grid">
-                {currentQ.options.map((opt, i) => {
-                  const isSelected = answers[11]?.selectedId === opt.id;
-                  const isDone = isQuestionComplete(11);
-                  let cls = 'fs-option-btn';
-                  if (isSelected) cls += ' selected';
-                  if (isDone) {
-                    if (opt.isCorrect) cls += ' correct';
-                    else if (isSelected) cls += ' incorrect';
-                  }
-                  return (
-                    <button
-                      key={opt.id}
-                      className={cls}
-                      onClick={() => updateAnswer(11, { selectedId: opt.id })}
-                    >
-                      <span className="fs-option-letter">{String.fromCharCode(65 + i)}</span>
-                      <span>{opt.text}</span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div className="fs-verification-bar" style={{ marginTop: '0.75rem' }}>
-                <button className="fs-btn-secondary" onClick={() => setActiveStep(10)}>
-                  ← Back to Q10
-                </button>
-                <button
-                  className="fs-btn-primary"
-                  disabled={!isQuestionComplete(11)}
+                  className="fs-btn-secondary"
                   onClick={() => {
-                    setActiveStep(12);
-                    setIsFinished(true);
+                    setActiveLine(null);
                   }}
                 >
-                  Enter The Naming Handover Ceremony 🏆
+                  ✏️ Change Equation
+                </button>
+              )}
+              <button
+                className="fs-btn-primary"
+                onClick={() => setActiveStep(2)}
+              >
+                Continue to Question 2 →
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* =================================================== */}
+        {/* QUESTION 2: EVALUATE FIRST POINT                    */}
+        {/* =================================================== */}
+        {activeStep === 2 && (
+          <div className="fs-step-intro-block">
+            <div className="fs-equation-pill-bar">
+              <span className="fs-equation-pill-label">Line Equation:</span>
+              <span className="fs-equation-pill-val">{effectiveLine.equationDisplay}</span>
+            </div>
+            <h3 className="fs-step-heading">
+              On your line <span className="fs-equation-highlight">{effectiveLine.equationDisplay}</span>, when <span style={{ color: '#e8864a' }}>x = {inq1.x}</span>, what is the value of <span style={{ color: '#14b8a6' }}>y</span>?
+            </h3>
+            <p className="fs-step-subtext">
+              Look at the dashed vertical guideline at <strong>x = {inq1.x}</strong> on the grid, or substitute <strong>x = {inq1.x}</strong> into <strong>{effectiveLine.equationDisplay}</strong>.
+            </p>
+
+            <form
+              className="fs-inquiry-form"
+              onSubmit={(e) => handleCheckPointAnswer(2, inq1, e)}
+              style={{ marginTop: '0.85rem' }}
+            >
+              <span className="fs-inquiry-prefix">y =</span>
+              <input
+                ref={q2InputRef}
+                type="text"
+                className="fs-inquiry-input"
+                placeholder="?"
+                value={answers[2].yVal}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setAnswers((prev) => ({
+                    ...prev,
+                    2: { ...prev[2], yVal: val, error: null }
+                  }));
+                }}
+                disabled={answers[2].isCorrect}
+              />
+              {!answers[2].isCorrect && (
+                <button type="submit" className="fs-btn-primary">
+                  Check Answer ✓
+                </button>
+              )}
+            </form>
+
+            {answers[2].error && (
+              <div className="fs-inquiry-feedback error" style={{ marginTop: '0.65rem' }}>
+                <span>ℹ</span>
+                <span>{answers[2].error}</span>
+              </div>
+            )}
+
+            {answers[2].isCorrect && (
+              <div className="fs-inquiry-feedback success" style={{ marginTop: '0.65rem' }}>
+                <span>✓</span>
+                <span>Correct! On <strong>{effectiveLine.equationDisplay}</strong>, when x = {inq1.x}, y = {inq1.y}. Point P1({inq1.x}, {inq1.y}) is now pinned on your line.</span>
+              </div>
+            )}
+
+            {/* Step Footer Navigation */}
+            <div className="fs-step-footer-actions between">
+              <button className="fs-btn-secondary" onClick={() => setActiveStep(1)}>
+                ← Back to Question 1
+              </button>
+              <button
+                className="fs-btn-primary"
+                onClick={() => setActiveStep(3)}
+              >
+                Continue to Question 3 →
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* =================================================== */}
+        {/* QUESTION 3: EVALUATE SECOND POINT                   */}
+        {/* =================================================== */}
+        {activeStep === 3 && (
+          <div className="fs-step-intro-block">
+            <div className="fs-equation-pill-bar">
+              <span className="fs-equation-pill-label">Line Equation:</span>
+              <span className="fs-equation-pill-val">{effectiveLine.equationDisplay}</span>
+            </div>
+            <h3 className="fs-step-heading">
+              On your line <span className="fs-equation-highlight">{effectiveLine.equationDisplay}</span>, when <span style={{ color: '#e8864a' }}>x = {inq2.x}</span>, what is the value of <span style={{ color: '#14b8a6' }}>y</span>?
+            </h3>
+            <p className="fs-step-subtext">
+              Trace vertically from <strong>x = {inq2.x}</strong> to where it meets your line, or substitute <strong>x = {inq2.x}</strong> into <strong>{effectiveLine.equationDisplay}</strong>.
+            </p>
+
+            <form
+              className="fs-inquiry-form"
+              onSubmit={(e) => handleCheckPointAnswer(3, inq2, e)}
+              style={{ marginTop: '0.85rem' }}
+            >
+              <span className="fs-inquiry-prefix">y =</span>
+              <input
+                ref={q3InputRef}
+                type="text"
+                className="fs-inquiry-input"
+                placeholder="?"
+                value={answers[3].yVal}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setAnswers((prev) => ({
+                    ...prev,
+                    3: { ...prev[3], yVal: val, error: null }
+                  }));
+                }}
+                disabled={answers[3].isCorrect}
+              />
+              {!answers[3].isCorrect && (
+                <button type="submit" className="fs-btn-primary">
+                  Check Answer ✓
+                </button>
+              )}
+            </form>
+
+            {answers[3].error && (
+              <div className="fs-inquiry-feedback error" style={{ marginTop: '0.65rem' }}>
+                <span>ℹ</span>
+                <span>{answers[3].error}</span>
+              </div>
+            )}
+
+            {answers[3].isCorrect && (
+              <div className="fs-inquiry-feedback success" style={{ marginTop: '0.65rem' }}>
+                <span>✓</span>
+                <span>Correct! On <strong>{effectiveLine.equationDisplay}</strong>, when x = {inq2.x}, y = {inq2.y}. Point P2({inq2.x}, {inq2.y}) is pinned on your line.</span>
+              </div>
+            )}
+
+            {/* Step Footer Navigation */}
+            <div className="fs-step-footer-actions between">
+              <button className="fs-btn-secondary" onClick={() => setActiveStep(2)}>
+                ← Back to Question 2
+              </button>
+              <button
+                className="fs-btn-primary"
+                onClick={() => setActiveStep(4)}
+              >
+                Continue to Question 4 →
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* =================================================== */}
+        {/* QUESTION 4: THIRD POINT                             */}
+        {/* =================================================== */}
+        {activeStep === 4 && (
+          <div className="fs-step-intro-block">
+            <div className="fs-equation-pill-bar">
+              <span className="fs-equation-pill-label">Line Equation:</span>
+              <span className="fs-equation-pill-val">{effectiveLine.equationDisplay}</span>
+            </div>
+            <h3 className="fs-step-heading">
+              On your line <span className="fs-equation-highlight">{effectiveLine.equationDisplay}</span>, when <span style={{ color: '#e8864a' }}>x = {inq3.x}</span>, what is the value of <span style={{ color: '#14b8a6' }}>y</span>?
+            </h3>
+            <p className="fs-step-subtext">
+              Find where <strong>x = {inq3.x}</strong> meets your line on the grid, or substitute <strong>x = {inq3.x}</strong> into <strong>{effectiveLine.equationDisplay}</strong>.
+            </p>
+
+            <form
+              className="fs-inquiry-form"
+              onSubmit={(e) => handleCheckPointAnswer(4, inq3, e)}
+              style={{ marginTop: '0.85rem' }}
+            >
+              <span className="fs-inquiry-prefix">y =</span>
+              <input
+                ref={q4InputRef}
+                type="text"
+                className="fs-inquiry-input"
+                placeholder="?"
+                value={answers[4].yVal}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setAnswers((prev) => ({
+                    ...prev,
+                    4: { ...prev[4], yVal: val, error: null }
+                  }));
+                }}
+                disabled={answers[4].isCorrect}
+              />
+              {!answers[4].isCorrect && (
+                <button type="submit" className="fs-btn-primary">
+                  Check Answer ✓
+                </button>
+              )}
+            </form>
+
+            {answers[4].error && (
+              <div className="fs-inquiry-feedback error" style={{ marginTop: '0.65rem' }}>
+                <span>ℹ</span>
+                <span>{answers[4].error}</span>
+              </div>
+            )}
+
+            {answers[4].isCorrect && (
+              <div className="fs-inquiry-feedback success" style={{ marginTop: '0.65rem' }}>
+                <span>✓</span>
+                <span>Correct! On <strong>{effectiveLine.equationDisplay}</strong>, when x = {inq3.x}, y = {inq3.y}. All 3 points are now pinned on your line.</span>
+              </div>
+            )}
+
+            {/* Step Footer Navigation */}
+            <div className="fs-step-footer-actions between">
+              <button className="fs-btn-secondary" onClick={() => setActiveStep(3)}>
+                ← Back to Question 3
+              </button>
+              <button
+                className="fs-btn-primary"
+                onClick={() => setActiveStep(5)}
+              >
+                Continue to Question 5 →
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* =================================================== */}
+        {/* QUESTION 5: ROLE OF X (INPUT VS OUTPUT)             */}
+        {/* =================================================== */}
+        {activeStep === 5 && (
+          <div className="fs-step-intro-block">
+            <div className="fs-equation-pill-bar">
+              <span className="fs-equation-pill-label">Line Equation:</span>
+              <span className="fs-equation-pill-val">{effectiveLine.equationDisplay}</span>
+            </div>
+            <h3 className="fs-step-heading">
+              In your equation <span className="fs-equation-highlight">{effectiveLine.equationDisplay}</span>, what do you think <span style={{ color: '#e8864a' }}>x</span> is acting as?
+            </h3>
+            <p className="fs-step-subtext">
+              Think about how you evaluated each point: you were given a value for <strong>x</strong> first, substituted it into the rule, and calculated <strong>y</strong>.
+            </p>
+
+            {/* MCQ Options */}
+            <div className="fs-options-grid" style={{ marginTop: '0.85rem' }}>
+              {Q5_OPTIONS.map((opt, i) => {
+                const isSelected = answers[5]?.selectedId === opt.id;
+                const isSubmitted = answers[5]?.isSubmitted;
+                let cls = 'fs-option-btn';
+                if (isSelected) cls += ' selected';
+                if (isSubmitted && isSelected) {
+                  cls += opt.isCorrect ? ' correct' : ' incorrect';
+                } else if (answers[5]?.isCorrect && opt.isCorrect) {
+                  cls += ' correct';
+                }
+
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    className={cls}
+                    onClick={() => {
+                      if (!answers[5]?.isCorrect) {
+                        setAnswers((prev) => ({
+                          ...prev,
+                          5: { ...prev[5], selectedId: opt.id, isSubmitted: false, error: null }
+                        }));
+                      }
+                    }}
+                    disabled={answers[5]?.isCorrect}
+                  >
+                    <span className="fs-option-letter">{String.fromCharCode(65 + i)}</span>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                      <span style={{ fontWeight: 700, fontSize: '0.92rem' }}>{opt.label}</span>
+                      <span style={{ fontSize: '0.78rem', color: 'var(--clr-text-soft, #a89e94)' }}>{opt.description}</span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {answers[5]?.error && (
+              <div className="fs-inquiry-feedback error" style={{ marginTop: '0.75rem' }}>
+                <span>ℹ</span>
+                <span>{answers[5].error}</span>
+              </div>
+            )}
+
+            {!answers[5]?.isCorrect && (
+              <div style={{ marginTop: '0.85rem' }}>
+                <button
+                  type="button"
+                  className="fs-btn-primary"
+                  disabled={!answers[5]?.selectedId}
+                  onClick={handleCheckQ5Answer}
+                >
+                  Check Answer ✓
                 </button>
               </div>
+            )}
 
-              {isQuestionComplete(11) && (
-                <div className="fs-earns-card">
-                  <div className="fs-earns-badge">🎉 Final Question Complete!</div>
-                  <p className="fs-earns-text">{currentQ.earns}</p>
-                  <p className="fs-earns-sub">{currentQ.creditExplanation}</p>
+            {answers[5]?.isCorrect && (
+              <div>
+                <div className="fs-inquiry-feedback success" style={{ marginTop: '0.75rem' }}>
+                  <span>✓</span>
+                  <span>Correct! <strong>x</strong> is the <strong>Input</strong> that you feed into the rule.</span>
+                </div>
+
+                {/* EARNED INSIGHT CARD */}
+                <div className="fs-earns-card" style={{ marginTop: '0.85rem' }}>
+                  <div className="fs-earns-badge">✨ Core Intuition Earned</div>
+                  <h4 style={{ margin: '0 0 0.35rem 0', color: '#ede8e3', fontSize: '1rem', fontWeight: 800 }}>
+                    One Input x ➔ Exactly One Output y
+                  </h4>
+                  <p className="fs-earns-text" style={{ fontSize: '0.88rem', fontWeight: 500 }}>
+                    Notice what happened across all three points: For every single input <strong>x</strong> you chose on your line <strong>{effectiveLine.equationDisplay}</strong>, the rule gave back <strong>exactly one output y</strong>.
+                  </p>
+                  <p className="fs-earns-sub">
+                    A vertical line through any x touches your line at only one place. That unique output is what makes this rule a well-defined function.
+                  </p>
+
+                  <table className="fs-summary-table">
+                    <thead>
+                      <tr>
+                        <th>Input (x)</th>
+                        <th>Rule: {effectiveLine.equationDisplay}</th>
+                        <th>Output (y)</th>
+                        <th>Coordinate</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {effectiveLine.inquiries.map((inq, idx) => (
+                        <tr key={idx}>
+                          <td>x = {inq.x}</td>
+                          <td style={{ color: '#a89e94' }}>
+                            {effectiveLine.m}({inq.x}) {effectiveLine.c >= 0 ? `+ ${effectiveLine.c}` : `- ${Math.abs(effectiveLine.c)}`}
+                          </td>
+                          <td style={{ color: '#14b8a6', fontWeight: 700 }}>y = {inq.y}</td>
+                          <td style={{ color: '#e8864a' }}>({inq.x}, {inq.y})</td>
+                          <td style={{ color: '#34d399', fontWeight: 600 }}>✓ Pinned</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* Step Footer Navigation */}
+            <div className="fs-step-footer-actions between">
+              <button className="fs-btn-secondary" onClick={() => setActiveStep(4)}>
+                ← Back to Question 4
+              </button>
+              <div style={{ display: 'flex', gap: '0.6rem' }}>
+                <button className="fs-btn-secondary" onClick={handleResetNewJourney}>
+                  ✏️ Input Another Line
+                </button>
+                <button className="fs-btn-primary" onClick={() => setActiveStep(6)}>
+                  Continue to Question 6 →
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* =================================================== */}
+        {/* QUESTION 6: INTRODUCING f(x) FUNCTION NOTATION       */}
+        {/* =================================================== */}
+        {activeStep === 6 && (
+          <div className="fs-step-intro-block">
+            {/* Visual Handover & Intuition Container */}
+            <div className="fs-handover-box">
+              <span className="fs-handover-badge">✨ New Notation Unlocked</span>
+              <h3 className="fs-handover-title">
+                Writing the Rule to Show <span style={{ color: 'var(--clr-accent, #e8864a)' }}>x</span> as the Input
+              </h3>
+
+              {/* Visual Transformation Flow: y = 2x + 1 ➔ f(x) = 2x + 1 */}
+              <div className="fs-notation-flow">
+                <div className="fs-flow-card">
+                  <span className="fs-flow-tag">Line Equation</span>
+                  <span className="fs-flow-math">{effectiveLine.equationDisplay}</span>
+                  <span className="fs-flow-note">Outputs y from x</span>
+                </div>
+
+                <span className="fs-flow-arrow">➔</span>
+
+                <div className="fs-flow-card new">
+                  <span className="fs-flow-tag highlight">Function Notation</span>
+                  <span className="fs-flow-math highlight">
+                    f(x) = {effectiveLine.equationDisplay.replace(/^y\s*=\s*/, '')}
+                  </span>
+                  <span className="fs-flow-note" style={{ color: 'var(--clr-accent, #e8864a)', fontWeight: 600 }}>
+                    Shows x going into rule f
+                  </span>
+                </div>
+              </div>
+
+              {/* Machine Diagram */}
+              <div className="fs-machine-diagram">
+                <div className="fs-diagram-box input-box">
+                  <span className="fs-diagram-label">INPUT</span>
+                  <span className="fs-diagram-val">x</span>
+                </div>
+                <span className="fs-diagram-arrow">──▶</span>
+                <div className="fs-diagram-box machine-box">
+                  <span className="fs-diagram-label">RULE / MACHINE</span>
+                  <span className="fs-diagram-val">
+                    f(·) = {effectiveLine.m}(·) {effectiveLine.c >= 0 ? `+ ${effectiveLine.c}` : `- ${Math.abs(effectiveLine.c)}`}
+                  </span>
+                </div>
+                <span className="fs-diagram-arrow">──▶</span>
+                <div className="fs-diagram-box output-box">
+                  <span className="fs-diagram-label">OUTPUT</span>
+                  <span className="fs-diagram-val">f(x)</span>
+                </div>
+              </div>
+
+              {/* 3 Punchy Points */}
+              <div className="fs-handover-points">
+                <div className="fs-point-item">
+                  <span className="fs-point-bullet">•</span>
+                  <span><strong>f</strong> is the name of our rule/machine.</span>
+                </div>
+                <div className="fs-point-item">
+                  <span className="fs-point-bullet">•</span>
+                  <span><strong>(x)</strong> shows that <strong>x</strong> is going inside the rule as the input.</span>
+                </div>
+                <div className="fs-point-item">
+                  <span className="fs-point-bullet">•</span>
+                  <span><strong>f(x)</strong> is the output produced (pronounced <em>"f of x"</em>). It replaces <strong>y</strong>!</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Intuition Check Question */}
+            <div style={{ marginTop: '1.25rem' }}>
+              <div className="fs-inquiry-header">
+                <span className="fs-inquiry-tag">Check Your Understanding</span>
+                <h3 className="fs-inquiry-title">In the notation f(x), what do the parentheses (x) mean?</h3>
+                <p className="fs-inquiry-desc">
+                  Select the option that best describes what (x) is doing:
+                </p>
+              </div>
+
+              <div className="fs-options-grid" style={{ gridTemplateColumns: '1fr', gap: '0.6rem' }}>
+                {Q6_OPTIONS.map((opt, i) => {
+                  const isSelected = answers[6]?.selectedId === opt.id;
+                  let cls = 'fs-option-btn';
+                  if (isSelected) cls += ' selected';
+                  if (answers[6]?.isSubmitted && isSelected) {
+                    cls += opt.isCorrect ? ' correct' : ' incorrect';
+                  } else if (answers[6]?.isCorrect && opt.isCorrect) {
+                    cls += ' correct';
+                  }
+
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      className={cls}
+                      onClick={() => {
+                        if (!answers[6]?.isCorrect) {
+                          setAnswers((prev) => ({
+                            ...prev,
+                            6: { ...prev[6], selectedId: opt.id, isSubmitted: false, error: null }
+                          }));
+                        }
+                      }}
+                      disabled={answers[6]?.isCorrect}
+                    >
+                      <span className="fs-option-letter">{String.fromCharCode(65 + i)}</span>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                        <span style={{ fontWeight: 700, fontSize: '0.92rem' }}>{opt.label}</span>
+                        <span style={{ fontSize: '0.78rem', color: 'var(--clr-text-soft, #a89e94)' }}>{opt.description}</span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {answers[6]?.error && (
+                <div className="fs-inquiry-feedback error" style={{ marginTop: '0.75rem' }}>
+                  <span>ℹ</span>
+                  <span>{answers[6].error}</span>
+                </div>
+              )}
+
+              {!answers[6]?.isCorrect && (
+                <div style={{ marginTop: '0.85rem' }}>
+                  <button
+                    type="button"
+                    className="fs-btn-primary"
+                    disabled={!answers[6]?.selectedId}
+                    onClick={handleCheckQ6Answer}
+                  >
+                    Check Answer ✓
+                  </button>
+                </div>
+              )}
+
+              {answers[6]?.isCorrect && (
+                <div>
+                  <div className="fs-inquiry-feedback success" style={{ marginTop: '0.75rem' }}>
+                    <span>✓</span>
+                    <span>
+                      Spot on! <strong>f(x)</strong> is not multiplication. The parentheses simply show that <strong>x</strong> enters rule <strong>f</strong> as the input.
+                    </span>
+                  </div>
+
+                  {/* Summary Card with f(x) evaluated values */}
+                  <div className="fs-earns-card" style={{ marginTop: '0.85rem' }}>
+                    <div className="fs-earns-badge">🎉 Function Notation Mastered!</div>
+                    <h4 style={{ margin: '0 0 0.35rem 0', color: '#ede8e3', fontSize: '1rem', fontWeight: 800 }}>
+                      f(x) = {effectiveLine.equationDisplay.replace(/^y\s*=\s*/, '')}
+                    </h4>
+                    <p className="fs-earns-text" style={{ fontSize: '0.88rem', fontWeight: 500 }}>
+                      Here is how the three points you found look in function notation:
+                    </p>
+
+                    <table className="fs-summary-table">
+                      <thead>
+                        <tr>
+                          <th>Input</th>
+                          <th>Function Call</th>
+                          <th>Computation</th>
+                          <th>Output</th>
+                          <th>Coordinate</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {effectiveLine.inquiries.map((inq, idx) => (
+                          <tr key={idx}>
+                            <td>x = {inq.x}</td>
+                            <td style={{ color: 'var(--clr-accent, #e8864a)', fontWeight: 700 }}>f({inq.x})</td>
+                            <td style={{ color: '#a89e94' }}>
+                              {effectiveLine.m}({inq.x}) {effectiveLine.c >= 0 ? `+ ${effectiveLine.c}` : `- ${Math.abs(effectiveLine.c)}`}
+                            </td>
+                            <td style={{ color: '#14b8a6', fontWeight: 700 }}>{inq.y}</td>
+                            <td style={{ color: '#e8864a' }}>({inq.x}, {inq.y})</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               )}
             </div>
-          )}
-        </div>
-      </div>
 
-      {/* Bottom Nav */}
-      <div className="fs-bottom-nav">
-        <button
-          className="fs-nav-btn"
-          onClick={() => setActiveStep((prev) => Math.max(1, prev - 1))}
-          disabled={activeStep === 1}
-        >
-          ← Previous Question
-        </button>
-
-        <span style={{ fontSize: '0.8rem', color: 'var(--clr-text-soft, #a89e94)' }}>
-          {PATH_META.title} ({completedCount} of 11 questions completed)
-        </span>
-
-        <button
-          className="fs-nav-btn"
-          onClick={() => {
-            if (activeStep < 11) {
-              setActiveStep((prev) => prev + 1);
-            } else {
-              setActiveStep(12);
-              setIsFinished(true);
-            }
-          }}
-          disabled={!isQuestionComplete(activeStep)}
-        >
-          Next Question →
-        </button>
+            {/* Step Footer Navigation */}
+            <div className="fs-step-footer-actions between">
+              <button className="fs-btn-secondary" onClick={() => setActiveStep(5)}>
+                ← Back to Question 5
+              </button>
+              <button className="fs-btn-primary" onClick={handleResetNewJourney}>
+                ✏️ Input Another Line
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

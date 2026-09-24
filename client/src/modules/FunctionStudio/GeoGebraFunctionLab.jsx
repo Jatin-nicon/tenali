@@ -15,11 +15,15 @@ import './GeoGebraFunctionLab.css';
 export default function GeoGebraFunctionLab({
   plottedPoints = [],
   plottedRules = [],
+  activeLine = null,
+  targetX = null,
+  verifiedPoints = [],
   onPointPlotted,
   onRuleEntered,
   onClearCanvas,
   inputPlaceholder = 'e.g. y = x^2 or f(x) = x^2 or A = (-2, 4)',
-  suggestedShortcuts = []
+  suggestedShortcuts = [],
+  showInputBar = false
 }) {
   const [inputVal, setInputVal] = useState('');
   const [feedback, setFeedback] = useState(null);
@@ -56,27 +60,68 @@ export default function GeoGebraFunctionLab({
     if (!api) return;
 
     try {
-      // 1. Sync Points
-      const allGgbPoints = api.getAllObjectNames('point') || [];
-      const currentPointNames = new Set(plottedPoints.map((p) => p.name));
+      // 1. Sync Active Line
+      const activeLineId = activeLine ? (activeLine.id || 'mainLine') : null;
+      if (activeLine) {
+        api.evalCommand(`${activeLineId}: y = ${activeLine.cmd}`);
+        const color = activeLine.color || [232, 134, 74]; // Tenali Amber
+        api.setColor(activeLineId, color[0], color[1], color[2]);
+        api.setLineThickness(activeLineId, 5);
+        if (activeLine.label) {
+          try {
+            api.setCaption(activeLineId, activeLine.label);
+            api.setLabelStyle(activeLineId, 3);
+          } catch (e) {}
+        }
+        api.setLabelVisible(activeLineId, true);
+      }
 
+      // 2. Sync Target X Guideline (trace guideline)
+      if (targetX !== null && targetX !== undefined) {
+        api.evalCommand(`targetGuide: x = ${targetX}`);
+        api.setColor('targetGuide', 20, 184, 166); // Tenali Teal
+        api.setLineStyle('targetGuide', 1); // Dashed
+        api.setLineThickness('targetGuide', 2);
+        api.setLabelVisible('targetGuide', false);
+      } else {
+        try {
+          api.deleteObject('targetGuide');
+        } catch (e) {}
+      }
+
+      // 3. Sync Verified Points
+      const allVerifiedNames = new Set(verifiedPoints.map((p, i) => p.name || `P_${i + 1}`));
+      verifiedPoints.forEach((pt, i) => {
+        const ptName = pt.name || `P_${i + 1}`;
+        api.evalCommand(`${ptName} = (${pt.x}, ${pt.y})`);
+        api.setColor(ptName, 20, 184, 166); // Tenali Teal
+        api.setPointSize(ptName, 7);
+        api.setLabelVisible(ptName, true);
+        api.setLabelStyle(ptName, 1); // 1 = Name & Value
+      });
+
+      // 4. Sync custom plottedPoints
+      const currentCustomPointNames = new Set(plottedPoints.map((p) => p.name));
+      plottedPoints.forEach((pt) => {
+        api.evalCommand(`${pt.name} = (${pt.x}, ${pt.y})`);
+        api.setColor(pt.name, 232, 134, 74);
+        api.setPointSize(pt.name, 6);
+        api.setLabelVisible(pt.name, true);
+        api.setLabelStyle(pt.name, 1);
+      });
+
+      // 5. Clean up any leftover points
+      const allAllowedPoints = new Set([...allVerifiedNames, ...currentCustomPointNames]);
+      const allGgbPoints = api.getAllObjectNames('point') || [];
       allGgbPoints.forEach((ptName) => {
-        if (!currentPointNames.has(ptName)) {
+        if (!allAllowedPoints.has(ptName)) {
           try {
             api.deleteObject(ptName);
           } catch (e) {}
         }
       });
 
-      plottedPoints.forEach((pt) => {
-        api.evalCommand(`${pt.name} = (${pt.x}, ${pt.y})`);
-        api.setColor(pt.name, 232, 134, 74); // Warm brand orange
-        api.setPointSize(pt.name, 6);
-        api.setLabelVisible(pt.name, true);
-        api.setLabelStyle(pt.name, 1);
-      });
-
-      // 2. Sync Plotted Rules
+      // 6. Sync Plotted Rules
       const existingRules = new Set(plottedRules.map((r) => r.id));
       const allFunctions = [
         ...(api.getAllObjectNames('function') || []),
@@ -85,7 +130,8 @@ export default function GeoGebraFunctionLab({
       ];
 
       allFunctions.forEach((objName) => {
-        if (!existingRules.has(objName) && !currentPointNames.has(objName)) {
+        if (objName === 'targetGuide' || objName === activeLineId) return;
+        if (!existingRules.has(objName) && !allAllowedPoints.has(objName)) {
           try {
             api.deleteObject(objName);
           } catch (e) {}
@@ -103,7 +149,7 @@ export default function GeoGebraFunctionLab({
     } catch (err) {
       console.warn('GeoGebra sync warning:', err);
     }
-  }, [plottedPoints, plottedRules]);
+  }, [activeLine, targetX, verifiedPoints, plottedPoints, plottedRules]);
 
   // Initialize GeoGebra Applet
   useEffect(() => {
@@ -146,8 +192,8 @@ export default function GeoGebraFunctionLab({
           try {
             api.setPerspective('G');
             api.evalCommand('SetPerspective("G")');
-            // Centered Cartesian viewport fitting parabolas, lines, and V-shapes
-            api.setCoordSystem(-8, 8, -5, 12);
+            // Centered Cartesian viewport fitting lines and curves
+            api.setCoordSystem(-7, 7, -7, 9);
             api.evalCommand('SetAxesRatio(1, 1)');
             syncCanvasObjects();
           } catch (err) {
@@ -285,11 +331,11 @@ export default function GeoGebraFunctionLab({
       const ruleId = `func_${funcName}`;
       const cmd = `${funcName}(x) = ${rhs}`;
 
-      // Distinguish colors: f -> purple, g -> amber, others -> teal
-      let color = [99, 102, 241];
-      if (funcName === 'f') color = [124, 58, 237]; // Purple
-      else if (funcName === 'g') color = [245, 158, 11]; // Amber
-      else color = [20, 184, 166]; // Teal
+      // Distinguish colors: f -> Tenali amber, g -> teal, others -> sky blue
+      let color = [20, 184, 166];
+      if (funcName === 'f') color = [232, 134, 74]; // Tenali Amber
+      else if (funcName === 'g') color = [20, 184, 166]; // Tenali Teal
+      else color = [59, 130, 246]; // Blue
 
       if (api) {
         try {
@@ -328,10 +374,10 @@ export default function GeoGebraFunctionLab({
       const ruleId = `rule_${rhs.replace(/[^a-zA-Z0-9]/g, '_')}`;
       const cmd = `y = ${rhs}`;
 
-      let color = [59, 130, 246]; // Blue default
-      if (rhs.includes('^2')) color = [124, 58, 237]; // Purple for x^2
+      let color = [20, 184, 166]; // Teal default
+      if (rhs.includes('^2') || rhs.includes('²')) color = [232, 134, 74]; // Tenali Amber for x^2
       else if (rhs.includes('+') || rhs.includes('-')) color = [20, 184, 166]; // Teal for lines
-      else if (rhs.includes('abs')) color = [245, 158, 11]; // Amber for abs
+      else if (rhs.includes('abs')) color = [217, 119, 6]; // Warm Amber for abs
 
       if (api) {
         try {
@@ -403,7 +449,7 @@ export default function GeoGebraFunctionLab({
   const handleRecenter = () => {
     if (ggbApiRef.current) {
       try {
-        ggbApiRef.current.setCoordSystem(-8, 8, -5, 12);
+        ggbApiRef.current.setCoordSystem(-7, 7, -7, 9);
         ggbApiRef.current.evalCommand('SetAxesRatio(1, 1)');
       } catch (e) {}
     }
@@ -458,9 +504,21 @@ export default function GeoGebraFunctionLab({
         </div>
 
         {/* Live Plotted Objects Indicator */}
-        {(plottedPoints.length > 0 || plottedRules.length > 0) && (
+        {(activeLine || verifiedPoints.length > 0 || plottedPoints.length > 0 || plottedRules.length > 0) && (
           <div className="func-lab-objects-strip">
             <span style={{ fontWeight: 600 }}>Active Canvas Objects:</span>
+            {activeLine && (
+              <span className="func-lab-object-chip">
+                <span className="func-lab-object-dot" style={{ backgroundColor: '#e8864a' }} />
+                {activeLine.label || `y = ${activeLine.cmd}`}
+              </span>
+            )}
+            {verifiedPoints.map((p, i) => (
+              <span key={p.name || i} className="func-lab-object-chip">
+                <span className="func-lab-object-dot" style={{ backgroundColor: '#14b8a6' }} />
+                {p.name || `P_${i + 1}`} ({p.x}, {p.y})
+              </span>
+            ))}
             {plottedRules.map((r) => (
               <span key={r.id} className="func-lab-object-chip">
                 <span
@@ -468,7 +526,7 @@ export default function GeoGebraFunctionLab({
                   style={{
                     backgroundColor: r.color
                       ? `rgb(${r.color[0]}, ${r.color[1]}, ${r.color[2]})`
-                      : '#7c3aed'
+                      : '#e8864a'
                   }}
                 />
                 {r.name}
@@ -484,51 +542,53 @@ export default function GeoGebraFunctionLab({
         )}
       </div>
 
-      {/* 2. MIDDLE: INPUT BAR */}
-      <div className="func-lab-input-card">
-        <div className="func-lab-input-row">
-          <input
-            type="text"
-            className="func-lab-input-field"
-            value={inputVal}
-            onChange={(e) => setInputVal(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') handlePlotInput();
-            }}
-            placeholder={inputPlaceholder}
-            aria-label="GeoGebra Command Input"
-          />
-          <button className="func-lab-plot-btn" onClick={() => handlePlotInput()}>
-            Plot on Canvas 🚀
-          </button>
+      {/* 2. MIDDLE: INPUT BAR (OPTIONAL) */}
+      {showInputBar && (
+        <div className="func-lab-input-card">
+          <div className="func-lab-input-row">
+            <input
+              type="text"
+              className="func-lab-input-field"
+              value={inputVal}
+              onChange={(e) => setInputVal(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handlePlotInput();
+              }}
+              placeholder={inputPlaceholder}
+              aria-label="GeoGebra Command Input"
+            />
+            <button className="func-lab-plot-btn" onClick={() => handlePlotInput()}>
+              Plot on Canvas 🚀
+            </button>
+          </div>
+
+          {/* Shortcuts for active step */}
+          {suggestedShortcuts && suggestedShortcuts.length > 0 && (
+            <div className="func-lab-shortcuts">
+              <span className="func-lab-shortcut-label">Quick Commands:</span>
+              {suggestedShortcuts.map((sc, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  className="func-lab-shortcut-chip"
+                  onClick={() => {
+                    setInputVal(sc);
+                    handlePlotInput(sc);
+                  }}
+                >
+                  {sc}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {feedback && (
+            <div className={`func-lab-feedback ${feedback.type}`}>
+              {feedback.msg}
+            </div>
+          )}
         </div>
-
-        {/* Shortcuts for active step */}
-        {suggestedShortcuts && suggestedShortcuts.length > 0 && (
-          <div className="func-lab-shortcuts">
-            <span className="func-lab-shortcut-label">Quick Commands:</span>
-            {suggestedShortcuts.map((sc, i) => (
-              <button
-                key={i}
-                type="button"
-                className="func-lab-shortcut-chip"
-                onClick={() => {
-                  setInputVal(sc);
-                  handlePlotInput(sc);
-                }}
-              >
-                {sc}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {feedback && (
-          <div className={`func-lab-feedback ${feedback.type}`}>
-            {feedback.msg}
-          </div>
-        )}
-      </div>
+      )}
     </div>
   );
 }
