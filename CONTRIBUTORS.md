@@ -50,7 +50,7 @@
 <!-- live-snapshot:start -->
 | 🏆 Commits | 🔀 Merged PRs | 👥 Contributors | 🧩 Puzzles | 📚 Vocab | 🌍 GK |
 |----------:|------------:|--------------:|---------:|-------:|----:|
-| **1068** | **110** | **43** | **93** | **7,662** | **991** |
+| **1070** | **110** | **43** | **93** | **7,662** | **991** |
 <!-- live-snapshot:end -->
 
 ## 🥇 Leaderboard
@@ -71,8 +71,8 @@ _Live data — last regenerated 2026-09-24 · auto-refreshed by [`github-actions
 | 9. | **Ritish Karmakar** | [Ritish007-svg](https://github.com/Ritish007-svg) | **27** | 1  | Percentages Level-wise Explanation |
 | 10. | **saniyajos**<br/><sub>↳ also commits as <b>SaniyaJos</b></sub> | [saniyajos](https://github.com/saniyajos) | **22** | 0  | — |
 | 11. | **K C Dharshan** | [KCDharshan9](https://github.com/KCDharshan9) | **21** | 1  | Tap-to-Define Word Glossary |
-| 12. | **Ahana Banerjee** | [ahana4banerjee](https://github.com/ahana4banerjee) | **20** | 2  | Goal Practice & Learning Journey |
-| 13. | **jatin-kumar**<br/><sub>↳ also commits as <b>Jatin Kumar</b></sub> | [jatin-kumar](https://github.com/jatin-kumar) | **18** | 0  | — |
+| 12. | **jatin-kumar**<br/><sub>↳ also commits as <b>Jatin Kumar</b></sub> | [jatin-kumar](https://github.com/jatin-kumar) | **20** | 0  | — |
+| 13. | **Ahana Banerjee** | [ahana4banerjee](https://github.com/ahana4banerjee) | **20** | 2  | Goal Practice & Learning Journey |
 | 14. | **harshyy07** | [harshyy07](https://github.com/harshyy07) | **16** | 1  | — |
 | 15. | **Shubh Dixit**<br/><sub>↳ also commits as <b>Shubh dixit</b></sub> | [Shubhdix9](https://github.com/Shubhdix9) | **16** | 2  | Premium UI Suite + Word Games |
 | 16. | **athira**<br/><sub>↳ also commits as <b>Athira</b></sub> | [athira](https://github.com/athira) | **15** | 0  | — |
@@ -405,23 +405,18 @@ _Live data — last regenerated 2026-09-24 · auto-refreshed by [`github-actions
   <table>
     <tr>
       <td align="center" width="220">
-        <a href="https://github.com/ahana4banerjee"><img src="https://avatars.githubusercontent.com/u/166562662?v=4&s=120" width="120" style="border-radius:50%; border:3px solid #E91E63;" alt="Ahana Banerjee"/></a>
-        <br/><b>Ahana Banerjee</b>
-        <br/><a href="https://github.com/ahana4banerjee">@ahana4banerjee</a>
-        <br/><sub>🏆 20 commits · 2 PRs merged</sub>
-        <br/><sub>📍 Hyderabad, India · 🌐 banerjeeahana4@gmail.com</sub>
+        <a href="https://github.com/jatin-kumar"><img src="https://github.com/jatin-kumar.png?size=120&s=120" width="120" style="border-radius:50%; border:3px solid #888888;" alt="jatin-kumar"/></a>
+        <br/><b>jatin-kumar</b>
+        <br/><a href="https://github.com/jatin-kumar">@jatin-kumar</a>
+        <br/><sub>🏆 20 commits · 0 PRs merged</sub>
+        <br/><sub>🔗 also commits as: <b>Jatin Kumar</b></sub>
       </td>
       <td valign="top" width="*">
-        <h4>12. Goal Practice & Learning Journey</h4>
+        <h4>12. New Contributor</h4>
         <ul>
-          <li>📚 <b>Goal-based Practice Sessions (PR #11)</b> — isolated goal-practice module that hides "standard mode" pills</li>
-          <li>🧠 <b>Learning Intelligence Layer (LIL)</b> — architected LIL with cross-app goal-practice integration</li>
-          <li>🪜 <b>AL Learning Checkpoints (PR #34)</b> — sequential unlock rules with <b>15-question topic checkpoints</b></li>
-          <li>🎯 <b>Targeted concept revision loop</b> — automatically revisits weak concepts</li>
-          <li>🎉 <b>Confetti animations</b> — checkpoint completion celebrations</li>
-          <li>🚫 <b>Block successive topics</b> — locked topics until the previous is mastered</li>
-          <li>🛡️ <b>"Oh no, it's okay"</b> — replaced harsh wrong-answer copy with kid-friendly wording</li>
-          <li>🔀 <b>6× merge conflict resolutions</b> — clean upstream merges for both feature branches</li>
+          <li>🆕 <b>New contributor</b> — auto-added by the readme-bot</li>
+          <li>📊 <b>20 commits</b> across this repo's history</li>
+          <li>🔗 <i>Add a <code>FALLBACK_PROFILES</code> entry in <code>scripts/update-readme-contributors.js</code> to enrich this card with real name, avatar, location, and curated feature list</i></li>
         </ul>
       </td>
     </tr>
@@ -432,18 +427,23 @@ _Live data — last regenerated 2026-09-24 · auto-refreshed by [`github-actions
   <table>
     <tr>
       <td align="center" width="220">
-        <a href="https://github.com/jatin-kumar"><img src="https://github.com/jatin-kumar.png?size=120&s=120" width="120" style="border-radius:50%; border:3px solid #888888;" alt="jatin-kumar"/></a>
-        <br/><b>jatin-kumar</b>
-        <br/><a href="https://github.com/jatin-kumar">@jatin-kumar</a>
-        <br/><sub>🏆 18 commits · 0 PRs merged</sub>
-        <br/><sub>🔗 also commits as: <b>Jatin Kumar</b></sub>
+        <a href="https://github.com/ahana4banerjee"><img src="https://avatars.githubusercontent.com/u/166562662?v=4&s=120" width="120" style="border-radius:50%; border:3px solid #E91E63;" alt="Ahana Banerjee"/></a>
+        <br/><b>Ahana Banerjee</b>
+        <br/><a href="https://github.com/ahana4banerjee">@ahana4banerjee</a>
+        <br/><sub>🏆 20 commits · 2 PRs merged</sub>
+        <br/><sub>📍 Hyderabad, India · 🌐 banerjeeahana4@gmail.com</sub>
       </td>
       <td valign="top" width="*">
-        <h4>13. New Contributor</h4>
+        <h4>13. Goal Practice & Learning Journey</h4>
         <ul>
-          <li>🆕 <b>New contributor</b> — auto-added by the readme-bot</li>
-          <li>📊 <b>18 commits</b> across this repo's history</li>
-          <li>🔗 <i>Add a <code>FALLBACK_PROFILES</code> entry in <code>scripts/update-readme-contributors.js</code> to enrich this card with real name, avatar, location, and curated feature list</i></li>
+          <li>📚 <b>Goal-based Practice Sessions (PR #11)</b> — isolated goal-practice module that hides "standard mode" pills</li>
+          <li>🧠 <b>Learning Intelligence Layer (LIL)</b> — architected LIL with cross-app goal-practice integration</li>
+          <li>🪜 <b>AL Learning Checkpoints (PR #34)</b> — sequential unlock rules with <b>15-question topic checkpoints</b></li>
+          <li>🎯 <b>Targeted concept revision loop</b> — automatically revisits weak concepts</li>
+          <li>🎉 <b>Confetti animations</b> — checkpoint completion celebrations</li>
+          <li>🚫 <b>Block successive topics</b> — locked topics until the previous is mastered</li>
+          <li>🛡️ <b>"Oh no, it's okay"</b> — replaced harsh wrong-answer copy with kid-friendly wording</li>
+          <li>🔀 <b>6× merge conflict resolutions</b> — clean upstream merges for both feature branches</li>
         </ul>
       </td>
     </tr>

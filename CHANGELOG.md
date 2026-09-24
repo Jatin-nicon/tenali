@@ -19,9 +19,18 @@
 ---
 
 <!-- live-changelog:start -->
-### 📊 Total: 1068 commits · 83 active days · 43 unique authors
+### 📊 Total: 1070 commits · 84 active days · 43 unique authors
 
 > **📖 How to read this:** Each entry shows a clickable SHA, the author, and a one-line subject. Sub-bullets show the **exact files touched** with per-file `+additions −deletions`, the **total line stats**, and (when present) the **commit body** explaining what & why.
+
+#### 📅 2026-09-24  <sub>(2 commits)</sub>
+
+- ✨ [`d0693650`](https://github.com/Jatin-nicon/tenali/commit/d0693650ce05cfbbffc6aac50043df0648ac3ec4) — **Jatin Kumar** — add strict line input, input intuition, and f(x) function notation
+    - 📁 **5 files:** `client/src/modules/FunctionStudio/FunctionStudioModule.css` `+676 −69`, `client/src/modules/FunctionStudio/FunctionStudioModule.jsx` `+904 −917`, `client/src/modules/FunctionStudio/GeoGebraFunctionLab.css` `+19 −18`, `client/src/modules/FunctionStudio/GeoGebraFunctionLab.jsx` `+128 −68`, `client/src/modules/FunctionStudio/equationParser.js` `+159 −0`
+    - 📊 **`+1886 −1072`** · 5 files
+- ✨ [`9149b5fc`](https://github.com/Jatin-nicon/tenali/commit/9149b5fc4016e75f6707e98eff3740a7d6927622) — **Jatin Kumar** — expand 10-step progression and streamline Naming Handover
+    - 📁 **5 files:** `client/src/modules/LineStudio/GeoGebraLineLab.jsx` `+43 −18`, `client/src/modules/LineStudio/LineStudioModule.jsx` `+849 −209`, `client/src/modules/LineStudio/answerEvaluator.js` `+439 −0`, `client/src/modules/LineStudio/answerEvaluator.test.js` `+170 −0`, `client/src/modules/LineStudio/questions.js` `+92 −33`
+    - 📊 **`+1593 −260`** · 5 files
 
 #### 📅 2026-09-23  <sub>(3 commits)</sub>
 
