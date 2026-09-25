@@ -19,9 +19,15 @@
 ---
 
 <!-- live-changelog:start -->
-### 📊 Total: 1070 commits · 84 active days · 43 unique authors
+### 📊 Total: 1071 commits · 85 active days · 43 unique authors
 
 > **📖 How to read this:** Each entry shows a clickable SHA, the author, and a one-line subject. Sub-bullets show the **exact files touched** with per-file `+additions −deletions`, the **total line stats**, and (when present) the **commit body** explaining what & why.
+
+#### 📅 2026-09-25  <sub>(1 commit)</sub>
+
+- ✨ [`653f1b09`](https://github.com/Jatin-nicon/tenali/commit/653f1b097483be75e4fe55672f2223cff80c0a57) — **Jatin Kumar** — make step 6 purely informative with no questions
+    - 📁 **1 file:** `client/src/modules/FunctionStudio/FunctionStudioModule.jsx` `+49 −176`
+    - 📊 **`+49 −176`** · 1 file
 
 #### 📅 2026-09-24  <sub>(2 commits)</sub>
 
