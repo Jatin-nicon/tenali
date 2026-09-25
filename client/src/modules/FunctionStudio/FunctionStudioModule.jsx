@@ -83,30 +83,6 @@ const Q5_OPTIONS = [
   }
 ];
 
-const Q6_OPTIONS = [
-  {
-    id: 'input',
-    label: 'Input entering the rule',
-    description: 'They show that x is going inside function f as the input',
-    isCorrect: true,
-    feedback: null
-  },
-  {
-    id: 'multiply',
-    label: 'Multiply f times x',
-    description: 'They mean f multiplied by x',
-    isCorrect: false,
-    feedback: 'Careful! In function notation, f(x) does NOT mean multiplication. The parentheses show that x is entering inside the machine f as the input.'
-  },
-  {
-    id: 'constant',
-    label: 'Fixed number',
-    description: 'They mean x is locked to one constant value',
-    isCorrect: false,
-    feedback: 'x is still a flexible input that you can change anytime. The parentheses show where the input goes.'
-  }
-];
-
 const DEFAULT_LINE = parseLineEquation('y = 2x + 1');
 
 export default function FunctionStudioModule({ onBack }) {
@@ -122,13 +98,12 @@ export default function FunctionStudioModule({ onBack }) {
   // Feedback for Question 1
   const [lineError, setLineError] = useState(null);
 
-  // Answers for Questions 2, 3, 4, 5, and 6
+  // Answers for Questions 2, 3, 4, and 5
   const [answers, setAnswers] = useState({
     2: { yVal: '', isSubmitted: false, isCorrect: false, error: null },
     3: { yVal: '', isSubmitted: false, isCorrect: false, error: null },
     4: { yVal: '', isSubmitted: false, isCorrect: false, error: null },
-    5: { selectedId: null, isSubmitted: false, isCorrect: false, error: null },
-    6: { selectedId: null, isSubmitted: false, isCorrect: false, error: null }
+    5: { selectedId: null, isSubmitted: false, isCorrect: false, error: null }
   });
 
   // Track session completed journeys
@@ -155,6 +130,7 @@ export default function FunctionStudioModule({ onBack }) {
   // Question completion criteria
   const isQuestionComplete = (qId) => {
     if (qId === 1) return Boolean(activeLine);
+    if (qId === 6) return Boolean(answers[5]?.isCorrect);
     return Boolean(answers[qId]?.isCorrect);
   };
 
@@ -205,8 +181,7 @@ export default function FunctionStudioModule({ onBack }) {
       2: { yVal: '', isSubmitted: false, isCorrect: false, error: null },
       3: { yVal: '', isSubmitted: false, isCorrect: false, error: null },
       4: { yVal: '', isSubmitted: false, isCorrect: false, error: null },
-      5: { selectedId: null, isSubmitted: false, isCorrect: false, error: null },
-      6: { selectedId: null, isSubmitted: false, isCorrect: false, error: null }
+      5: { selectedId: null, isSubmitted: false, isCorrect: false, error: null }
     });
   };
 
@@ -276,44 +251,12 @@ export default function FunctionStudioModule({ onBack }) {
         ...prev,
         5: { ...prev[5], isSubmitted: true, isCorrect: true, error: null }
       }));
+      setCompletedLinesCount((prev) => prev + 1);
     } else {
       setAnswers((prev) => ({
         ...prev,
         5: {
           ...prev[5],
-          isSubmitted: true,
-          isCorrect: false,
-          error: selectedOpt.feedback
-        }
-      }));
-    }
-  };
-
-  // Handle Q6 Function Notation Submission
-  const handleCheckQ6Answer = () => {
-    const selectedId = answers[6]?.selectedId;
-    if (!selectedId) {
-      setAnswers((prev) => ({
-        ...prev,
-        6: { ...prev[6], error: 'Please select an option to check.' }
-      }));
-      return;
-    }
-
-    const selectedOpt = Q6_OPTIONS.find((opt) => opt.id === selectedId);
-    if (!selectedOpt) return;
-
-    if (selectedOpt.isCorrect) {
-      setAnswers((prev) => ({
-        ...prev,
-        6: { ...prev[6], isSubmitted: true, isCorrect: true, error: null }
-      }));
-      setCompletedLinesCount((prev) => prev + 1);
-    } else {
-      setAnswers((prev) => ({
-        ...prev,
-        6: {
-          ...prev[6],
           isSubmitted: true,
           isCorrect: false,
           error: selectedOpt.feedback
@@ -331,8 +274,7 @@ export default function FunctionStudioModule({ onBack }) {
       2: { yVal: '', isSubmitted: false, isCorrect: false, error: null },
       3: { yVal: '', isSubmitted: false, isCorrect: false, error: null },
       4: { yVal: '', isSubmitted: false, isCorrect: false, error: null },
-      5: { selectedId: null, isSubmitted: false, isCorrect: false, error: null },
-      6: { selectedId: null, isSubmitted: false, isCorrect: false, error: null }
+      5: { selectedId: null, isSubmitted: false, isCorrect: false, error: null }
     });
     setActiveStep(1);
   };
@@ -934,122 +876,53 @@ export default function FunctionStudioModule({ onBack }) {
               </div>
             </div>
 
-            {/* Quick Intuition Check Question */}
-            <div style={{ marginTop: '1.25rem' }}>
-              <div className="fs-inquiry-header">
-                <span className="fs-inquiry-tag">Check Your Understanding</span>
-                <h3 className="fs-inquiry-title">In the notation f(x), what do the parentheses (x) mean?</h3>
-                <p className="fs-inquiry-desc">
-                  Select the option that best describes what (x) is doing:
-                </p>
+            {/* Information Card: Connecting Points to Functions (Purely informative, no questions) */}
+            <div className="fs-earns-card" style={{ marginTop: '1rem' }}>
+              <div className="fs-earns-badge">💡 What f(x) Means in Practice</div>
+              <h4 style={{ margin: '0 0 0.35rem 0', color: '#ede8e3', fontSize: '1.05rem', fontWeight: 800 }}>
+                Every Point on Your Line is a Function Call:
+              </h4>
+              <p className="fs-earns-text" style={{ fontSize: '0.88rem', fontWeight: 500 }}>
+                Notice that <strong>f(x) does NOT mean f multiplied by x</strong>. Instead, the parentheses simply tell you: <em>"put this input inside rule f"</em>.
+              </p>
+              <p className="fs-earns-sub">
+                Here is how the points you discovered earlier look using function notation with your rule <strong>f(x) = {effectiveLine.equationDisplay.replace(/^y\s*=\s*/, '')}</strong>:
+              </p>
+
+              <table className="fs-summary-table" style={{ marginTop: '0.85rem' }}>
+                <thead>
+                  <tr>
+                    <th>Input (x)</th>
+                    <th>Function Notation</th>
+                    <th>Rule Computation</th>
+                    <th>Output f(x)</th>
+                    <th>Point on Graph</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {effectiveLine.inquiries.map((inq, idx) => (
+                    <tr key={idx}>
+                      <td>x = {inq.x}</td>
+                      <td style={{ color: 'var(--clr-accent, #e8864a)', fontWeight: 700 }}>f({inq.x})</td>
+                      <td style={{ color: '#a89e94' }}>
+                        {effectiveLine.m}({inq.x}) {effectiveLine.c >= 0 ? `+ ${effectiveLine.c}` : `- ${Math.abs(effectiveLine.c)}`}
+                      </td>
+                      <td style={{ color: '#14b8a6', fontWeight: 700 }}>{inq.y}</td>
+                      <td style={{ color: '#e8864a' }}>({inq.x}, {inq.y})</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              <div style={{ marginTop: '0.85rem', padding: '0.75rem 1rem', background: 'rgba(232, 134, 74, 0.08)', borderRadius: '8px', border: '1px solid rgba(232, 134, 74, 0.2)' }}>
+                <span style={{ fontSize: '0.85rem', color: '#ede8e3', lineHeight: 1.5 }}>
+                  📌 <strong>Core Takeaway:</strong> A function is just a mathematical machine. Whenever you see <strong>f(x)</strong>, read it as: <em>"feed x into rule f to get the output."</em>
+                </span>
               </div>
-
-              <div className="fs-options-grid" style={{ gridTemplateColumns: '1fr', gap: '0.6rem' }}>
-                {Q6_OPTIONS.map((opt, i) => {
-                  const isSelected = answers[6]?.selectedId === opt.id;
-                  let cls = 'fs-option-btn';
-                  if (isSelected) cls += ' selected';
-                  if (answers[6]?.isSubmitted && isSelected) {
-                    cls += opt.isCorrect ? ' correct' : ' incorrect';
-                  } else if (answers[6]?.isCorrect && opt.isCorrect) {
-                    cls += ' correct';
-                  }
-
-                  return (
-                    <button
-                      key={opt.id}
-                      type="button"
-                      className={cls}
-                      onClick={() => {
-                        if (!answers[6]?.isCorrect) {
-                          setAnswers((prev) => ({
-                            ...prev,
-                            6: { ...prev[6], selectedId: opt.id, isSubmitted: false, error: null }
-                          }));
-                        }
-                      }}
-                      disabled={answers[6]?.isCorrect}
-                    >
-                      <span className="fs-option-letter">{String.fromCharCode(65 + i)}</span>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
-                        <span style={{ fontWeight: 700, fontSize: '0.92rem' }}>{opt.label}</span>
-                        <span style={{ fontSize: '0.78rem', color: 'var(--clr-text-soft, #a89e94)' }}>{opt.description}</span>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {answers[6]?.error && (
-                <div className="fs-inquiry-feedback error" style={{ marginTop: '0.75rem' }}>
-                  <span>ℹ</span>
-                  <span>{answers[6].error}</span>
-                </div>
-              )}
-
-              {!answers[6]?.isCorrect && (
-                <div style={{ marginTop: '0.85rem' }}>
-                  <button
-                    type="button"
-                    className="fs-btn-primary"
-                    disabled={!answers[6]?.selectedId}
-                    onClick={handleCheckQ6Answer}
-                  >
-                    Check Answer ✓
-                  </button>
-                </div>
-              )}
-
-              {answers[6]?.isCorrect && (
-                <div>
-                  <div className="fs-inquiry-feedback success" style={{ marginTop: '0.75rem' }}>
-                    <span>✓</span>
-                    <span>
-                      Spot on! <strong>f(x)</strong> is not multiplication. The parentheses simply show that <strong>x</strong> enters rule <strong>f</strong> as the input.
-                    </span>
-                  </div>
-
-                  {/* Summary Card with f(x) evaluated values */}
-                  <div className="fs-earns-card" style={{ marginTop: '0.85rem' }}>
-                    <div className="fs-earns-badge">🎉 Function Notation Mastered!</div>
-                    <h4 style={{ margin: '0 0 0.35rem 0', color: '#ede8e3', fontSize: '1rem', fontWeight: 800 }}>
-                      f(x) = {effectiveLine.equationDisplay.replace(/^y\s*=\s*/, '')}
-                    </h4>
-                    <p className="fs-earns-text" style={{ fontSize: '0.88rem', fontWeight: 500 }}>
-                      Here is how the three points you found look in function notation:
-                    </p>
-
-                    <table className="fs-summary-table">
-                      <thead>
-                        <tr>
-                          <th>Input</th>
-                          <th>Function Call</th>
-                          <th>Computation</th>
-                          <th>Output</th>
-                          <th>Coordinate</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {effectiveLine.inquiries.map((inq, idx) => (
-                          <tr key={idx}>
-                            <td>x = {inq.x}</td>
-                            <td style={{ color: 'var(--clr-accent, #e8864a)', fontWeight: 700 }}>f({inq.x})</td>
-                            <td style={{ color: '#a89e94' }}>
-                              {effectiveLine.m}({inq.x}) {effectiveLine.c >= 0 ? `+ ${effectiveLine.c}` : `- ${Math.abs(effectiveLine.c)}`}
-                            </td>
-                            <td style={{ color: '#14b8a6', fontWeight: 700 }}>{inq.y}</td>
-                            <td style={{ color: '#e8864a' }}>({inq.x}, {inq.y})</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
             </div>
 
             {/* Step Footer Navigation */}
-            <div className="fs-step-footer-actions between">
+            <div className="fs-step-footer-actions between" style={{ marginTop: '1.25rem' }}>
               <button className="fs-btn-secondary" onClick={() => setActiveStep(5)}>
                 ← Back to Question 5
               </button>
