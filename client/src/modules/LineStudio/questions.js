@@ -113,7 +113,7 @@ export const LINE_PATH_QUESTIONS = [
     phaseId: 3,
     phaseTitle: 'Phase 3: Knobs & Exploration',
     title: 'Increasing Knob "a"',
-    prompt: 'What happens when "a" is gradually increased?',
+    prompt: 'What happens when "a" is slowly increased?',
     subtext: null,
     type: 'mcq',
     options: [
@@ -147,7 +147,7 @@ export const LINE_PATH_QUESTIONS = [
     phaseId: 4,
     phaseTitle: 'Phase 4: The Equation y = ax + b',
     title: 'Writing the Equation',
-    prompt: 'Type an equation with rotation/steepness value 3 and passing through 2 at y:',
+    prompt: 'Write an equation with steepness 3 and passing through 2 at y:',
     subtext: null,
     type: 'equation_input',
     creditExplanation: 'You constructed the equation y = 3x + 2! Steepness is 3 and it passes through 2 at y.',

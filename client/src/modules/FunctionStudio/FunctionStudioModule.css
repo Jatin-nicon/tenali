@@ -1226,4 +1226,116 @@
   color: #ffffff;
 }
 
+/* ==========================================================================
+   GEOGEBRA ALGEBRA VIEW PANEL & ITEMS (Matching GeoGebra UX)
+   ========================================================================== */
+.fs-ggb-algebra-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin: 0.85rem 0;
+  max-width: 480px;
+}
+
+.fs-ggb-algebra-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--clr-text-soft, #a89e94);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.fs-ggb-algebra-item {
+  display: flex;
+  background: #ffffff;
+  border: 1px solid #dcdfe4;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  animation: ggbFadeSlideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes ggbFadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fs-ggb-gutter {
+  width: 32px;
+  background: #f1f3f4;
+  border-right: 1px solid #e0e0e0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.fs-ggb-vis-circle {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid #14b8a6;
+  background: rgba(20, 184, 166, 0.2);
+}
+
+.fs-ggb-vis-circle.line {
+  border-color: #e8864a;
+  background: rgba(232, 134, 74, 0.2);
+}
+
+.fs-ggb-algebra-body {
+  flex: 1;
+  padding: 0.55rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.fs-ggb-algebra-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.fs-ggb-algebra-expr {
+  color: #1f2937;
+  font-size: 1.12rem;
+  font-family: 'Cambria Math', 'KaTeX_Math', 'Times New Roman', Georgia, serif;
+  letter-spacing: 0.01em;
+}
+
+.fs-ggb-algebra-dots {
+  color: #5f6368;
+  font-size: 1.25rem;
+  cursor: default;
+  line-height: 1;
+  user-select: none;
+  padding: 0 0.15rem;
+}
+
+.fs-ggb-algebra-result {
+  color: #1f2937;
+  font-size: 1.12rem;
+  font-family: 'Cambria Math', 'KaTeX_Math', 'Times New Roman', Georgia, serif;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding-left: 0.1rem;
+}
+
+.fs-ggb-algebra-result .val {
+  font-weight: 700;
+  color: #0f766e;
+}
+
+
 

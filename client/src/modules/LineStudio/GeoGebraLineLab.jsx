@@ -32,7 +32,8 @@ export default function GeoGebraLineLab({
   inputPlaceholder = "e.g. (x, y) or Name = (x, y) or Line(A, B)",
   showInputBar = true,
   inputSubmitLabel = "Plot on Canvas 🚀",
-  taskHeader = null
+  taskHeader = null,
+  coordBounds = null
 }) {
   const [inputVal, setInputVal] = useState('');
   const [feedback, setFeedback] = useState(null);
@@ -214,7 +215,11 @@ export default function GeoGebraLineLab({
             api.setPerspective('G');
             api.evalCommand('SetPerspective("G")');
             // 1:1 isometric square grid with points A..F and origin visible
-            api.setCoordSystem(-6, 12, -3, 13);
+            if (coordBounds) {
+              api.setCoordSystem(coordBounds.xmin, coordBounds.xmax, coordBounds.ymin, coordBounds.ymax);
+            } else {
+              api.setCoordSystem(-6, 12, -3, 13);
+            }
             api.evalCommand('SetAxesRatio(1, 1)');
             syncCanvasObjects();
           } catch (err) {
@@ -235,6 +240,22 @@ export default function GeoGebraLineLab({
       ggbApiRef.current = null;
     };
   }, [ensureGeoGebraLoaded]);
+
+  // Dynamic coordinate bounding update (e.g. framing all 5 points in Question 3)
+  useEffect(() => {
+    const api = ggbApiRef.current;
+    if (!api || isGgbLoading) return;
+    try {
+      if (coordBounds) {
+        api.setCoordSystem(coordBounds.xmin, coordBounds.xmax, coordBounds.ymin, coordBounds.ymax);
+      } else {
+        api.setCoordSystem(-6, 12, -3, 13);
+      }
+      api.evalCommand('SetAxesRatio(1, 1)');
+    } catch (err) {
+      console.warn('GeoGebra coordBounds update warning:', err);
+    }
+  }, [coordBounds?.xmin, coordBounds?.xmax, coordBounds?.ymin, coordBounds?.ymax, isGgbLoading]);
 
   // Synchronize when state dependencies change
   useEffect(() => {
@@ -375,6 +396,11 @@ export default function GeoGebraLineLab({
   const handleRecenter = () => {
     if (ggbApiRef.current) {
       try {
+        if (coordBounds) {
+          ggbApiRef.current.setCoordSystem(coordBounds.xmin, coordBounds.xmax, coordBounds.ymin, coordBounds.ymax);
+          ggbApiRef.current.evalCommand('SetAxesRatio(1, 1)');
+          return;
+        }
         if (plottedPoints && plottedPoints.length >= 2) {
           const xs = plottedPoints.map((p) => p.x);
           const ys = plottedPoints.map((p) => p.y);

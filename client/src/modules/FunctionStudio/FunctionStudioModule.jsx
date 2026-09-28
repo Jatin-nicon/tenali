@@ -1,6 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import GeoGebraFunctionLab from './GeoGebraFunctionLab';
-import { parseLineEquation } from './equationParser';
+import {
+  parseLineEquation,
+  parseFunctionEquation,
+  parseFunctionEvaluationInput,
+  parseInverseInput,
+  getInverseInquiries
+} from './equationParser';
 import './FunctionStudioModule.css';
 
 /**
@@ -46,9 +52,37 @@ const QUESTIONS_META = [
   {
     id: 6,
     phase: 'Phase 3: The Big Intuition',
-    title: 'Introducing f(x)',
+    title: 'Meet f(x)',
     prompt: 'Meet the Function Notation: f(x)',
     subtext: 'A cleaner way to show that x goes inside the rule.'
+  },
+  {
+    id: 7,
+    phase: 'Phase 4: Function Studio',
+    title: 'Input Your Function',
+    prompt: 'Define Your Function: f(x) = ...',
+    subtext: 'Type a function starting with f(x) = (for example: f(x) = 2x + 3 or f(x) = -x + 4):'
+  },
+  {
+    id: 8,
+    phase: 'Phase 4: Function Studio',
+    title: 'Evaluate f(x)',
+    prompt: 'Evaluate f(2) and f(4)',
+    subtext: 'Use your function rule f(x) to find outputs for inputs x = 2 and x = 4.'
+  },
+  {
+    id: 9,
+    phase: 'Phase 5: Inverse Thinking',
+    title: 'Find Input a',
+    prompt: 'Given f(a) = output, find input a',
+    subtext: 'Work backwards from the output to find what input produced it.'
+  },
+  {
+    id: 10,
+    phase: 'Phase 5: Inverse Thinking',
+    title: 'Meaning of Inverse',
+    prompt: 'What is the Inverse of a Function?',
+    subtext: 'When you have the output and are asked for the input.'
   }
 ];
 
@@ -86,24 +120,40 @@ const Q5_OPTIONS = [
 const DEFAULT_LINE = parseLineEquation('y = 2x + 1');
 
 export default function FunctionStudioModule({ onBack }) {
-  // activeStep: 1..6 corresponding to Questions 1..6
+  // activeStep: 1..8 corresponding to Questions 1..8
   const [activeStep, setActiveStep] = useState(1);
 
-  // Question 1: Line input text (empty by default)
+  // Question 1: Line input text
   const [lineEquationInput, setLineEquationInput] = useState('');
-  // Active parsed line object: { m, c, equationDisplay, ggbCmd, inquiries }
   const [activeLine, setActiveLine] = useState(null);
-  // Fallback to DEFAULT_LINE if user navigates freely before plotting
   const effectiveLine = activeLine || DEFAULT_LINE;
-  // Feedback for Question 1
   const [lineError, setLineError] = useState(null);
 
-  // Answers for Questions 2, 3, 4, and 5
+  // Question 7: Function input text
+  const [functionEquationInput, setFunctionEquationInput] = useState('');
+  const [activeFunctionLine, setActiveFunctionLine] = useState(null);
+  const [functionError, setFunctionError] = useState(null);
+
+  // Active line/function for display
+  const currentDisplayLine = (activeStep >= 7 && activeFunctionLine) ? activeFunctionLine : effectiveLine;
+  const currentLineLabel = activeStep >= 6
+    ? `f(x) = ${currentDisplayLine.equationDisplay.replace(/^(y|f\(x\))\s*=\s*/, '')}`
+    : currentDisplayLine.equationDisplay;
+
+  // 3 Inverse inquiries for Question 9
+  const invInquiries = currentDisplayLine?.inverseInquiries || getInverseInquiries(currentDisplayLine);
+  const inv1 = invInquiries[0] || { a: 2, y: 5 };
+  const inv2 = invInquiries[1] || { a: -1, y: -1 };
+  const inv3 = invInquiries[2] || { a: 3, y: 7 };
+
+  // Answers for Questions 2, 3, 4, 5, 8, and 9
   const [answers, setAnswers] = useState({
     2: { yVal: '', isSubmitted: false, isCorrect: false, error: null },
     3: { yVal: '', isSubmitted: false, isCorrect: false, error: null },
     4: { yVal: '', isSubmitted: false, isCorrect: false, error: null },
-    5: { selectedId: null, isSubmitted: false, isCorrect: false, error: null }
+    5: { selectedId: null, isSubmitted: false, isCorrect: false, error: null },
+    8: { val2: '', val4: '', is2Correct: false, is4Correct: false, isCorrect: false, error: null },
+    9: { val1: '', val2: '', val3: '', is1Correct: false, is2Correct: false, is3Correct: false, isCorrect: false, error: null }
   });
 
   // Track session completed journeys
@@ -113,6 +163,15 @@ export default function FunctionStudioModule({ onBack }) {
   const q2InputRef = useRef(null);
   const q3InputRef = useRef(null);
   const q4InputRef = useRef(null);
+  const q7InputRef = useRef(null);
+  const q8Val2Ref = useRef(null);
+  const q8Val4Ref = useRef(null);
+  const q9Val1Ref = useRef(null);
+  const q9Val2Ref = useRef(null);
+  const q9Val3Ref = useRef(null);
+
+  // Question 9 stage (1, 2, or 3)
+  const [q9CurrentStage, setQ9CurrentStage] = useState(1);
 
   // Auto-focus inputs on question change
   useEffect(() => {
@@ -124,13 +183,28 @@ export default function FunctionStudioModule({ onBack }) {
       q3InputRef.current.focus();
     } else if (activeStep === 4 && q4InputRef.current && !answers[4].isCorrect) {
       q4InputRef.current.focus();
+    } else if (activeStep === 7 && !activeFunctionLine && q7InputRef.current) {
+      q7InputRef.current.focus();
+    } else if (activeStep === 8 && q8Val2Ref.current && !answers[8]?.is2Correct) {
+      q8Val2Ref.current.focus();
+    } else if (activeStep === 8 && q8Val4Ref.current && answers[8]?.is2Correct && !answers[8]?.is4Correct) {
+      q8Val4Ref.current.focus();
+    } else if (activeStep === 9 && q9CurrentStage === 1 && q9Val1Ref.current && !answers[9]?.is1Correct) {
+      q9Val1Ref.current.focus();
+    } else if (activeStep === 9 && q9CurrentStage === 2 && q9Val2Ref.current && !answers[9]?.is2Correct) {
+      q9Val2Ref.current.focus();
+    } else if (activeStep === 9 && q9CurrentStage === 3 && q9Val3Ref.current && !answers[9]?.is3Correct) {
+      q9Val3Ref.current.focus();
     }
-  }, [activeStep, activeLine, answers]);
+  }, [activeStep, activeLine, activeFunctionLine, answers, q9CurrentStage]);
 
   // Question completion criteria
   const isQuestionComplete = (qId) => {
     if (qId === 1) return Boolean(activeLine);
     if (qId === 6) return Boolean(answers[5]?.isCorrect);
+    if (qId === 7) return Boolean(activeFunctionLine);
+    if (qId === 8) return Boolean(answers[8]?.isCorrect);
+    if (qId === 9 || qId === 10) return Boolean(answers[9]?.isCorrect);
     return Boolean(answers[qId]?.isCorrect);
   };
 
@@ -144,21 +218,133 @@ export default function FunctionStudioModule({ onBack }) {
 
   // Compute verified points for GeoGebra canvas
   const verifiedPoints = [];
-  if (answers[2]?.isCorrect && inq1) {
-    verifiedPoints.push({ name: 'P_1', x: inq1.x, y: inq1.y });
+  if (activeStep < 7) {
+    if (answers[2]?.isCorrect && inq1) {
+      verifiedPoints.push({ name: 'P_1', label: `(${inq1.x}, ${inq1.y})`, x: inq1.x, y: inq1.y });
+    }
+    if (answers[3]?.isCorrect && inq2) {
+      verifiedPoints.push({ name: 'P_2', label: `(${inq2.x}, ${inq2.y})`, x: inq2.x, y: inq2.y });
+    }
+    if (answers[4]?.isCorrect && inq3) {
+      verifiedPoints.push({ name: 'P_3', label: `(${inq3.x}, ${inq3.y})`, x: inq3.x, y: inq3.y });
+    }
+  } else if (activeStep === 8) {
+    if (answers[8]?.is2Correct && currentDisplayLine) {
+      verifiedPoints.push({
+        name: 'Pt_eval2',
+        label: `f(2) = ${currentDisplayLine.eval2}`,
+        x: 2,
+        y: currentDisplayLine.eval2
+      });
+    }
+    if (answers[8]?.is4Correct && currentDisplayLine) {
+      verifiedPoints.push({
+        name: 'Pt_eval4',
+        label: `f(4) = ${currentDisplayLine.eval4}`,
+        x: 4,
+        y: currentDisplayLine.eval4
+      });
+    }
+  } else if (activeStep === 9 || activeStep === 10) {
+    if ((activeStep === 10 || answers[9]?.is3Correct) && currentDisplayLine) {
+      verifiedPoints.push(
+        { name: 'Pt_eval_a1', label: `f(${inv1.a}) = ${inv1.y}`, x: inv1.a, y: inv1.y },
+        { name: 'Pt_eval_a2', label: `f(${inv2.a}) = ${inv2.y}`, x: inv2.a, y: inv2.y },
+        { name: 'Pt_eval_a3', label: `f(${inv3.a}) = ${inv3.y}`, x: inv3.a, y: inv3.y }
+      );
+    } else if (q9CurrentStage === 1 && answers[9]?.is1Correct && currentDisplayLine) {
+      verifiedPoints.push({
+        name: 'Pt_eval_a',
+        label: `f(a) = ${inv1.y} ⇒ a = ${inv1.a}`,
+        x: inv1.a,
+        y: inv1.y
+      });
+    } else if (q9CurrentStage === 2 && answers[9]?.is2Correct && currentDisplayLine) {
+      verifiedPoints.push({
+        name: 'Pt_eval_a',
+        label: `f(a) = ${inv2.y} ⇒ a = ${inv2.a}`,
+        x: inv2.a,
+        y: inv2.y
+      });
+    } else if (q9CurrentStage === 3 && answers[9]?.is3Correct && currentDisplayLine) {
+      verifiedPoints.push({
+        name: 'Pt_eval_a',
+        label: `f(a) = ${inv3.y} ⇒ a = ${inv3.a}`,
+        x: inv3.a,
+        y: inv3.y
+      });
+    }
   }
-  if (answers[3]?.isCorrect && inq2) {
-    verifiedPoints.push({ name: 'P_2', x: inq2.x, y: inq2.y });
-  }
-  if (answers[4]?.isCorrect && inq3) {
-    verifiedPoints.push({ name: 'P_3', x: inq3.x, y: inq3.y });
-  }
+
+  // Determine what to graph on the GeoGebra canvas
+  const getGgbActiveLine = () => {
+    if (activeStep === 1) {
+      if (!activeLine) return null;
+      return {
+        id: 'mainGraphLine',
+        cmd: activeLine.ggbCmd,
+        label: activeLine.equationDisplay
+      };
+    }
+    if (activeStep >= 2 && activeStep <= 5) {
+      return {
+        id: 'mainGraphLine',
+        cmd: effectiveLine.ggbCmd,
+        label: effectiveLine.equationDisplay
+      };
+    }
+    if (activeStep === 6) {
+      return {
+        id: 'mainGraphLine',
+        cmd: effectiveLine.ggbCmd,
+        label: `f(x) = ${effectiveLine.equationDisplay.replace(/^y\s*=\s*/, '')}`
+      };
+    }
+    if (activeStep === 7) {
+      if (!activeFunctionLine) return null;
+      return {
+        id: 'mainGraphLine',
+        cmd: activeFunctionLine.ggbCmd,
+        label: activeFunctionLine.equationDisplay
+      };
+    }
+    if (activeStep >= 8) {
+      const lineToUse = activeFunctionLine || effectiveLine;
+      return {
+        id: 'mainGraphLine',
+        cmd: lineToUse.ggbCmd,
+        label: lineToUse.equationDisplay.startsWith('f(x)')
+          ? lineToUse.equationDisplay
+          : `f(x) = ${lineToUse.equationDisplay.replace(/^y\s*=\s*/, '')}`
+      };
+    }
+    return null;
+  };
 
   // Target X for vertical guideline
   const getTargetX = () => {
     if (activeStep === 2 && !answers[2]?.isCorrect && inq1) return inq1.x;
     if (activeStep === 3 && !answers[3]?.isCorrect && inq2) return inq2.x;
     if (activeStep === 4 && !answers[4]?.isCorrect && inq3) return inq3.x;
+    if (activeStep === 8) {
+      if (!answers[8]?.is2Correct) return 2;
+      if (!answers[8]?.is4Correct) return 4;
+    }
+    if (activeStep === 9) {
+      if (q9CurrentStage === 1 && answers[9]?.is1Correct) return inv1.a;
+      if (q9CurrentStage === 2 && answers[9]?.is2Correct) return inv2.a;
+      if (q9CurrentStage === 3 && answers[9]?.is3Correct) return inv3.a;
+    }
+    return null;
+  };
+
+  // Target Y for horizontal guideline (Question 9 inverse thinking)
+  const getTargetY = () => {
+    if (activeStep === 9 && currentDisplayLine) {
+      if (q9CurrentStage === 1) return inv1.y;
+      if (q9CurrentStage === 2) return inv2.y;
+      if (q9CurrentStage === 3 && !answers[9]?.is3Correct) return inv3.y;
+    }
     return null;
   };
 
@@ -177,12 +363,33 @@ export default function FunctionStudioModule({ onBack }) {
     setLineError(null);
 
     // Reset downstream answers when line is re-plotted
-    setAnswers({
+    setAnswers((prev) => ({
+      ...prev,
       2: { yVal: '', isSubmitted: false, isCorrect: false, error: null },
       3: { yVal: '', isSubmitted: false, isCorrect: false, error: null },
       4: { yVal: '', isSubmitted: false, isCorrect: false, error: null },
       5: { selectedId: null, isSubmitted: false, isCorrect: false, error: null }
-    });
+    }));
+  };
+
+  // Handle Q7 Function Submission
+  const handlePlotFunction = (e) => {
+    if (e) e.preventDefault();
+    const raw = functionEquationInput.trim();
+    const parsed = parseFunctionEquation(raw);
+
+    if (!parsed.success) {
+      setFunctionError(parsed.error);
+      return;
+    }
+
+    setActiveFunctionLine(parsed);
+    setFunctionError(null);
+
+    setAnswers((prev) => ({
+      ...prev,
+      8: { val2: '', val4: '', is2Correct: false, is4Correct: false, isCorrect: false, error: null }
+    }));
   };
 
   // Handle Q2..Q4 Point Answer Submission
@@ -232,16 +439,9 @@ export default function FunctionStudioModule({ onBack }) {
     }
   };
 
-  // Handle Q5 Intuition Answer Submission
-  const handleCheckQ5Answer = () => {
-    const selectedId = answers[5]?.selectedId;
-    if (!selectedId) {
-      setAnswers((prev) => ({
-        ...prev,
-        5: { ...prev[5], error: 'Please select an option to check.' }
-      }));
-      return;
-    }
+  // Handle Q5 Instant Selection
+  const handleSelectQ5Option = (selectedId) => {
+    if (answers[5]?.isCorrect) return;
 
     const selectedOpt = Q5_OPTIONS.find((opt) => opt.id === selectedId);
     if (!selectedOpt) return;
@@ -249,14 +449,14 @@ export default function FunctionStudioModule({ onBack }) {
     if (selectedOpt.isCorrect) {
       setAnswers((prev) => ({
         ...prev,
-        5: { ...prev[5], isSubmitted: true, isCorrect: true, error: null }
+        5: { selectedId, isSubmitted: true, isCorrect: true, error: null }
       }));
       setCompletedLinesCount((prev) => prev + 1);
     } else {
       setAnswers((prev) => ({
         ...prev,
         5: {
-          ...prev[5],
+          selectedId,
           isSubmitted: true,
           isCorrect: false,
           error: selectedOpt.feedback
@@ -265,16 +465,171 @@ export default function FunctionStudioModule({ onBack }) {
     }
   };
 
+  // Handle Q8 f(2) Submission (GeoGebra convention)
+  const handleCheckQ8Val2 = (e) => {
+    if (e) e.preventDefault();
+    const currentAns = answers[8];
+    if (currentAns?.is2Correct) return;
+
+    const raw = currentAns?.val2 || '';
+    const res = parseFunctionEvaluationInput(raw, 2, currentDisplayLine);
+
+    if (!res.success) {
+      setAnswers((prev) => ({
+        ...prev,
+        8: { ...prev[8], error: res.error }
+      }));
+      return;
+    }
+
+    setAnswers((prev) => ({
+      ...prev,
+      8: {
+        ...prev[8],
+        is2Correct: true,
+        error: null
+      }
+    }));
+  };
+
+  // Handle Q8 f(4) Submission (GeoGebra convention)
+  const handleCheckQ8Val4 = (e) => {
+    if (e) e.preventDefault();
+    const currentAns = answers[8];
+    if (currentAns?.is4Correct) return;
+
+    const raw = currentAns?.val4 || '';
+    const res = parseFunctionEvaluationInput(raw, 4, currentDisplayLine);
+
+    if (!res.success) {
+      setAnswers((prev) => ({
+        ...prev,
+        8: { ...prev[8], error: res.error }
+      }));
+      return;
+    }
+
+    setAnswers((prev) => ({
+      ...prev,
+      8: {
+        ...prev[8],
+        is4Correct: true,
+        isCorrect: true,
+        error: null
+      }
+    }));
+    setCompletedLinesCount((prev) => prev + 1);
+  };
+
+  // Handle proceeding from Stage 1 to Stage 2 (user click)
+  const handleProceedToStage2 = () => {
+    setQ9CurrentStage(2);
+  };
+
+  // Handle proceeding from Stage 2 to Stage 3 (user click)
+  const handleProceedToStage3 = () => {
+    setQ9CurrentStage(3);
+  };
+
+  // Handle Q9 Inverse Round 1 Submission
+  const handleCheckQ9Val1 = (e) => {
+    if (e) e.preventDefault();
+    const currentAns = answers[9];
+    if (currentAns?.is1Correct) return;
+
+    const raw = currentAns?.val1 || '';
+    const res = parseInverseInput(raw, inv1.a, inv1.y, currentDisplayLine);
+
+    if (!res.success) {
+      setAnswers((prev) => ({
+        ...prev,
+        9: { ...prev[9], error: res.error }
+      }));
+      return;
+    }
+
+    setAnswers((prev) => ({
+      ...prev,
+      9: {
+        ...prev[9],
+        is1Correct: true,
+        error: null
+      }
+    }));
+  };
+
+  // Handle Q9 Inverse Round 2 Submission
+  const handleCheckQ9Val2 = (e) => {
+    if (e) e.preventDefault();
+    const currentAns = answers[9];
+    if (currentAns?.is2Correct) return;
+
+    const raw = currentAns?.val2 || '';
+    const res = parseInverseInput(raw, inv2.a, inv2.y, currentDisplayLine);
+
+    if (!res.success) {
+      setAnswers((prev) => ({
+        ...prev,
+        9: { ...prev[9], error: res.error }
+      }));
+      return;
+    }
+
+    setAnswers((prev) => ({
+      ...prev,
+      9: {
+        ...prev[9],
+        is2Correct: true,
+        error: null
+      }
+    }));
+  };
+
+  // Handle Q9 Inverse Round 3 Submission
+  const handleCheckQ9Val3 = (e) => {
+    if (e) e.preventDefault();
+    const currentAns = answers[9];
+    if (currentAns?.is3Correct) return;
+
+    const raw = currentAns?.val3 || '';
+    const res = parseInverseInput(raw, inv3.a, inv3.y, currentDisplayLine);
+
+    if (!res.success) {
+      setAnswers((prev) => ({
+        ...prev,
+        9: { ...prev[9], error: res.error }
+      }));
+      return;
+    }
+
+    setAnswers((prev) => ({
+      ...prev,
+      9: {
+        ...prev[9],
+        is3Correct: true,
+        isCorrect: true,
+        error: null
+      }
+    }));
+    setCompletedLinesCount((prev) => prev + 1);
+  };
+
   // Reset to input another line
   const handleResetNewJourney = () => {
+    setQ9CurrentStage(1);
     setActiveLine(null);
     setLineEquationInput('');
     setLineError(null);
+    setActiveFunctionLine(null);
+    setFunctionEquationInput('');
+    setFunctionError(null);
     setAnswers({
       2: { yVal: '', isSubmitted: false, isCorrect: false, error: null },
       3: { yVal: '', isSubmitted: false, isCorrect: false, error: null },
       4: { yVal: '', isSubmitted: false, isCorrect: false, error: null },
-      5: { selectedId: null, isSubmitted: false, isCorrect: false, error: null }
+      5: { selectedId: null, isSubmitted: false, isCorrect: false, error: null },
+      8: { val2: '', val4: '', is2Correct: false, is4Correct: false, isCorrect: false, error: null },
+      9: { val1: '', val2: '', val3: '', is1Correct: false, is2Correct: false, is3Correct: false, isCorrect: false, error: null }
     });
     setActiveStep(1);
   };
@@ -337,30 +692,36 @@ export default function FunctionStudioModule({ onBack }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
             <span className="fs-question-badge">{`Q${activeStep}`}</span>
             <span className="fs-topic-badge">{currentQ.title}</span>
-            {(activeLine || activeStep > 1) && (
-              <span className="fs-card-line-badge">
-                {activeStep === 6 ? `f(x) = ${effectiveLine.equationDisplay.replace(/^y\s*=\s*/, '')}` : effectiveLine.equationDisplay}
-              </span>
+            {activeStep === 1 && activeLine && (
+              <span className="fs-card-line-badge">{activeLine.equationDisplay}</span>
+            )}
+            {activeStep >= 2 && activeStep <= 5 && (
+              <span className="fs-card-line-badge">{effectiveLine.equationDisplay}</span>
+            )}
+            {activeStep === 6 && (
+              <span className="fs-card-line-badge">{`f(x) = ${effectiveLine.equationDisplay.replace(/^y\s*=\s*/, '')}`}</span>
+            )}
+            {activeStep === 7 && activeFunctionLine && (
+              <span className="fs-card-line-badge">{activeFunctionLine.equationDisplay}</span>
+            )}
+            {activeStep >= 8 && (
+              <span className="fs-card-line-badge">{currentLineLabel}</span>
             )}
           </div>
           <span className="fs-question-num">{`Question ${activeStep} of ${QUESTIONS_META.length}`}</span>
         </div>
 
         {/* 1. GRAPH AT TOP (Centered isometric Cartesian canvas) */}
-        <GeoGebraFunctionLab
-          activeLine={
-            (activeLine || activeStep > 1)
-              ? {
-                  id: effectiveLine.id,
-                  cmd: effectiveLine.ggbCmd,
-                  label: activeStep === 6 ? `f(x) = ${effectiveLine.equationDisplay.replace(/^y\s*=\s*/, '')}` : effectiveLine.equationDisplay
-                }
-              : null
-          }
-          targetX={getTargetX()}
-          verifiedPoints={verifiedPoints}
-          showInputBar={false}
-        />
+        {activeStep !== 6 && activeStep < 10 && (
+          <GeoGebraFunctionLab
+            activeLine={getGgbActiveLine()}
+            targetX={getTargetX()}
+            targetY={getTargetY()}
+            verifiedPoints={verifiedPoints}
+            showInputBar={false}
+            compact={activeStep === 8}
+          />
+        )}
 
         {/* 2. QUESTION CONTENT */}
 
@@ -701,14 +1062,7 @@ export default function FunctionStudioModule({ onBack }) {
                     key={opt.id}
                     type="button"
                     className={cls}
-                    onClick={() => {
-                      if (!answers[5]?.isCorrect) {
-                        setAnswers((prev) => ({
-                          ...prev,
-                          5: { ...prev[5], selectedId: opt.id, isSubmitted: false, error: null }
-                        }));
-                      }
-                    }}
+                    onClick={() => handleSelectQ5Option(opt.id)}
                     disabled={answers[5]?.isCorrect}
                   >
                     <span className="fs-option-letter">{String.fromCharCode(65 + i)}</span>
@@ -725,19 +1079,6 @@ export default function FunctionStudioModule({ onBack }) {
               <div className="fs-inquiry-feedback error" style={{ marginTop: '0.75rem' }}>
                 <span>ℹ</span>
                 <span>{answers[5].error}</span>
-              </div>
-            )}
-
-            {!answers[5]?.isCorrect && (
-              <div style={{ marginTop: '0.85rem' }}>
-                <button
-                  type="button"
-                  className="fs-btn-primary"
-                  disabled={!answers[5]?.selectedId}
-                  onClick={handleCheckQ5Answer}
-                >
-                  Check Answer ✓
-                </button>
               </div>
             )}
 
@@ -876,58 +1217,697 @@ export default function FunctionStudioModule({ onBack }) {
               </div>
             </div>
 
-            {/* Information Card: Connecting Points to Functions (Purely informative, no questions) */}
-            <div className="fs-earns-card" style={{ marginTop: '1rem' }}>
-              <div className="fs-earns-badge">💡 What f(x) Means in Practice</div>
-              <h4 style={{ margin: '0 0 0.35rem 0', color: '#ede8e3', fontSize: '1.05rem', fontWeight: 800 }}>
-                Every Point on Your Line is a Function Call:
-              </h4>
-              <p className="fs-earns-text" style={{ fontSize: '0.88rem', fontWeight: 500 }}>
-                Notice that <strong>f(x) does NOT mean f multiplied by x</strong>. Instead, the parentheses simply tell you: <em>"put this input inside rule f"</em>.
-              </p>
-              <p className="fs-earns-sub">
-                Here is how the points you discovered earlier look using function notation with your rule <strong>f(x) = {effectiveLine.equationDisplay.replace(/^y\s*=\s*/, '')}</strong>:
-              </p>
-
-              <table className="fs-summary-table" style={{ marginTop: '0.85rem' }}>
-                <thead>
-                  <tr>
-                    <th>Input (x)</th>
-                    <th>Function Notation</th>
-                    <th>Rule Computation</th>
-                    <th>Output f(x)</th>
-                    <th>Point on Graph</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {effectiveLine.inquiries.map((inq, idx) => (
-                    <tr key={idx}>
-                      <td>x = {inq.x}</td>
-                      <td style={{ color: 'var(--clr-accent, #e8864a)', fontWeight: 700 }}>f({inq.x})</td>
-                      <td style={{ color: '#a89e94' }}>
-                        {effectiveLine.m}({inq.x}) {effectiveLine.c >= 0 ? `+ ${effectiveLine.c}` : `- ${Math.abs(effectiveLine.c)}`}
-                      </td>
-                      <td style={{ color: '#14b8a6', fontWeight: 700 }}>{inq.y}</td>
-                      <td style={{ color: '#e8864a' }}>({inq.x}, {inq.y})</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-
-              <div style={{ marginTop: '0.85rem', padding: '0.75rem 1rem', background: 'rgba(232, 134, 74, 0.08)', borderRadius: '8px', border: '1px solid rgba(232, 134, 74, 0.2)' }}>
-                <span style={{ fontSize: '0.85rem', color: '#ede8e3', lineHeight: 1.5 }}>
-                  📌 <strong>Core Takeaway:</strong> A function is just a mathematical machine. Whenever you see <strong>f(x)</strong>, read it as: <em>"feed x into rule f to get the output."</em>
-                </span>
-              </div>
-            </div>
-
             {/* Step Footer Navigation */}
             <div className="fs-step-footer-actions between" style={{ marginTop: '1.25rem' }}>
               <button className="fs-btn-secondary" onClick={() => setActiveStep(5)}>
                 ← Back to Question 5
               </button>
+              <div style={{ display: 'flex', gap: '0.6rem' }}>
+                <button className="fs-btn-secondary" onClick={handleResetNewJourney}>
+                  ✏️ Input Another Line
+                </button>
+                <button className="fs-btn-primary" onClick={() => setActiveStep(7)}>
+                  Continue to Question 7 →
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* =================================================== */}
+        {/* QUESTION 7: INPUT YOUR FUNCTION f(x) = ...          */}
+        {/* =================================================== */}
+        {activeStep === 7 && (
+          <div className="fs-step-intro-block">
+            {activeFunctionLine ? (
+              <>
+                <div className="fs-equation-pill-bar">
+                  <span className="fs-equation-pill-label">Function Notation:</span>
+                  <span className="fs-equation-pill-val">{activeFunctionLine.equationDisplay}</span>
+                </div>
+                <h3 className="fs-step-heading">
+                  Your Function: <span className="fs-equation-highlight">{activeFunctionLine.equationDisplay}</span>
+                </h3>
+                <p className="fs-step-subtext">
+                  Your function <strong style={{ color: '#e8864a' }}>{activeFunctionLine.equationDisplay}</strong> is drawn on the canvas. Click Continue to evaluate inputs.
+                </p>
+              </>
+            ) : (
+              <>
+                <h3 className="fs-step-heading">
+                  Enter your function definition using f(x) = notation:
+                </h3>
+                <p className="fs-step-subtext">
+                  Type the complete function starting with <strong>f(x) =</strong> (for example: <code>f(x) = 2x + 3</code> or <code>f(x) = -x + 1</code>):
+                </p>
+              </>
+            )}
+
+            {!activeFunctionLine && (
+              <>
+                <form className="fs-tray-input-row" onSubmit={handlePlotFunction} style={{ marginTop: '0.85rem' }}>
+                  <input
+                    ref={q7InputRef}
+                    type="text"
+                    className="fs-tray-input-box"
+                    placeholder="e.g. f(x) = 2x + 3 or f(x) = -x + 1"
+                    value={functionEquationInput}
+                    onChange={(e) => {
+                      setFunctionEquationInput(e.target.value);
+                      if (functionError) setFunctionError(null);
+                    }}
+                  />
+                  <button type="submit" className="fs-tray-submit-btn">
+                    Plot Function 🚀
+                  </button>
+                </form>
+
+                {functionError && (
+                  <div className="fs-inquiry-feedback error" style={{ marginTop: '0.65rem' }}>
+                    <span>ℹ</span>
+                    <span>{functionError}</span>
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* Step Footer Navigation */}
+            <div className="fs-step-footer-actions between">
+              <button className="fs-btn-secondary" onClick={() => setActiveStep(6)}>
+                ← Back to Question 6
+              </button>
+              <button
+                className="fs-btn-primary"
+                disabled={!activeFunctionLine}
+                onClick={() => setActiveStep(8)}
+              >
+                Continue to Question 8 →
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* =================================================== */}
+        {/* =================================================== */}
+        {/* QUESTION 8: EVALUATE f(2) AND f(4)                  */}
+        {/* =================================================== */}
+        {activeStep === 8 && (
+          <div className="fs-step-intro-block">
+            <div className="fs-equation-pill-bar">
+              <span className="fs-equation-pill-label">Active Function:</span>
+              <span className="fs-equation-pill-val">{currentLineLabel}</span>
+            </div>
+
+            {/* Dynamic Step Heading & Subtext */}
+            {!answers[8]?.is2Correct && (
+              <>
+                <h3 className="fs-step-heading">
+                  Call your function with <span className="fs-equation-highlight">x = 2</span>
+                </h3>
+                <p className="fs-step-subtext">
+                  In GeoGebra, type <code>f(2)</code> to evaluate the output for input <strong>x = 2</strong>:
+                </p>
+              </>
+            )}
+
+            {answers[8]?.is2Correct && !answers[8]?.is4Correct && (
+              <>
+                <h3 className="fs-step-heading">
+                  Call your function with <span className="fs-equation-highlight">x = 4</span>
+                </h3>
+                <p className="fs-step-subtext">
+                  Now type <code>f(4)</code> to evaluate the output for input <strong>x = 4</strong>:
+                </p>
+              </>
+            )}
+
+            {answers[8]?.is4Correct && (
+              <>
+                <h3 className="fs-step-heading">
+                  Function Evaluation Complete 🎉
+                </h3>
+                <p className="fs-step-subtext">
+                  You evaluated both <strong>f(2)</strong> and <strong>f(4)</strong> on your function.
+                </p>
+              </>
+            )}
+
+            {/* GeoGebra Algebra View Output Panel */}
+            <div className="fs-ggb-algebra-panel" style={{ marginTop: '0.85rem' }}>
+              <span className="fs-ggb-algebra-title">
+                📐 GeoGebra Algebra View
+              </span>
+
+              {/* Function Rule Entry */}
+              <div className="fs-ggb-algebra-item">
+                <div className="fs-ggb-gutter">
+                  <div className="fs-ggb-vis-circle line" />
+                </div>
+                <div className="fs-ggb-algebra-body">
+                  <div className="fs-ggb-algebra-row">
+                    <span className="fs-ggb-algebra-expr">{currentLineLabel}</span>
+                    <span className="fs-ggb-algebra-dots">⋮</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* f(2) evaluation entry (visible once f(2) is given) */}
+              {answers[8]?.is2Correct && (
+                <div className="fs-ggb-algebra-item">
+                  <div className="fs-ggb-gutter">
+                    <div className="fs-ggb-vis-circle" />
+                  </div>
+                  <div className="fs-ggb-algebra-body">
+                    <div className="fs-ggb-algebra-row">
+                      <span className="fs-ggb-algebra-expr">f(2)</span>
+                      <span className="fs-ggb-algebra-dots">⋮</span>
+                    </div>
+                    <div className="fs-ggb-algebra-result">
+                      <span className="eq">=</span>
+                      <span className="val">{currentDisplayLine?.eval2}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* f(4) evaluation entry (visible once f(4) is given) */}
+              {answers[8]?.is4Correct && (
+                <div className="fs-ggb-algebra-item">
+                  <div className="fs-ggb-gutter">
+                    <div className="fs-ggb-vis-circle" />
+                  </div>
+                  <div className="fs-ggb-algebra-body">
+                    <div className="fs-ggb-algebra-row">
+                      <span className="fs-ggb-algebra-expr">f(4)</span>
+                      <span className="fs-ggb-algebra-dots">⋮</span>
+                    </div>
+                    <div className="fs-ggb-algebra-result">
+                      <span className="eq">=</span>
+                      <span className="val">{currentDisplayLine?.eval4}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Inquiry 1: f(2) */}
+            {!answers[8]?.is2Correct && (
+              <div style={{ marginTop: '0.85rem' }}>
+                <form className="fs-tray-input-row" onSubmit={handleCheckQ8Val2}>
+                  <input
+                    ref={q8Val2Ref}
+                    type="text"
+                    className="fs-tray-input-box"
+                    placeholder="e.g. f(2)"
+                    value={answers[8]?.val2 || ''}
+                    onChange={(e) =>
+                      setAnswers((prev) => ({
+                        ...prev,
+                        8: { ...prev[8], val2: e.target.value, error: null }
+                      }))
+                    }
+                  />
+                  <button type="submit" className="fs-tray-submit-btn">
+                    Evaluate f(2) ➔
+                  </button>
+                </form>
+
+                {answers[8]?.error && !answers[8]?.is2Correct && (
+                  <div className="fs-inquiry-feedback error" style={{ marginTop: '0.65rem' }}>
+                    <span>ℹ</span>
+                    <span>{answers[8].error}</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Inquiry 2: f(4) (Only shown once f(2) is correct) */}
+            {answers[8]?.is2Correct && !answers[8]?.is4Correct && (
+              <div style={{ marginTop: '0.85rem' }}>
+                <div className="fs-inquiry-feedback success" style={{ marginBottom: '0.75rem' }}>
+                  <span>✓</span>
+                  <span>Point (2, {currentDisplayLine?.eval2}) is pinned on the grid!</span>
+                </div>
+
+                <form className="fs-tray-input-row" onSubmit={handleCheckQ8Val4}>
+                  <input
+                    ref={q8Val4Ref}
+                    type="text"
+                    className="fs-tray-input-box"
+                    placeholder="e.g. f(4)"
+                    value={answers[8]?.val4 || ''}
+                    onChange={(e) =>
+                      setAnswers((prev) => ({
+                        ...prev,
+                        8: { ...prev[8], val4: e.target.value, error: null }
+                      }))
+                    }
+                  />
+                  <button type="submit" className="fs-tray-submit-btn">
+                    Evaluate f(4) ➔
+                  </button>
+                </form>
+
+                {answers[8]?.error && (
+                  <div className="fs-inquiry-feedback error" style={{ marginTop: '0.65rem' }}>
+                    <span>ℹ</span>
+                    <span>{answers[8].error}</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Complete Card when both f(2) and f(4) are correct */}
+            {answers[8]?.is4Correct && (
+              <div style={{ marginTop: '0.85rem' }}>
+                <div className="fs-inquiry-feedback success">
+                  <span>✓</span>
+                  <span>Fantastic! GeoGebra evaluated <strong>f(2) = {currentDisplayLine?.eval2}</strong> and <strong>f(4) = {currentDisplayLine?.eval4}</strong>!</span>
+                </div>
+
+                <div className="fs-earns-card" style={{ marginTop: '0.85rem' }}>
+                  <div className="fs-earns-badge">🎉 Function Evaluation Complete!</div>
+                  <h4 style={{ margin: '0 0 0.35rem 0', color: '#ede8e3', fontSize: '1rem', fontWeight: 800 }}>
+                    {currentLineLabel}
+                  </h4>
+
+                  <table className="fs-summary-table" style={{ marginTop: '0.5rem' }}>
+                    <thead>
+                      <tr>
+                        <th>Input (x)</th>
+                        <th>Function Call</th>
+                        <th>Rule Computation</th>
+                        <th>Output Value</th>
+                        <th>Grid Coordinate</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>x = 2</td>
+                        <td style={{ color: 'var(--clr-accent, #e8864a)', fontWeight: 700 }}>f(2)</td>
+                        <td style={{ color: '#a89e94' }}>{currentDisplayLine?.m}(2) {currentDisplayLine?.c >= 0 ? `+ ${currentDisplayLine?.c}` : `- ${Math.abs(currentDisplayLine?.c)}`}</td>
+                        <td style={{ color: '#14b8a6', fontWeight: 700 }}>{currentDisplayLine?.eval2}</td>
+                        <td style={{ color: '#e8864a' }}>(2, {currentDisplayLine?.eval2})</td>
+                      </tr>
+                      <tr>
+                        <td>x = 4</td>
+                        <td style={{ color: 'var(--clr-accent, #e8864a)', fontWeight: 700 }}>f(4)</td>
+                        <td style={{ color: '#a89e94' }}>{currentDisplayLine?.m}(4) {currentDisplayLine?.c >= 0 ? `+ ${currentDisplayLine?.c}` : `- ${Math.abs(currentDisplayLine?.c)}`}</td>
+                        <td style={{ color: '#14b8a6', fontWeight: 700 }}>{currentDisplayLine?.eval4}</td>
+                        <td style={{ color: '#e8864a' }}>(4, {currentDisplayLine?.eval4})</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* Step Footer Navigation */}
+            <div className="fs-step-footer-actions between" style={{ marginTop: '1.25rem' }}>
+              <button className="fs-btn-secondary" onClick={() => setActiveStep(7)}>
+                ← Back to Question 7
+              </button>
+              <button
+                className="fs-btn-primary"
+                onClick={() => setActiveStep(9)}
+                disabled={!answers[8]?.is4Correct}
+              >
+                Continue to Question 9 →
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* =================================================== */}
+        {/* QUESTION 9: INVERSE THINKING - FIND INPUT a         */}
+        {/* =================================================== */}
+        {activeStep === 9 && (
+          <div className="fs-step-intro-block">
+            {/* Dynamic heading based on current stage */}
+            <h3 className="fs-step-heading">
+              {q9CurrentStage === 1 && `What if you know f(a) = ${inv1.y}? Can you tell "a"?`}
+              {q9CurrentStage === 2 && `Now what if you know f(a) = ${inv2.y}? Can you tell "a"?`}
+              {q9CurrentStage === 3 && !answers[9]?.is3Correct && `One more: what if you know f(a) = ${inv3.y}? Can you tell "a"?`}
+              {answers[9]?.is3Correct && `Inverse Thinking: Finding Input a`}
+            </h3>
+            <p className="fs-step-subtext">
+              {q9CurrentStage === 1 && `Trace backwards from the output on the graph to find what input a produces it.`}
+              {q9CurrentStage === 2 && `Trace along the horizontal guideline at y = ${inv2.y} to find what input a produces it.`}
+              {q9CurrentStage === 3 && !answers[9]?.is3Correct && `Trace along the horizontal guideline at y = ${inv3.y} to find what input a produces it.`}
+              {answers[9]?.is3Correct && `Given any output y, you can work backwards along the rule to find the original input a.`}
+            </p>
+
+            {/* GeoGebra Style Algebra Panel */}
+            <div className="fs-ggb-algebra-panel">
+              <div className="fs-ggb-algebra-title">
+                <span>GeoGebra Algebra View</span>
+              </div>
+
+              {/* Function Rule Entry */}
+              <div className="fs-ggb-algebra-item">
+                <div className="fs-ggb-gutter">
+                  <div className="fs-ggb-vis-circle line" />
+                </div>
+                <div className="fs-ggb-algebra-body">
+                  <div className="fs-ggb-algebra-row">
+                    <span className="fs-ggb-algebra-expr">{currentLineLabel}</span>
+                    <span className="fs-ggb-algebra-dots">⋮</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Current Output f(a) Entry (previous values get removed when starting new output) */}
+              <div className="fs-ggb-algebra-item">
+                <div className="fs-ggb-gutter">
+                  <div className="fs-ggb-vis-circle" style={{ borderColor: '#e8864a', background: 'rgba(232, 134, 74, 0.2)' }} />
+                </div>
+                <div className="fs-ggb-algebra-body">
+                  <div className="fs-ggb-algebra-row">
+                    <span className="fs-ggb-algebra-expr">f(a)</span>
+                    <span className="fs-ggb-algebra-dots">⋮</span>
+                  </div>
+                  <div className="fs-ggb-algebra-result">
+                    <span className="eq">=</span>
+                    <span className="val" style={{ color: '#e8864a' }}>
+                      {q9CurrentStage === 1 ? inv1.y : q9CurrentStage === 2 ? inv2.y : inv3.y}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Resolved a Entry for Current Output (only shown once current stage is correct) */}
+              {((q9CurrentStage === 1 && answers[9]?.is1Correct) ||
+                (q9CurrentStage === 2 && answers[9]?.is2Correct) ||
+                (q9CurrentStage === 3 && answers[9]?.is3Correct)) && (
+                <div className="fs-ggb-algebra-item">
+                  <div className="fs-ggb-gutter">
+                    <div className="fs-ggb-vis-circle" />
+                  </div>
+                  <div className="fs-ggb-algebra-body">
+                    <div className="fs-ggb-algebra-row">
+                      <span className="fs-ggb-algebra-expr">a</span>
+                      <span className="fs-ggb-algebra-dots">⋮</span>
+                    </div>
+                    <div className="fs-ggb-algebra-result">
+                      <span className="eq">=</span>
+                      <span className="val">
+                        {q9CurrentStage === 1 ? inv1.a : q9CurrentStage === 2 ? inv2.a : inv3.a}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* STAGE 1: Find a for inv1.y */}
+            {q9CurrentStage === 1 && (
+              <div style={{ marginTop: '0.85rem' }}>
+                {!answers[9]?.is1Correct ? (
+                  <>
+                    <form className="fs-tray-input-row" onSubmit={handleCheckQ9Val1}>
+                      <input
+                        ref={q9Val1Ref}
+                        type="text"
+                        className="fs-tray-input-box"
+                        placeholder={`e.g. a = ${inv1.a} or ${inv1.a}`}
+                        value={answers[9]?.val1 || ''}
+                        onChange={(e) =>
+                          setAnswers((prev) => ({
+                            ...prev,
+                            9: { ...prev[9], val1: e.target.value, error: null }
+                          }))
+                        }
+                      />
+                      <button type="submit" className="fs-tray-submit-btn">
+                        Find a ➔
+                      </button>
+                    </form>
+
+                    {answers[9]?.error && (
+                      <div className="fs-inquiry-feedback error" style={{ marginTop: '0.65rem' }}>
+                        <span>ℹ</span>
+                        <span>{answers[9].error}</span>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div
+                    className="fs-inquiry-feedback success"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '0.75rem',
+                      flexWrap: 'wrap'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <span>✓</span>
+                      <span>Correct! For <strong>f(a) = {inv1.y}</strong>, input <strong>a = {inv1.a}</strong>. Point ({inv1.a}, {inv1.y}) pinned!</span>
+                    </div>
+                    <button
+                      type="button"
+                      className="fs-tray-submit-btn"
+                      style={{ padding: '0.35rem 0.85rem', fontSize: '0.85rem' }}
+                      onClick={handleProceedToStage2}
+                    >
+                      Next Output (y = {inv2.y}) ➔
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* STAGE 2: Find a for inv2.y */}
+            {q9CurrentStage === 2 && (
+              <div style={{ marginTop: '0.85rem' }}>
+                {!answers[9]?.is2Correct ? (
+                  <>
+                    <form className="fs-tray-input-row" onSubmit={handleCheckQ9Val2}>
+                      <input
+                        ref={q9Val2Ref}
+                        type="text"
+                        className="fs-tray-input-box"
+                        placeholder={`e.g. a = ${inv2.a} or ${inv2.a}`}
+                        value={answers[9]?.val2 || ''}
+                        onChange={(e) =>
+                          setAnswers((prev) => ({
+                            ...prev,
+                            9: { ...prev[9], val2: e.target.value, error: null }
+                          }))
+                        }
+                      />
+                      <button type="submit" className="fs-tray-submit-btn">
+                        Find a ➔
+                      </button>
+                    </form>
+
+                    {answers[9]?.error && (
+                      <div className="fs-inquiry-feedback error" style={{ marginTop: '0.65rem' }}>
+                        <span>ℹ</span>
+                        <span>{answers[9].error}</span>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div
+                    className="fs-inquiry-feedback success"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '0.75rem',
+                      flexWrap: 'wrap'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <span>✓</span>
+                      <span>Correct! For <strong>f(a) = {inv2.y}</strong>, input <strong>a = {inv2.a}</strong>. Point ({inv2.a}, {inv2.y}) pinned!</span>
+                    </div>
+                    <button
+                      type="button"
+                      className="fs-tray-submit-btn"
+                      style={{ padding: '0.35rem 0.85rem', fontSize: '0.85rem' }}
+                      onClick={handleProceedToStage3}
+                    >
+                      Next Output (y = {inv3.y}) ➔
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* STAGE 3: Find a for inv3.y */}
+            {q9CurrentStage === 3 && !answers[9]?.is3Correct && (
+              <div style={{ marginTop: '0.85rem' }}>
+                <form className="fs-tray-input-row" onSubmit={handleCheckQ9Val3}>
+                  <input
+                    ref={q9Val3Ref}
+                    type="text"
+                    className="fs-tray-input-box"
+                    placeholder={`e.g. a = ${inv3.a} or ${inv3.a}`}
+                    value={answers[9]?.val3 || ''}
+                    onChange={(e) =>
+                      setAnswers((prev) => ({
+                        ...prev,
+                        9: { ...prev[9], val3: e.target.value, error: null }
+                      }))
+                    }
+                  />
+                  <button type="submit" className="fs-tray-submit-btn">
+                    Find a ➔
+                  </button>
+                </form>
+
+                {answers[9]?.error && (
+                  <div className="fs-inquiry-feedback error" style={{ marginTop: '0.65rem' }}>
+                    <span>ℹ</span>
+                    <span>{answers[9].error}</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Complete Card when all 3 inquiries are correct */}
+            {answers[9]?.is3Correct && (
+              <div style={{ marginTop: '0.85rem' }}>
+                <div className="fs-inquiry-feedback success">
+                  <span>✓</span>
+                  <span>Point ({inv3.a}, {inv3.y}) confirmed! All 3 points found on the line!</span>
+                </div>
+
+                <div className="fs-earns-card" style={{ marginTop: '0.85rem' }}>
+                  <div className="fs-earns-badge">🎯 The Big Discovery!</div>
+                  <h4 style={{ margin: '0 0 0.35rem 0', color: '#ede8e3', fontSize: '1rem', fontWeight: 800 }}>
+                    This is exactly what the Inverse of a Function means!
+                  </h4>
+                  <p style={{ margin: '0 0 0.5rem 0', color: '#a89e94', fontSize: '0.875rem' }}>
+                    When you have the output and are asked for the input, you are finding the inverse.
+                  </p>
+
+                  <table className="fs-summary-table" style={{ marginTop: '0.5rem' }}>
+                    <thead>
+                      <tr>
+                        <th>Output f(a)</th>
+                        <th>Equation to Solve</th>
+                        <th>Input (a)</th>
+                        <th>Grid Coordinate</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td style={{ color: '#e8864a', fontWeight: 700 }}>f(a) = {inv1.y}</td>
+                        <td style={{ color: '#a89e94' }}>{currentDisplayLine?.m}a {currentDisplayLine?.c >= 0 ? `+ ${currentDisplayLine?.c}` : `- ${Math.abs(currentDisplayLine?.c)}`} = {inv1.y}</td>
+                        <td style={{ color: '#14b8a6', fontWeight: 700 }}>a = {inv1.a}</td>
+                        <td style={{ color: '#e8864a' }}>({inv1.a}, {inv1.y})</td>
+                      </tr>
+                      <tr>
+                        <td style={{ color: '#e8864a', fontWeight: 700 }}>f(a) = {inv2.y}</td>
+                        <td style={{ color: '#a89e94' }}>{currentDisplayLine?.m}a {currentDisplayLine?.c >= 0 ? `+ ${currentDisplayLine?.c}` : `- ${Math.abs(currentDisplayLine?.c)}`} = {inv2.y}</td>
+                        <td style={{ color: '#14b8a6', fontWeight: 700 }}>a = {inv2.a}</td>
+                        <td style={{ color: '#e8864a' }}>({inv2.a}, {inv2.y})</td>
+                      </tr>
+                      <tr>
+                        <td style={{ color: '#e8864a', fontWeight: 700 }}>f(a) = {inv3.y}</td>
+                        <td style={{ color: '#a89e94' }}>{currentDisplayLine?.m}a {currentDisplayLine?.c >= 0 ? `+ ${currentDisplayLine?.c}` : `- ${Math.abs(currentDisplayLine?.c)}`} = {inv3.y}</td>
+                        <td style={{ color: '#14b8a6', fontWeight: 700 }}>a = {inv3.a}</td>
+                        <td style={{ color: '#e8864a' }}>({inv3.a}, {inv3.y})</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* Step Footer Navigation */}
+            <div className="fs-step-footer-actions between" style={{ marginTop: '1.25rem' }}>
+              <button className="fs-btn-secondary" onClick={() => setActiveStep(8)}>
+                ← Back to Question 8
+              </button>
+              <button
+                className="fs-btn-primary"
+                onClick={() => setActiveStep(10)}
+                disabled={!answers[9]?.is3Correct}
+              >
+                Continue to Question 10 →
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* =================================================== */}
+        {/* QUESTION 10: WHAT IS THE INVERSE OF A FUNCTION?     */}
+        {/* =================================================== */}
+        {activeStep === 10 && (
+          <div className="fs-step-intro-block">
+            {/* Visual Handover & Intuition Container */}
+            <div className="fs-handover-box">
+              <span className="fs-handover-badge">🔄 Core Revelation</span>
+              <h3 className="fs-handover-title">
+                What does the <span style={{ color: 'var(--clr-accent, #e8864a)' }}>Inverse</span> of a Function mean?
+              </h3>
+
+              {/* Success Callout Banner */}
+              <div
+                className="fs-inquiry-feedback success"
+                style={{
+                  justifyContent: 'center',
+                  fontSize: '0.95rem',
+                  fontWeight: 600,
+                  marginBottom: '1.15rem'
+                }}
+              >
+                <span>💡</span>
+                <span>
+                  <strong>Inverse of a Function:</strong> When you have the <strong>output</strong> and are asked for the <strong>input</strong>!
+                </span>
+              </div>
+
+              {/* Visual Transformation Flow: Forward vs. Inverse */}
+              <div className="fs-notation-flow">
+                <div className="fs-flow-card">
+                  <span className="fs-flow-tag">Forward Function f(x)</span>
+                  <span className="fs-flow-math">Input (x) ➔ Output (y)</span>
+                  <span className="fs-flow-note">Given x, evaluate to get y</span>
+                </div>
+
+                <span className="fs-flow-arrow">⇄</span>
+
+                <div className="fs-flow-card new">
+                  <span className="fs-flow-tag highlight">Inverse Thinking</span>
+                  <span className="fs-flow-math highlight">Output (y) ➔ Input (x)</span>
+                  <span className="fs-flow-note" style={{ color: 'var(--clr-accent, #e8864a)', fontWeight: 600 }}>
+                    Given y, solve backwards for x
+                  </span>
+                </div>
+              </div>
+
+              {/* Machine Diagram (Running in reverse) */}
+              <div className="fs-machine-diagram">
+                <div className="fs-diagram-box output-box">
+                  <span className="fs-diagram-label">KNOWN OUTPUT</span>
+                  <span className="fs-diagram-val">y = f(a)</span>
+                </div>
+                <span className="fs-diagram-arrow">──▶</span>
+                <div className="fs-diagram-box machine-box">
+                  <span className="fs-diagram-label">REVERSE THE RULE</span>
+                  <span className="fs-diagram-val">Solve for a</span>
+                </div>
+                <span className="fs-diagram-arrow">──▶</span>
+                <div className="fs-diagram-box input-box">
+                  <span className="fs-diagram-label">INPUT FOUND</span>
+                  <span className="fs-diagram-val">a</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Step Footer Navigation */}
+            <div className="fs-step-footer-actions between" style={{ marginTop: '1.25rem' }}>
+              <button className="fs-btn-secondary" onClick={() => setActiveStep(9)}>
+                ← Back to Question 9
+              </button>
               <button className="fs-btn-primary" onClick={handleResetNewJourney}>
-                ✏️ Input Another Line
+                ✏️ Input Another Line / Function
               </button>
             </div>
           </div>

@@ -17,13 +17,15 @@ export default function GeoGebraFunctionLab({
   plottedRules = [],
   activeLine = null,
   targetX = null,
+  targetY = null,
   verifiedPoints = [],
   onPointPlotted,
   onRuleEntered,
   onClearCanvas,
   inputPlaceholder = 'e.g. y = x^2 or f(x) = x^2 or A = (-2, 4)',
   suggestedShortcuts = [],
-  showInputBar = false
+  showInputBar = false,
+  compact = false
 }) {
   const [inputVal, setInputVal] = useState('');
   const [feedback, setFeedback] = useState(null);
@@ -60,9 +62,14 @@ export default function GeoGebraFunctionLab({
     if (!api) return;
 
     try {
-      // 1. Sync Active Line
-      const activeLineId = activeLine ? (activeLine.id || 'mainLine') : null;
-      if (activeLine) {
+      // 1. Sync Active Line / Function
+      const activeLineId = 'mainGraphLine';
+      try {
+        api.deleteObject('mainLine');
+        api.deleteObject(activeLineId);
+      } catch (e) {}
+
+      if (activeLine && activeLine.cmd) {
         api.evalCommand(`${activeLineId}: y = ${activeLine.cmd}`);
         const color = activeLine.color || [232, 134, 74]; // Tenali Amber
         api.setColor(activeLineId, color[0], color[1], color[2]);
@@ -76,28 +83,47 @@ export default function GeoGebraFunctionLab({
         api.setLabelVisible(activeLineId, true);
       }
 
-      // 2. Sync Target X Guideline (trace guideline)
+      // 2. Sync Target X & Target Y Guidelines (trace guidelines)
+      try {
+        api.deleteObject('targetGuide');
+        api.deleteObject('targetGuideY');
+      } catch (e) {}
+
       if (targetX !== null && targetX !== undefined) {
         api.evalCommand(`targetGuide: x = ${targetX}`);
         api.setColor('targetGuide', 20, 184, 166); // Tenali Teal
         api.setLineStyle('targetGuide', 1); // Dashed
         api.setLineThickness('targetGuide', 2);
         api.setLabelVisible('targetGuide', false);
-      } else {
-        try {
-          api.deleteObject('targetGuide');
-        } catch (e) {}
+      }
+
+      if (targetY !== null && targetY !== undefined) {
+        api.evalCommand(`targetGuideY: y = ${targetY}`);
+        api.setColor('targetGuideY', 232, 134, 74); // Tenali Amber
+        api.setLineStyle('targetGuideY', 1); // Dashed
+        api.setLineThickness('targetGuideY', 2);
+        api.setLabelVisible('targetGuideY', false);
       }
 
       // 3. Sync Verified Points
       const allVerifiedNames = new Set(verifiedPoints.map((p, i) => p.name || `P_${i + 1}`));
       verifiedPoints.forEach((pt, i) => {
         const ptName = pt.name || `P_${i + 1}`;
+        try {
+          api.deleteObject(ptName);
+        } catch (e) {}
         api.evalCommand(`${ptName} = (${pt.x}, ${pt.y})`);
         api.setColor(ptName, 20, 184, 166); // Tenali Teal
         api.setPointSize(ptName, 7);
+        if (pt.label) {
+          try {
+            api.setCaption(ptName, pt.label);
+            api.setLabelStyle(ptName, 3);
+          } catch (e) {}
+        } else {
+          api.setLabelStyle(ptName, 1); // 1 = Name & Value
+        }
         api.setLabelVisible(ptName, true);
-        api.setLabelStyle(ptName, 1); // 1 = Name & Value
       });
 
       // 4. Sync custom plottedPoints
@@ -130,7 +156,7 @@ export default function GeoGebraFunctionLab({
       ];
 
       allFunctions.forEach((objName) => {
-        if (objName === 'targetGuide' || objName === activeLineId) return;
+        if (objName === 'targetGuide' || objName === 'targetGuideY' || objName === activeLineId) return;
         if (!existingRules.has(objName) && !allAllowedPoints.has(objName)) {
           try {
             api.deleteObject(objName);
@@ -149,7 +175,7 @@ export default function GeoGebraFunctionLab({
     } catch (err) {
       console.warn('GeoGebra sync warning:', err);
     }
-  }, [activeLine, targetX, verifiedPoints, plottedPoints, plottedRules]);
+  }, [activeLine, targetX, targetY, verifiedPoints, plottedPoints, plottedRules]);
 
   // Initialize GeoGebra Applet
   useEffect(() => {
@@ -172,7 +198,7 @@ export default function GeoGebraFunctionLab({
         appName: 'graphing',
         perspective: 'G', // Pure 2D graphics view
         width: 620,
-        height: 360,
+        height: compact ? 220 : 360,
         showToolBar: false,
         showAlgebraInput: false,
         showMenuBar: false,
@@ -221,6 +247,23 @@ export default function GeoGebraFunctionLab({
       syncCanvasObjects();
     }
   }, [syncCanvasObjects, isGgbLoading]);
+
+  // Dynamically resize GeoGebra viewport when compact mode toggles
+  useEffect(() => {
+    const api = ggbApiRef.current;
+    if (api && !isGgbLoading) {
+      try {
+        const targetH = compact ? 220 : 360;
+        const container = geogebraContainerRef.current;
+        const targetW = container?.clientWidth || 620;
+        if (typeof api.setSize === 'function') {
+          api.setSize(targetW, targetH);
+        }
+      } catch (err) {
+        console.warn('GeoGebra resize warning:', err);
+      }
+    }
+  }, [compact, isGgbLoading]);
 
   // Robust Normalizer for Mathematical Inputs
   const normalizeInput = (raw) => {
@@ -476,7 +519,7 @@ export default function GeoGebraFunctionLab({
   return (
     <div className="func-lab-root">
       {/* 1. TOP: GRAPH CARD */}
-      <div className="func-lab-graph-card">
+      <div className={`func-lab-graph-card ${compact ? 'compact' : ''}`}>
         <div className="func-lab-graph-header">
           <span className="func-lab-tag">Function Coordinate Canvas</span>
           <div className="func-lab-header-actions">
@@ -489,7 +532,7 @@ export default function GeoGebraFunctionLab({
           </div>
         </div>
 
-        <div className="func-lab-canvas-wrapper">
+        <div className={`func-lab-canvas-wrapper ${compact ? 'compact' : ''}`}>
           {isGgbLoading && (
             <div className="func-lab-geogebra-loading">
               <div className="func-lab-geogebra-spinner" />

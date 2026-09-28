@@ -180,6 +180,70 @@ export default function LineStudioModule({ onBack }) {
     (p) => (p.name === 'E' || (p !== userPtA && p !== userPtB)) && Math.abs(p.x - targetE.x) < 0.05 && Math.abs(p.y - targetE.y) < 0.05
   );
 
+  // Question 3: Find the farthest point among the 5 points (A, B, C, D, E) and zoom out according to that only
+  const getFarthestPointBounds = () => {
+    const fivePoints = [ptA, ptB, targetC, targetD, targetE];
+
+    // Calculate the farthest point from the origin (0, 0)
+    const farthestPoint = fivePoints.reduce((maxPt, pt) => {
+      const dPt = Math.hypot(pt.x, pt.y);
+      const dMax = Math.hypot(maxPt.x, maxPt.y);
+      return dPt > dMax ? pt : maxPt;
+    }, fivePoints[0]);
+
+    // Default base coordinate system in GeoGebraLineLab: [-6, 12, -3, 13]
+    const defaultXmin = -6;
+    const defaultXmax = 12;
+    const defaultYmin = -3;
+    const defaultYmax = 13;
+
+    // Safety margin ratio so points sit comfortably inside the frame
+    const margin = 0.75;
+
+    // Zoom scale starts at 1.0 (never zoom in closer than standard, only zoom out)
+    let zoomScale = 1.0;
+
+    // Check farthest point against default boundaries
+    if (farthestPoint.x > defaultXmax * margin) {
+      zoomScale = Math.max(zoomScale, farthestPoint.x / (defaultXmax * margin));
+    }
+    if (farthestPoint.x < defaultXmin * margin) {
+      zoomScale = Math.max(zoomScale, farthestPoint.x / (defaultXmin * margin));
+    }
+    if (farthestPoint.y > defaultYmax * margin) {
+      zoomScale = Math.max(zoomScale, farthestPoint.y / (defaultYmax * margin));
+    }
+    if (farthestPoint.y < defaultYmin * margin) {
+      zoomScale = Math.max(zoomScale, farthestPoint.y / (defaultYmin * margin));
+    }
+
+    // Also verify all 5 points are covered with the same safety margin
+    fivePoints.forEach((p) => {
+      if (p.x > defaultXmax * margin) {
+        zoomScale = Math.max(zoomScale, p.x / (defaultXmax * margin));
+      }
+      if (p.x < defaultXmin * margin) {
+        zoomScale = Math.max(zoomScale, p.x / (defaultXmin * margin));
+      }
+      if (p.y > defaultYmax * margin) {
+        zoomScale = Math.max(zoomScale, p.y / (defaultYmax * margin));
+      }
+      if (p.y < defaultYmin * margin) {
+        zoomScale = Math.max(zoomScale, p.y / (defaultYmin * margin));
+      }
+    });
+
+    const scale = Math.max(1.0, Math.ceil(zoomScale * 10) / 10);
+
+    return {
+      xmin: Math.floor(defaultXmin * scale),
+      xmax: Math.ceil(defaultXmax * scale),
+      ymin: Math.floor(defaultYmin * scale),
+      ymax: Math.ceil(defaultYmax * scale),
+      farthestPoint
+    };
+  };
+
   // Callback when a line is drawn via GeoGebra input bar
   const handleLineDrawn = ({ pt1, pt2 }) => {
     if (activeStep === 5) {
@@ -208,10 +272,13 @@ export default function LineStudioModule({ onBack }) {
       return 'Change sliders "a" and "b" and type your observation:';
     }
     if (activeStep === 7) {
-      return 'What happens when "a" is gradually increased?';
+      return 'What happens when "a" is slowly increased?';
     }
     if (activeStep === 8) {
       return 'What is "b" doing here?';
+    }
+    if (activeStep === 9) {
+      return 'Write an equation with steepness 3 and passing through 2 at y:';
     }
     return currentQ?.prompt;
   };
@@ -685,6 +752,7 @@ export default function LineStudioModule({ onBack }) {
             interactiveSliders={isSliderMode}
             onSliderInteracted={handleSliderInteracted}
             showInputBar={showGeoGebraInputBar}
+            coordBounds={activeStep >= 3 && activeStep <= 5 ? getFarthestPointBounds() : null}
             inputSubmitLabel={activeStep === 5 ? 'Draw Line 🚀' : 'Plot on Canvas 🚀'}
             inputPlaceholder={getInputPlaceholder()}
             taskHeader={
@@ -1334,10 +1402,10 @@ export default function LineStudioModule({ onBack }) {
                           ← Back to Question 7
                         </button>
                         <button
-                          className="la-btn-primary large"
+                          className="la-btn-primary"
                           onClick={() => setActiveStep(9)}
                         >
-                          Meet The Equation y = ax + b →
+                          Continue to Question 9 →
                         </button>
                       </div>
                     </div>
@@ -1348,50 +1416,103 @@ export default function LineStudioModule({ onBack }) {
           )}
 
           {/* =================================================== */}
-          {/* QUESTION 9: THE NAMING HANDOVER & WRITE EQUATION    */}
+          {/* QUESTION 9: WRITE EQUATION                          */}
           {/* =================================================== */}
           {activeStep === 9 && (
             <div className="la-single-step-view">
-              {/* THE NAMING HANDOVER BANNER */}
-              <div className="la-naming-handover-banner" style={{
-                background: 'linear-gradient(135deg, rgba(232, 134, 74, 0.12) 0%, rgba(20, 184, 166, 0.08) 100%)',
-                border: '1px solid rgba(232, 134, 74, 0.35)',
+              {/* CLEAR VISIBLE TARGET VALUES CARD */}
+              <div style={{
+                background: 'rgba(255, 255, 255, 0.03)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
                 borderRadius: '12px',
-                padding: '1rem 1.25rem',
+                padding: '1.15rem 1.35rem',
                 marginBottom: '1rem',
                 textAlign: 'center'
               }}>
-                <div style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#e8864a', marginBottom: '0.25rem' }}>
-                  ✨ THE NAMING HANDOVER
-                </div>
                 <div style={{
-                  fontSize: '1.75rem',
-                  fontWeight: 800,
-                  fontFamily: 'serif',
-                  color: '#e8864a',
-                  marginBottom: '0.35rem',
-                  letterSpacing: '0.04em'
+                  fontSize: '0.78rem',
+                  fontWeight: 700,
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                  color: 'var(--clr-text-soft, #a89e94)',
+                  marginBottom: '0.75rem'
                 }}>
-                  y = a·x + b
+                  Given Line Parameters
                 </div>
-                <p style={{ margin: '0 0 0.65rem 0', fontSize: '0.92rem', color: '#f3efe6', lineHeight: 1.45 }}>
-                  Whatever you were doing with knobs <strong>a</strong> and <strong>b</strong> is actually this equation:
-                </p>
+
                 <div style={{
                   display: 'flex',
-                  flexDirection: 'column',
-                  gap: '0.45rem',
-                  textAlign: 'left',
-                  background: 'rgba(0, 0, 0, 0.22)',
-                  padding: '0.75rem 1rem',
-                  borderRadius: '8px',
-                  border: '1px solid rgba(232, 134, 74, 0.18)'
+                  gap: '1rem',
+                  justifyContent: 'center',
+                  alignItems: 'stretch',
+                  flexWrap: 'wrap'
                 }}>
-                  <div style={{ fontSize: '0.88rem', color: '#f3efe6', lineHeight: 1.4 }}>
-                    • <strong>a controls rotation &amp; steepness:</strong> increasing 'a' rotates the line anti-clockwise.
+                  {/* Steepness / Tilt Value */}
+                  <div style={{
+                    flex: '1 1 200px',
+                    maxWidth: '280px',
+                    background: 'rgba(232, 134, 74, 0.12)',
+                    border: '1.5px solid rgba(232, 134, 74, 0.45)',
+                    borderRadius: '10px',
+                    padding: '0.9rem 1.15rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <span style={{
+                      fontSize: '0.76rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      color: '#a89e94',
+                      fontWeight: 700,
+                      marginBottom: '0.35rem'
+                    }}>
+                      Steepness / Tilt (a)
+                    </span>
+                    <span style={{
+                      fontSize: '2.1rem',
+                      fontWeight: 800,
+                      color: '#e8864a',
+                      fontFamily: 'serif',
+                      lineHeight: 1
+                    }}>
+                      3
+                    </span>
                   </div>
-                  <div style={{ fontSize: '0.88rem', color: '#f3efe6', lineHeight: 1.4 }}>
-                    • <strong>b gives where the line passes at 'y'</strong>.
+
+                  {/* Passing through y value */}
+                  <div style={{
+                    flex: '1 1 200px',
+                    maxWidth: '280px',
+                    background: 'rgba(20, 184, 166, 0.12)',
+                    border: '1.5px solid rgba(20, 184, 166, 0.45)',
+                    borderRadius: '10px',
+                    padding: '0.9rem 1.15rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <span style={{
+                      fontSize: '0.76rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      color: '#a89e94',
+                      fontWeight: 700,
+                      marginBottom: '0.35rem'
+                    }}>
+                      Passes through y at (b)
+                    </span>
+                    <span style={{
+                      fontSize: '2.1rem',
+                      fontWeight: 800,
+                      color: '#14b8a6',
+                      fontFamily: 'serif',
+                      lineHeight: 1
+                    }}>
+                      2
+                    </span>
                   </div>
                 </div>
               </div>
@@ -1404,8 +1525,8 @@ export default function LineStudioModule({ onBack }) {
                 </div>
 
                 <div style={{ marginTop: '0.75rem' }}>
-                  <label style={{ display: 'block', fontSize: '0.84rem', color: '#a89e94', marginBottom: '0.4rem' }}>
-                    Type the equation (rotation/steepness = 3, passes through 2 at y):
+                  <label style={{ display: 'block', fontSize: '0.88rem', color: '#f3efe6', marginBottom: '0.45rem', fontWeight: 500 }}>
+                    Write the equation of the line using these values:
                   </label>
                   <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                     <input

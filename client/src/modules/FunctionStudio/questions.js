@@ -15,14 +15,14 @@
 export const PATH_META = {
   title: 'Rules Beyond the Line',
   subtitle: 'The One-Input-One-Output Pattern',
-  totalQuestions: 11
+  totalQuestions: 10
 };
 
 export const PHASES = [
   { id: 1, name: 'Phase 1: The Line Rule Was Just One Rule', range: [1, 3] },
   { id: 2, name: 'Phase 2: Many Rules, Same Pattern', range: [4, 5] },
   { id: 3, name: 'Phase 3: When the Pattern Breaks', range: [6, 8] },
-  { id: 4, name: 'Phase 4: The Named Rule', range: [9, 11] }
+  { id: 4, name: 'Phase 4: The Named Rule', range: [9, 10] }
 ];
 
 export const FUNCTION_PATH_QUESTIONS = [
@@ -219,23 +219,6 @@ export const FUNCTION_PATH_QUESTIONS = [
     },
     creditExplanation: 'g(0) = |0| + 1 = 1, and g(-2) = |-2| + 1 = 3. Each well-formed rule can be given its own unique name (f, g, h).',
     earns: 'Different rules get different names. f and g are two distinct rules — f(x) = x², g(x) = |x| + 1 — giving distinct outputs for the same input.'
-  },
-  {
-    id: 11,
-    phaseId: 4,
-    phaseTitle: 'Phase 4: The Named Rule',
-    title: 'Verify: Every x Gets Exactly One y',
-    prompt: 'You have f(x) = x² and g(x) = abs(x) + 1. For x = 5, f(5)=25 and g(5)=6. For x = -7, f(-7)=49 and g(-7)=8. Does each rule give exactly one y for every x?',
-    subtext: 'Verify the universal one-input-one-output property across both named rules:',
-    type: 'mcq',
-    options: [
-      { id: 'q11_both', text: 'Yes — both rules satisfy "exactly one y for every x"', isCorrect: true },
-      { id: 'q11_only_f', text: 'No — only f does; g fails', isCorrect: false },
-      { id: 'q11_only_g', text: 'No — only g does; f fails', isCorrect: false },
-      { id: 'q11_neither', text: 'No — neither rule satisfies it', isCorrect: false }
-    ],
-    creditExplanation: 'Both f and g are well-formed rules: for every input x, they return exactly one output y. No ambiguity, no exceptions!',
-    earns: 'Every named well-formed rule — f, g, and any rule that gives one y per x — passes the check. You have earned the master pattern of mathematics!'
   }
 ];
 
