@@ -50,7 +50,7 @@
 <!-- live-snapshot:start -->
 | 🏆 Commits | 🔀 Merged PRs | 👥 Contributors | 🧩 Puzzles | 📚 Vocab | 🌍 GK |
 |----------:|------------:|--------------:|---------:|-------:|----:|
-| **1071** | **110** | **43** | **93** | **7,662** | **991** |
+| **1072** | **110** | **43** | **93** | **7,662** | **991** |
 <!-- live-snapshot:end -->
 
 ## 🥇 Leaderboard
@@ -69,8 +69,8 @@ _Live data — last regenerated 2026-09-28 · auto-refreshed by [`github-actions
 | 7. | **Sameer Mishra** | [24F3005086](https://github.com/24F3005086) | **36** | 4  | i18n · Accessibility · Concept Labs |
 | 8. | **DIPTOSUBHRO DATTA**<br/><sub>↳ also commits as <b>Dipto Subhro</b></sub> | [diptosubhro-ctrl](https://github.com/diptosubhro-ctrl) | **33** | 1  | Tutorial System + Noise Filter Refactor |
 | 9. | **Ritish Karmakar** | [Ritish007-svg](https://github.com/Ritish007-svg) | **27** | 1  | Percentages Level-wise Explanation |
-| 10. | **saniyajos**<br/><sub>↳ also commits as <b>SaniyaJos</b></sub> | [saniyajos](https://github.com/saniyajos) | **22** | 0  | — |
-| 11. | **jatin-kumar**<br/><sub>↳ also commits as <b>Jatin Kumar</b></sub> | [jatin-kumar](https://github.com/jatin-kumar) | **21** | 0  | — |
+| 10. | **jatin-kumar**<br/><sub>↳ also commits as <b>Jatin Kumar</b></sub> | [jatin-kumar](https://github.com/jatin-kumar) | **22** | 0  | — |
+| 11. | **saniyajos**<br/><sub>↳ also commits as <b>SaniyaJos</b></sub> | [saniyajos](https://github.com/saniyajos) | **22** | 0  | — |
 | 12. | **K C Dharshan** | [KCDharshan9](https://github.com/KCDharshan9) | **21** | 1  | Tap-to-Define Word Glossary |
 | 13. | **Ahana Banerjee** | [ahana4banerjee](https://github.com/ahana4banerjee) | **20** | 2  | Goal Practice & Learning Journey |
 | 14. | **harshyy07** | [harshyy07](https://github.com/harshyy07) | **16** | 1  | — |
@@ -358,11 +358,11 @@ _Live data — last regenerated 2026-09-28 · auto-refreshed by [`github-actions
   <table>
     <tr>
       <td align="center" width="220">
-        <a href="https://github.com/saniyajos"><img src="https://github.com/saniyajos.png?size=120&s=120" width="120" style="border-radius:50%; border:3px solid #888888;" alt="saniyajos"/></a>
-        <br/><b>saniyajos</b>
-        <br/><a href="https://github.com/saniyajos">@saniyajos</a>
+        <a href="https://github.com/jatin-kumar"><img src="https://github.com/jatin-kumar.png?size=120&s=120" width="120" style="border-radius:50%; border:3px solid #888888;" alt="jatin-kumar"/></a>
+        <br/><b>jatin-kumar</b>
+        <br/><a href="https://github.com/jatin-kumar">@jatin-kumar</a>
         <br/><sub>🏆 22 commits · 0 PRs merged</sub>
-        <br/><sub>🔗 also commits as: <b>SaniyaJos</b></sub>
+        <br/><sub>🔗 also commits as: <b>Jatin Kumar</b></sub>
       </td>
       <td valign="top" width="*">
         <h4>10. New Contributor</h4>
@@ -380,17 +380,17 @@ _Live data — last regenerated 2026-09-28 · auto-refreshed by [`github-actions
   <table>
     <tr>
       <td align="center" width="220">
-        <a href="https://github.com/jatin-kumar"><img src="https://github.com/jatin-kumar.png?size=120&s=120" width="120" style="border-radius:50%; border:3px solid #888888;" alt="jatin-kumar"/></a>
-        <br/><b>jatin-kumar</b>
-        <br/><a href="https://github.com/jatin-kumar">@jatin-kumar</a>
-        <br/><sub>🏆 21 commits · 0 PRs merged</sub>
-        <br/><sub>🔗 also commits as: <b>Jatin Kumar</b></sub>
+        <a href="https://github.com/saniyajos"><img src="https://github.com/saniyajos.png?size=120&s=120" width="120" style="border-radius:50%; border:3px solid #888888;" alt="saniyajos"/></a>
+        <br/><b>saniyajos</b>
+        <br/><a href="https://github.com/saniyajos">@saniyajos</a>
+        <br/><sub>🏆 22 commits · 0 PRs merged</sub>
+        <br/><sub>🔗 also commits as: <b>SaniyaJos</b></sub>
       </td>
       <td valign="top" width="*">
         <h4>11. New Contributor</h4>
         <ul>
           <li>🆕 <b>New contributor</b> — auto-added by the readme-bot</li>
-          <li>📊 <b>21 commits</b> across this repo's history</li>
+          <li>📊 <b>22 commits</b> across this repo's history</li>
           <li>🔗 <i>Add a <code>FALLBACK_PROFILES</code> entry in <code>scripts/update-readme-contributors.js</code> to enrich this card with real name, avatar, location, and curated feature list</i></li>
         </ul>
       </td>

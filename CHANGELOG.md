@@ -19,9 +19,15 @@
 ---
 
 <!-- live-changelog:start -->
-### 📊 Total: 1071 commits · 85 active days · 43 unique authors
+### 📊 Total: 1072 commits · 86 active days · 43 unique authors
 
 > **📖 How to read this:** Each entry shows a clickable SHA, the author, and a one-line subject. Sub-bullets show the **exact files touched** with per-file `+additions −deletions`, the **total line stats**, and (when present) the **commit body** explaining what & why.
+
+#### 📅 2026-09-28  <sub>(1 commit)</sub>
+
+- ✨ [`e1f3aff3`](https://github.com/Jatin-nicon/tenali/commit/e1f3aff379782c90b505ab10eeb0ab4509e3e2c3) — **Jatin Kumar** — refine LineStudio and FunctionStudio flows and GeoGebra framing
+    - 📁 **9 files:** `client/src/modules/FunctionStudio/FunctionStudioModule.css` `+112 −0`, `client/src/modules/FunctionStudio/FunctionStudioModule.jsx` `+1096 −116`, `client/src/modules/FunctionStudio/GeoGebraFunctionLab.css` `+15 −0`, `client/src/modules/FunctionStudio/GeoGebraFunctionLab.jsx` `+58 −15`, `client/src/modules/FunctionStudio/equationParser.js` `+469 −15`, `client/src/modules/FunctionStudio/questions.js` `+2 −19`, `client/src/modules/LineStudio/GeoGebraLineLab.jsx` `+28 −2`, `client/src/modules/LineStudio/LineStudioModule.jsx` `+156 −35` *(+1 more in [`e1f3aff3`](https://github.com/Jatin-nicon/tenali/commit/e1f3aff379782c90b505ab10eeb0ab4509e3e2c3))*
+    - 📊 **`+1938 −204`** · 9 files
 
 #### 📅 2026-09-25  <sub>(1 commit)</sub>
 
