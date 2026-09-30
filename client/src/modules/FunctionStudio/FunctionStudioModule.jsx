@@ -1418,7 +1418,7 @@ export default function FunctionStudioModule({ onBack }) {
                     ref={q8Val2Ref}
                     type="text"
                     className="fs-tray-input-box"
-                    placeholder="e.g. f(2)"
+                    placeholder="e.g. f(...)"
                     value={answers[8]?.val2 || ''}
                     onChange={(e) =>
                       setAnswers((prev) => ({
@@ -1454,7 +1454,7 @@ export default function FunctionStudioModule({ onBack }) {
                     ref={q8Val4Ref}
                     type="text"
                     className="fs-tray-input-box"
-                    placeholder="e.g. f(4)"
+                    placeholder="e.g. f(...)"
                     value={answers[8]?.val4 || ''}
                     onChange={(e) =>
                       setAnswers((prev) => ({
@@ -1629,7 +1629,7 @@ export default function FunctionStudioModule({ onBack }) {
                         ref={q9Val1Ref}
                         type="text"
                         className="fs-tray-input-box"
-                        placeholder={`e.g. a = ${inv1.a} or ${inv1.a}`}
+                        placeholder="e.g. a = ? or number"
                         value={answers[9]?.val1 || ''}
                         onChange={(e) =>
                           setAnswers((prev) => ({
@@ -1688,7 +1688,7 @@ export default function FunctionStudioModule({ onBack }) {
                         ref={q9Val2Ref}
                         type="text"
                         className="fs-tray-input-box"
-                        placeholder={`e.g. a = ${inv2.a} or ${inv2.a}`}
+                        placeholder="e.g. a = ? or number"
                         value={answers[9]?.val2 || ''}
                         onChange={(e) =>
                           setAnswers((prev) => ({
@@ -1745,7 +1745,7 @@ export default function FunctionStudioModule({ onBack }) {
                     ref={q9Val3Ref}
                     type="text"
                     className="fs-tray-input-box"
-                    placeholder={`e.g. a = ${inv3.a} or ${inv3.a}`}
+                    placeholder="e.g. a = ? or number"
                     value={answers[9]?.val3 || ''}
                     onChange={(e) =>
                       setAnswers((prev) => ({

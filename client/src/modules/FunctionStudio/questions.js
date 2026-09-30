@@ -190,8 +190,8 @@ export const FUNCTION_PATH_QUESTIONS = [
     expectedRule: 'f(x) = x^2',
     ruleAliases: ['f(x) = x^2', 'f(x)=x^2', 'f(x) = x²', 'f(x)=x²'],
     inputs: [
-      { id: 'f_3', label: 'What is f(3)?', placeholder: 'Plug x = 3 into x²', expected: '9' },
-      { id: 'f_neg2', label: 'What is f(-2)?', placeholder: 'Plug x = -2 into x²', expected: '4' }
+      { id: 'f_3', label: 'What is f(3)?', placeholder: '?', expected: '9' },
+      { id: 'f_neg2', label: 'What is f(-2)?', placeholder: '?', expected: '4' }
     ],
     creditExplanation: 'f(3) = 3² = 9, and f(-2) = (-2)² = 4. The notation f(x) simply says: "this is rule f, and f(x) is its output at input x".',
     earns: 'Writing f(x) = x² names the rule "f". Then f(3) means "the output that rule f produces when input is 3" — which is 9.'
@@ -207,8 +207,8 @@ export const FUNCTION_PATH_QUESTIONS = [
     expectedRule: 'g(x) = abs(x) + 1',
     ruleAliases: ['g(x) = abs(x) + 1', 'g(x)=abs(x)+1', 'g(x) = |x| + 1', 'g(x)=|x|+1'],
     inputs: [
-      { id: 'g_0', label: 'What is g(0)?', placeholder: '|0| + 1', expected: '1' },
-      { id: 'g_neg2', label: 'What is g(-2)?', placeholder: '|-2| + 1', expected: '3' }
+      { id: 'g_0', label: 'What is g(0)?', placeholder: '?', expected: '1' },
+      { id: 'g_neg2', label: 'What is g(-2)?', placeholder: '?', expected: '3' }
     ],
     mcq: {
       question: 'f and g are two DIFFERENT rules. Should they have different names?',

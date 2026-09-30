@@ -333,7 +333,7 @@ export function parseInverseInput(inputStr, targetA, outputVal, lineObj) {
   if (!inputStr || typeof inputStr !== 'string' || !inputStr.trim()) {
     return {
       success: false,
-      error: `Please enter the value of a (e.g. a = ${targetA} or ${targetA}).`
+      error: `Please enter the value of a (e.g. a = ? or enter number).`
     };
   }
 
@@ -344,7 +344,7 @@ export function parseInverseInput(inputStr, targetA, outputVal, lineObj) {
   if (!match) {
     return {
       success: false,
-      error: `Please enter a valid number or equation for a (e.g. a = ${targetA} or ${targetA}).`
+      error: `Please enter a valid number or equation for a (e.g. a = ? or enter number).`
     };
   }
 
