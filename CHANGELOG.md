@@ -19,9 +19,15 @@
 ---
 
 <!-- live-changelog:start -->
-### 📊 Total: 1072 commits · 86 active days · 43 unique authors
+### 📊 Total: 1073 commits · 87 active days · 43 unique authors
 
 > **📖 How to read this:** Each entry shows a clickable SHA, the author, and a one-line subject. Sub-bullets show the **exact files touched** with per-file `+additions −deletions`, the **total line stats**, and (when present) the **commit body** explaining what & why.
+
+#### 📅 2026-09-30  <sub>(1 commit)</sub>
+
+- 🐛 [`b4b6aa87`](https://github.com/Jatin-nicon/tenali/commit/b4b6aa87df23f0c10f8355fc110abffc2fc44cae) — **Jatin Kumar** — remove exact answers and calculations from input placeholders
+    - 📁 **3 files:** `client/src/modules/FunctionStudio/FunctionStudioModule.jsx` `+5 −5`, `client/src/modules/FunctionStudio/equationParser.js` `+2 −2`, `client/src/modules/FunctionStudio/questions.js` `+4 −4`
+    - 📊 **`+11 −11`** · 3 files
 
 #### 📅 2026-09-28  <sub>(1 commit)</sub>
 
