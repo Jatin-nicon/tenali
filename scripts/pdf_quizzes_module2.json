@@ -1,0 +1,436 @@
+[
+  {
+    "quizNumber": 17,
+    "title": "Cryptography and the Matrix Machine",
+    "questionCode": "M2Q1",
+    "questions": [
+      {
+        "question": "The plain-text word SUDARSHANA yielded ten distinct numbers, but the encryption process required us to group them into pairs (like 18 and 20) before doing any math. Why was this pairing geometrically necessary?",
+        "options": [
+          "To prevent frequency analysis, cryptographic protocols always require combining a consonant with a vowel to mask the underlying language.",
+          "The encryption matrix is a 2 × 2 transformation, meaning it acts strictly as an engine that consumes and outputs two-dimensional spatial coordinates.",
+          "Because the determinant of the encryption matrix is exactly 2, the mathematical rules dictate that inputs must be processed in sets of two to avoid fractional remainders.",
+          "Grouping numbers into pairs naturally converts the linear data stream into a curved trajectory, which is significantly harder for codebreakers to trace."
+        ],
+        "correct_option": "The encryption matrix is a 2 × 2 transformation, meaning it acts strictly as an engine that consumes and outputs two-dimensional spatial coordinates.",
+        "explanation": "A 2 × 2 matrix represents a transformation of ℝ² space. It is physically built to accept a 2D coordinate vector (an x and a y) and stretch/rotate it into a new 2D coordinate vector. It simply does not know how to process a single 1D number or a 3D block of three numbers."
+      },
+      {
+        "question": "Visualize the Transformation Picture from Module 1. What exactly did the encryption matrix do to the first pair of numbers to turn (18, 20) into (96, 134)?",
+        "options": [
+          "It isolated the x and y variables, multiplying the 18 purely along the horizontal axis and the 20 purely along the vertical axis to generate a secure distance.",
+          "It shifted the central origin of the graph by (18, 20) units, effectively making the plain-text coordinate the new mathematical center of the cipher system.",
+          "It physically grasped the original coordinate at (18, 20) and relocated it across the geometric plane to a completely new, disguised destination at (96, 134).",
+          "It squared the original coordinates and mapped them onto a three-dimensional sphere, ensuring the encrypted values could not be read on a flat piece of paper."
+        ],
+        "correct_option": "It physically grasped the original coordinate at (18, 20) and relocated it across the geometric plane to a completely new, disguised destination at (96, 134).",
+        "explanation": "Encryption is simply the act of moving data to a place where an eavesdropper cannot recognize it. Think of the matrix as a spatial wind. The matrix multiplication Ax picked up the original, readable coordinate (S, U) located at (18, 20), and blew it far across the grid to a completely new coordinate at (96, 134)."
+      },
+      {
+        "question": "The core question asks: 'Given these numbers, how will you decrypt the message?' Using the language of linear algebra, what is the exact mathematical mechanism required to get SUDARSHANA back?",
+        "options": [
+          "You must multiply the encrypted cipher coordinates by the inverse of the original encryption matrix to reverse-engineer the geometric mapping.",
+          "You must divide the encrypted cipher coordinates (96, 134) directly by the original 2 × 2 matrix to mathematically isolate the original variables.",
+          "You must swap the rows of the original encryption matrix and multiply it by the cipher text, which physically reverses the directional vectors.",
+          "You apply the exact same original matrix to the cipher numbers, but strategically subtract the results from 26 (the total length of the alphabet)."
+        ],
+        "correct_option": "You must multiply the encrypted cipher coordinates by the inverse of the original encryption matrix to reverse-engineer the geometric mapping.",
+        "explanation": "This tests a major algebraic trap! If the forward equation is Ax = b, you cannot simply 'divide' by matrix A. Matrix division does not exist. To isolate the starting point x, you must multiply the destination (b) by the Inverse Matrix (A⁻¹). The inverse is a custom-built machine that perfectly retraces the steps from (96, 134) backward to (18, 20)."
+      },
+      {
+        "question": "What would logically happen if the sender accidentally used the 'broken' singular matrix [[1, 2], [2, 4]] from Module 1 to encrypt this message?",
+        "options": [
+          "The encryption would actually be significantly stronger, as the collapsed matrix lacks an identifiable geometric pattern, completely baffling codebreakers.",
+          "The encrypted numbers would spiral infinitely into decimal fractions, making it computationally difficult to match them back to whole letters of the alphabet.",
+          "Space would collapse, causing multiple different letter combinations to land on the exact same encrypted coordinate, making accurate decryption impossible.",
+          "The matrix would physically ignore the second letter of every pair, securely mapping only half of the message to the destination plane while deleting the rest."
+        ],
+        "correct_option": "Space would collapse, causing multiple different letter combinations to land on the exact same encrypted coordinate, making accurate decryption impossible.",
+        "explanation": "A secure cipher requires a perfectly unique 1-to-1 mapping. As we learned in M1Q16, a singular matrix collapses 2D space into a flat 1D line (the Null Space issue). This means entirely different letter pairs (like 'AB' and 'CD') might both get encrypted into the exact same output numbers (like '45, 90'). The history of the data is destroyed, making it impossible to know which word the sender originally wrote."
+      },
+      {
+        "question": "In the context of a secure cryptographic protocol, what real-world digital asset does the Inverse Matrix (A⁻¹) directly represent?",
+        "options": [
+          "It acts as the public encryption lock that allows anyone on the internet to send a scrambled message, but strictly prevents them from reading it.",
+          "It calculates the absolute computational time it would take a hacker to crack the cipher without knowing the original matrix variables.",
+          "It represents the secure physical channel (like an encrypted fiber-optic cable) over which the scrambled message (96, 134) safely travels.",
+          "It acts as the highly secure, privately held decryption key required to unlock the cipher and perfectly run the mathematical scramble in reverse."
+        ],
+        "correct_option": "It acts as the highly secure, privately held decryption key required to unlock the cipher and perfectly run the mathematical scramble in reverse.",
+        "explanation": "Anyone intercepting the message only sees a string of massive, confusing numbers. Without knowing the exact matrix used to scramble them, discovering the inverse is mathematically incredibly difficult (especially when scaled up to larger dimensions). The Inverse Matrix is the private key; whoever possesses it holds the exclusive power to run the matrix machine backward."
+      }
+    ]
+  },
+  {
+    "quizNumber": 18,
+    "title": "Real-World Constraints and the Geometric Intersection",
+    "questionCode": "M2Q2",
+    "questions": [
+      {
+        "question": "In the traditional 'Row Picture,' what does the single algebraic equation 3A + 1C = 1200 geometrically represent before you even look at the second table's bill?",
+        "options": [
+          "It calculates a bounded, triangular area of profit the manager makes strictly from the first table.",
+          "It defines a single, highly specific spatial coordinate that perfectly locks in the final prices of the adult and child meals.",
+          "It maps out a continuous geometric line, representing an infinite number of possible price combinations that could technically total 1200.",
+          "It restricts the mathematical graph to a single positive quadrant, ensuring that neither the adults nor the children can have a negative price."
+        ],
+        "correct_option": "It maps out a continuous geometric line, representing an infinite number of possible price combinations that could technically total 1200.",
+        "explanation": "A single equation with two variables cannot give you a single answer. If 3A + 1C = 1200, maybe the adult meal is Rs. 400 (and the child eats for free), or maybe the adult meal is Rs. 300 and the child meal is Rs. 300. Geometrically, this infinite set of 'possible realities' forms a single, unbroken straight line across the 2D plane. You are trapped somewhere on that line, but you don't know exactly where."
+      },
+      {
+        "question": "The manager must observe a second table (1A + 2C = 1000) to actually solve the problem. Geometrically, what does solving for the crossing of these two lines physically accomplish?",
+        "options": [
+          "It isolates the one unique spatial coordinate in the entire 2D plane that successfully obeys the financial rules of both tables at the exact same time.",
+          "The intersection algebraically adds the dimensions of the two tables together to find the overall average spatial cost per person.",
+          "It permanently bends the two mathematical trajectories so they run completely parallel to one another, preventing future contradictions.",
+          "The crossing point establishes the absolute mathematical baseline, proving that the central origin (0, 0) must be shifted upward."
+        ],
+        "correct_option": "It isolates the one unique spatial coordinate in the entire 2D plane that successfully obeys the financial rules of both tables at the exact same time.",
+        "explanation": "The first line is the set of all prices that make Table 1's bill correct. The second line is the set of all prices that make Table 2's bill correct. The geometric intersection is the singular coordinate that physically exists on both lines simultaneously. That intersection is the unique price point that perfectly balances both realities."
+      },
+      {
+        "question": "If we upgrade this high-school algebra into a modern Matrix Transformation (Mx = b), what does the actual 2 × 2 matrix engine [[3,1],[1,2]] itself represent in the cafe?",
+        "options": [
+          "The matrix acts as the final digital ledger, firmly locking in the ultimate monetary targets the manager is attempting to reach.",
+          "The matrix represents the fluctuating prices themselves, operating directly upon the human customers to calculate total revenue.",
+          "The 2 × 2 matrix algebraically calculates the absolute geographic distance between the first table and the second table.",
+          "The matrix is a rigid mapping engine, built entirely from the physical human seating arrangements, designed to transform unknown prices into the final bills."
+        ],
+        "correct_option": "The matrix is a rigid mapping engine, built entirely from the physical human seating arrangements, designed to transform unknown prices into the final bills.",
+        "explanation": "In the equation Mx = b, the x vector is the unknown prices (Adult, Child). The b vector is the target destination (the final bills: 1200, 1000). The matrix itself is the 'machine' that converts human beings into money. Its coefficients (3, 1 and 1, 2) are the strict physical constraints dictated purely by how many people sat down to eat."
+      },
+      {
+        "question": "Let's completely change our perspective and read the matrix using the 'Column Picture.' What does the first vertical column [3, 1]ᵀ mathematically track about the cafe?",
+        "options": [
+          "It perfectly isolates Table 1, showing that exactly 3 adults and 1 child sat down together to generate the first bill.",
+          "It represents the complete physical presence of the adults across the entire system, tracking exactly how the 'Adult price' impacts both bills simultaneously.",
+          "It isolates the exact amount of money contributed solely by the adults to the final financial ledger.",
+          "It defines the absolute physical difference in seating capacity between the first and second tables."
+        ],
+        "correct_option": "It represents the complete physical presence of the adults across the entire system, tracking exactly how the 'Adult price' impacts both bills simultaneously.",
+        "explanation": "This is a classic trap! Option A describes the Row Picture. Reading columns separates the variables. The first column is strictly attached to the Adult price variable (A). The top number (3) is how many adults are at Table 1. The bottom number (1) is how many adults are at Table 2. The column vector tells you the directional impact of the adult price on the entire restaurant at once."
+      },
+      {
+        "question": "What would happen to the geometry of the system if the manager recorded a second table with 6 Adults and 2 Children, and their bill was Rs. 2400?",
+        "options": [
+          "The second equation would generate a perfectly perpendicular line, making the intersection significantly easier to pinpoint on the graph.",
+          "The math would physically collapse into a single point at the origin, forcing both the adult and child prices to instantly default to zero.",
+          "The second equation is a mathematically redundant rule, meaning the two lines would perfectly overlap and completely destroy the possibility of finding one unique solution.",
+          "The matrix engine would simply rotate the original lines to find a completely new, more expensive central coordinate."
+        ],
+        "correct_option": "The second equation is a mathematically redundant rule, meaning the two lines would perfectly overlap and completely destroy the possibility of finding one unique solution.",
+        "explanation": "6A + 2C = 2400 is literally just the first table (3A + 1C = 1200) multiplied by 2. It provides zero new information! Geometrically, if you plotted this, the second line would be drawn directly on top of the first line. Because they intersect infinitely, the matrix singularizes (collapses). Without a second, independent geometric constraint, a unique price for the adult and child becomes mathematically impossible to find."
+      }
+    ]
+  },
+  {
+    "quizNumber": 19,
+    "title": "Overdetermined Systems and the Messy Real World",
+    "questionCode": "M2Q3",
+    "questions": [
+      {
+        "question": "You have exactly two variables (Adults and Children) but you now have three distinct equations. Geometrically, what happens when you attempt to plot these three constraints on a standard two-dimensional graph?",
+        "options": [
+          "Because they represent a single unified restaurant, all three lines will automatically converge at one flawless central coordinate.",
+          "The three distinct straight lines will almost certainly miss a perfectly shared intersection, creating a small empty triangle between them instead.",
+          "The introduction of a third variable constraint physically lifts the graph off the paper, converting the lines into planes within a three-dimensional volume.",
+          "The extra equation forces at least two of the lines to run perfectly parallel to each other to avoid a mathematical contradiction."
+        ],
+        "correct_option": "The three distinct straight lines will almost certainly miss a perfectly shared intersection, creating a small empty triangle between them instead.",
+        "explanation": "Two lines on a 2D plane will usually cross at exactly one point. But a third independent line will almost never pass perfectly through that exact same crossing point unless the universe perfectly aligned it. Because real-world data is messy, the three lines will cross each other at three different places, forming a small geometric 'triangle of error.'"
+      },
+      {
+        "question": "From a strictly real-world perspective at the Baker's Cafe, what does this geometric 'miss' actually mean for the manager?",
+        "options": [
+          "The algebraic system has completely collapsed, mathematically proving that it is impossible to set static prices for food items.",
+          "The manager has successfully collected enough historical data to calculate the exact, flawless average price across every table in the restaurant.",
+          "The collected data is inherently contradictory, strongly suggesting a recording error, an unlisted discount, or an extra dessert was secretly added to one of the bills.",
+          "The restaurant's pricing structure requires the introduction of imaginary numbers to properly balance the ledger."
+        ],
+        "correct_option": "The collected data is inherently contradictory, strongly suggesting a recording error, an unlisted discount, or an extra dessert was secretly added to one of the bills.",
+        "explanation": "The mathematics is simply exposing a lie in the data! The first two tables suggest an Adult meal is Rs. 280 and a Child meal is Rs. 360. If that were completely true, the third table (1 Adult + 1 Child) should be exactly Rs. 640. But their bill is Rs. 900. The numbers literally do not add up, meaning the real-world data contains hidden inconsistencies."
+      },
+      {
+        "question": "If you ignore the third table for a moment, and manually solve for the variables A and C using strictly the first two equations, how will those specific answers interact with the third equation (1A + 1C = 900)?",
+        "options": [
+          "The unique prices calculated from the first two tables will fail to add up to 900, directly and completely violating the third mathematical rule.",
+          "The prices will perfectly satisfy the third equation, proving that overdetermined systems are highly stable.",
+          "The third equation will mathematically erase the first two coordinates, forcing the variables to automatically adjust their own weights to balance the final equation.",
+          "The third equation will act as a geometric multiplier, scaling the answers from the first two tables upward until they reach the 900 target."
+        ],
+        "correct_option": "The unique prices calculated from the first two tables will fail to add up to 900, directly and completely violating the third mathematical rule.",
+        "explanation": "Solving equation 1 and 2 yields A = 280 and C = 360. This is the single coordinate that satisfies those two lines. When you plug this coordinate into the third equation, you get 280 + 360 = 640. Because 640 ≠ 900, the third rule is broken. Any point you pick to satisfy two of the tables will automatically violate the rules of the remaining table."
+      },
+      {
+        "question": "If we eventually package this 3 × 2 problem into a Matrix Transformation engine (Mx = b), what geometric dimensional mapping is the system actively attempting to perform?",
+        "options": [
+          "The matrix strictly maps three independent inputs to two separate targets, shrinking a 3D physical volume down to a flat 2D plane.",
+          "Because there are three physical equations, the matrix engine demands three independent spatial dimensions as its input fuel.",
+          "The matrix permanently traps all the variables within a 1-dimensional tracking line to ensure they can safely intersect without contradiction.",
+          "The system takes two spatial inputs (Adult and Child prices) but attempts to satisfy three distinct targets, effectively trying to map a flat 2D space into a 3D destination."
+        ],
+        "correct_option": "The system takes two spatial inputs (Adult and Child prices) but attempts to satisfy three distinct targets, effectively trying to map a flat 2D space into a 3D destination.",
+        "explanation": "The matrix will have two columns and three rows. The input vector x has two variables, meaning it starts in a 2D space (ℝ²). The target destination b will be the three bills (1200, 1000, 900), which is a coordinate floating in 3D space (ℝ³). The machine is trying to map a 2D piece of paper into a 3D room."
+      },
+      {
+        "question": "Because a 'perfect' geometric solution literally does not exist for this system, how do advanced mathematicians resolve this contradiction?",
+        "options": [
+          "They mathematically delete the most expensive table from the system to force the remaining lines to cross cleanly, reverting to standard high-school algebra.",
+          "They rotate the standard Cartesian grid by exactly 90 degrees to artificially align the divergent lines into a perfect crossing point.",
+          "They abandon the search for perfection and systematically seek a new coordinate that minimizes the overall geometric distance to all three lines simultaneously.",
+          "They introduce a massive scalar multiplier to reset the baseline to zero, bypassing the physical contradiction entirely."
+        ],
+        "correct_option": "They abandon the search for perfection and systematically seek a new coordinate that minimizes the overall geometric distance to all three lines simultaneously.",
+        "explanation": "This is brilliant foreshadowing for upcoming modules. Since the lines form a triangle of error and miss each other, we cannot find an answer that makes the equations perfectly true. Instead, mathematicians use 'Least Squares Approximation.' They find the single coordinate in the very center of that triangle—the point that is 'least wrong' and closest to all three lines at once."
+      }
+    ]
+  },
+  {
+    "quizNumber": 20,
+    "title": "The Anatomy of an Overdetermined Matrix",
+    "questionCode": "M2Q4",
+    "questions": [
+      {
+        "question": "When you read the exact mapping notation for this 3 × 2 matrix, what specific geometric dimensional shift is the engine actively performing?",
+        "options": [
+          "It actively requires three independent spatial coordinates as its input fuel to calculate a flat, two-dimensional geometric output space.",
+          "It strictly restricts all mathematical movement to a flat 2D plane to ensure the algebraic equations remain perfectly balanced.",
+          "It consumes a 2D input coordinate and physically maps it directly into a 3D destination space.",
+          "It scales a massive 3-dimensional volume uniformly so that it fits flawlessly inside a singular 1-dimensional line."
+        ],
+        "correct_option": "It consumes a 2D input coordinate and physically maps it directly into a 3D destination space.",
+        "explanation": "The input vector has exactly two variables: [A, C]ᵀ. This means the machine demands a 2D coordinate as its fuel (ℝ²). However, the matrix itself has three rows, meaning it outputs a final vector with three distinct numbers (the bills). Therefore, the machine takes a flat 2D point and projects it into a 3D volumetric space (ℝ³)."
+      },
+      {
+        "question": "Let's ignore the rows completely and read the matrix using the 'Column Picture.' Geometrically, what do the two vertical columns of the matrix physically represent?",
+        "options": [
+          "They trace the three intersecting lines of the simultaneous equations perfectly across a standard Cartesian grid.",
+          "They act as two independent 3D directional arrows, which are stretched or shrunk by the unknown variables A and C.",
+          "The first column mathematically captures the total amount of money paid exclusively by the adults, while the second strictly isolates the children's financial contribution to the system.",
+          "They serve as the fixed coordinates of the target destination, locking the final restaurant bills into their final spatial place."
+        ],
+        "correct_option": "They act as two independent 3D directional arrows, which are stretched or shrunk by the unknown variables A and C.",
+        "explanation": "The matrix is built from two columns: [3, 1, 1]ᵀ and [1, 2, 1]ᵀ. These are two distinct direction arrows living inside a 3D universe. The variables A and C are simply the instructions (the scalars) telling you exactly how far to walk along those two specific 3D arrows to build your final output. Option C is a massive trap—the columns track the number of people, not the money!"
+      },
+      {
+        "question": "If you can scale and add these two column vectors using any numbers you want for A and C, what geometric shape will all the possible combinations sweep out?",
+        "options": [
+          "A solid three-dimensional volume, because the mathematical system contains exactly three independent equations that expand outward into space.",
+          "A single, infinitely long straight 1D line passing through the origin.",
+          "A flat 2D plane floating suspended inside a 3D universe.",
+          "A series of three distinct intersecting planes that enclose a small, triangular pocket of geometric error where the target destination is trapped."
+        ],
+        "correct_option": "A flat 2D plane floating suspended inside a 3D universe.",
+        "explanation": "This is the legendary Column Space. Because you only have two base vectors (two directions to walk), combining them can only ever sweep out a flat 2D sheet of paper. But because those column vectors have three coordinates each, that flat sheet of paper is floating suspended inside a larger 3D room."
+      },
+      {
+        "question": "In the previous quiz, we discovered this cafe problem has no perfect solution. Looking exclusively through the lens of the Column Space geometry, why does the mathematics fail?",
+        "options": [
+          "The two fundamental column vectors of the matrix point in the exact same direction, causing the entire spatial geometry of the system to collapse under its own weight into a single line.",
+          "The target 3D coordinate representing the final bills floats completely off the 2D plane that the matrix can reach.",
+          "The matrix engine physically lacks the algebraic stability required to process numerical destination values that extend beyond the first geometric quadrant.",
+          "The physical intersection of the spatial lines occurs strictly inside a negative spatial dimension."
+        ],
+        "correct_option": "The target 3D coordinate representing the final bills floats completely off the 2D plane that the matrix can reach.",
+        "explanation": "This is one of the most profound visuals in linear algebra. The matrix can only map inputs onto its flat 2D Column Space plane. The target vector [1200, 1000, 900]ᵀ is a specific coordinate floating in that same 3D room. The problem has no solution because that target point is hovering in the air off the paper. The matrix machine is physically incapable of reaching it!"
+      },
+      {
+        "question": "By pulling the numbers out of the algebraic equations to form the abstract matrix A, what conceptual clarity does a mathematician ultimately gain?",
+        "options": [
+          "It physically isolates the restaurant's rigid seating structure from the fluctuating monetary prices.",
+          "It allows the manager to artificially increase the variables until the three distinct mathematical lines perfectly converge onto a single spatial point.",
+          "It directly merges the input parameters with the final bills to completely eliminate the possibility of algebraic fractions.",
+          "It mathematically forces the children's consumption rate to become perfectly proportional to the adults' consumption, solving the system implicitly."
+        ],
+        "correct_option": "It physically isolates the restaurant's rigid seating structure from the fluctuating monetary prices.",
+        "explanation": "The matrix A contains only the numbers of people (3, 1, 1 and 1, 2, 1). This is the underlying structural architecture of the system. By isolating it into a matrix, we separate the 'engine' (the human layout at the tables) from the 'fuel' (the prices A and C) and the 'exhaust' (the total bills). This allows us to study the structure of the cafe completely independent of whatever the prices happen to be on a given day."
+      }
+    ]
+  },
+  {
+    "quizNumber": 21,
+    "title": "The Geometry of Guessing and Error",
+    "questionCode": "M2Q5",
+    "questions": [
+      {
+        "question": "When you arbitrarily 'guess' prices for the variables A (Adult) and C (Child), what are you physically doing within the geometric Column Picture?",
+        "options": [
+          "You are navigating to a specific, unique coordinate strictly confined to the flat 2D plane created by the matrix's columns.",
+          "You are testing different three-dimensional coordinates in the air to see which one perfectly aligns with the mathematical target.",
+          "You are systematically rotating the foundational column vectors until they point directly at the required cafe bills.",
+          "You are incrementally shifting the entire target vector until it safely intersects with the physical boundaries of the matrix system."
+        ],
+        "correct_option": "You are navigating to a specific, unique coordinate strictly confined to the flat 2D plane created by the matrix's columns.",
+        "explanation": "The variables A and C are simply scalars—instructions telling you how far to walk along the two established column vectors. Because the matrix only has two columns, combining them can only ever build a flat 2D sheet of paper (the Column Space). Every single time you guess a new pair of prices, you are simply walking to a new spot resting perfectly flat on that specific 2D paper."
+      },
+      {
+        "question": "The text explicitly states, 'there is no solution to this question.' Visually, what strictly guarantees this failure?",
+        "options": [
+          "The three mathematical lines form a completely parallel geometric structure, meaning an intersection is theoretically impossible no matter what numbers are guessed.",
+          "The fundamental column vectors cancel each other out, mathematically collapsing the reachable space into a single unmoving point at the origin.",
+          "The exact 3D coordinate representing the final bills is physically floating in the space outside the flat 2D plane that the matrix is capable of reaching.",
+          "The manager collected financial targets that require a complex four-dimensional mapping engine to properly process."
+        ],
+        "correct_option": "The exact 3D coordinate representing the final bills is physically floating in the space outside the flat 2D plane that the matrix is capable of reaching.",
+        "explanation": "The matrix machine can only reach destinations that live on its 2D Column Space plane. The bills from the cafe form a 3D target destination: [1200, 1000, 900]ᵀ. Because this specific target point is hovering in the 3D room completely off the 2D sheet of paper, the matrix machine is physically incapable of ever reaching it. Perfection is impossible."
+      },
+      {
+        "question": "When you guess the prices and calculate the three resulting bills, you generate 'error.' How is this specific error visualized in the 3D space?",
+        "options": [
+          "It forms a flat geometric triangle connecting your guessed coordinate, the target destination, and the absolute origin.",
+          "It manifests as a physical, straight-line bridge drawn directly from your current position on the 2D plane to the floating 3D target in the air.",
+          "It curves organically around the spatial axes, representing the mathematical friction between the guessed inputs and the rigid matrix constraints.",
+          "It calculates the exact scalar angle between the fundamental row vectors and the flat column space."
+        ],
+        "correct_option": "It manifests as a physical, straight-line bridge drawn directly from your current position on the 2D plane to the floating 3D target in the air.",
+        "explanation": "Think of the space physically. You guessed a price, which dropped a pin somewhere on the flat 2D floor. The actual cafe bills form a target bird hovering in the air above the floor. The error is literally the physical, straight-line distance spanning from the pin you placed on the ground directly up to the bird in the air."
+      },
+      {
+        "question": "What is the precise algebraic mechanism used to calculate the exact numerical values of this specific 'error vector' after you make a guess?",
+        "options": [
+          "By dividing the actual given cafe bill totals directly by the newly calculated theoretical bill values.",
+          "By mathematically projecting the 3D target bills down onto the 2D column space and measuring the remaining shadow.",
+          "By multiplying your guessed variables directly against the final target destination vector.",
+          "By strictly subtracting your newly calculated theoretical bills from the actual given cafe bill totals."
+        ],
+        "correct_option": "By strictly subtracting your newly calculated theoretical bills from the actual given cafe bill totals.",
+        "explanation": "Error is simply the mathematical difference between where you landed and where you wanted to be. If your guessed prices calculate bills of (1300, 950, 950) but the real bills are (1200, 1000, 900), you just subtract the two vectors. The resulting vector [-100, 50, -50]ᵀ is the exact mathematical 'error vector' telling you how wrong your guess was."
+      },
+      {
+        "question": "The question challenges you to 'reduce the error.' Geometrically, if you want the absolute best guess with the smallest possible error, where must you stand on the flat 2D plane?",
+        "options": [
+          "The exact coordinate located perpendicularly straight down beneath the floating target.",
+          "The coordinate that sits exactly halfway between the central origin and the outermost column vector boundary.",
+          "The specific location where the two base column vectors perfectly intersect with the mathematical target line.",
+          "You must travel infinitely far along the steepest directional gradient until the spatial error strictly zeroes out."
+        ],
+        "correct_option": "The exact coordinate located perpendicularly straight down beneath the floating target.",
+        "explanation": "This is the brilliant core of Least Squares Approximation! If a bird is hovering in the air (the target) and you must stay on the flat ground (the Column Space), you cannot catch the bird. The absolute closest you can ever get to it is to walk to the exact spot on the ground directly underneath it. That vertical, 90-degree perpendicular drop represents the shortest possible distance (the minimized error)."
+      }
+    ]
+  },
+  {
+    "quizNumber": 22,
+    "title": "Markov Chains and the Geometry of Equilibrium",
+    "questionCode": "M2Q6",
+    "questions": [
+      {
+        "question": "If we convert the flowchart from markov2.png into a mathematical Transition Matrix, what foundational real-world rule strictly governs the numbers within it?",
+        "options": [
+          "The matrix requires the horizontal rows to sum to exactly 1.0 to ensure that the probability of being happy always equals the probability of being stressed.",
+          "Each vertical column must sum to exactly 1.0, mathematically enforcing the physical reality that no person is magically created or destroyed during a transition.",
+          "The determinant of the final matrix must dynamically scale to precisely 1000 to safely hold the entire physical population.",
+          "The sum of the main diagonal numbers must equal the total number of physical states to maintain geometric balance."
+        ],
+        "correct_option": "Each vertical column must sum to exactly 1.0, mathematically enforcing the physical reality that no person is magically created or destroyed during a transition.",
+        "explanation": "This is a 'Stochastic Matrix.' Look at the 'Happy' circle in the image. Exactly 0.3 (30%) stay Happy, and 0.7 (70%) leave to become Stressed. 0.3 + 0.7 = 1.0. Because people cannot spontaneously disappear into thin air, the outgoing probabilities leaving any specific state (which form the vertical columns of the matrix) must always sum perfectly to 100%."
+      },
+      {
+        "question": "The question asks what happens to the population distribution 'eventually.' Visually and physically, what does this long-term mathematical stability actually look like?",
+        "options": [
+          "The dominant 0.7 probability completely overtakes the system, eventually driving all 1000 people permanently into the Stressed state.",
+          "All transitions physically stop over time, freezing every individual permanently in whatever emotional state they happen to be in.",
+          "People continue to constantly change states every day, but the system stabilizes because the exact number of people becoming happy perfectly equals the exact number of people becoming stressed.",
+          "The system mathematically oscillates back and forth in a repeating loop between two extreme baseline populations."
+        ],
+        "correct_option": "People continue to constantly change states every day, but the system stabilizes because the exact number of people becoming happy perfectly equals the exact number of people becoming stressed.",
+        "explanation": "'Eventually' refers to the Steady State (or dynamic equilibrium). The transitions never stop! Every single day, 70% of the currently Happy people will still get Stressed. The system only stabilizes when it acts like a bathtub where the faucet is pouring water in at the exact same speed the drain is letting it out. The individuals change, but the total headcount in each room remains perfectly still."
+      },
+      {
+        "question": "If we write this final equilibrium algebraically as Mx = x (where M is the matrix and x is the final population), what profound concept of Linear Algebra does this specific state represent?",
+        "options": [
+          "The steady state acts as a true mathematical eigenvector, meaning the matrix machine processes it, but its actual spatial coordinate remains entirely unshifted.",
+          "The steady state forces the entire matrix to completely collapse into a one-dimensional Null Space, destroying historical coordinate data.",
+          "It permanently inverts the underlying transition probabilities to prevent the system from suffering a geometric overflow.",
+          "It establishes a rigid spatial boundary that actively repels any coordinates attempting to cross into a negative graphical quadrant."
+        ],
+        "correct_option": "The steady state acts as a true mathematical eigenvector, meaning the matrix machine processes it, but its actual spatial coordinate remains entirely unshifted.",
+        "explanation": "This is a magnificent introduction to Eigenvectors. Usually, a matrix M grabs a vector and blows it to a totally new location in space. However, if a vector is an eigenvector (with an eigenvalue of λ = 1), the matrix machine processes it, but the vector physically refuses to move or stretch. The final 1000-person distribution is literally just the primary eigenvector of the probability matrix!"
+      },
+      {
+        "question": "The prompt asks what happens 'If 1000 people were to start in one state...'. What happens to the final eventual distribution if everyone starts Happy versus if everyone starts Stressed?",
+        "options": [
+          "The initial state permanently offsets the final numbers, meaning starting with 1000 Happy people creates a fundamentally different equilibrium than starting with 1000 Stressed people.",
+          "The gravitational pull of the transition rules eventually erases the starting history, pulling the system to the exact same final distribution regardless of where the 1000 people began.",
+          "Starting entirely in one state causes the matrix to singularize, forcing the variables to default directly to zero.",
+          "If everyone starts in a single state, the system bypasses the arrows and immediately divides the population exactly in half to balance the mathematical graph."
+        ],
+        "correct_option": "The gravitational pull of the transition rules eventually erases the starting history, pulling the system to the exact same final distribution regardless of where the 1000 people began.",
+        "explanation": "A beautiful property of regular Markov Chains is that history is eventually forgotten. The transition matrix acts like a gravitational funnel. It pulls the 2D spatial coordinate toward the exact same single eigenvector regardless of where you initially drop the 1000 people on the coordinate plane. The rules of the system determine the final destination, not the starting line."
+      },
+      {
+        "question": "Without guessing or running a massive simulation, how can you algebraically determine the exact ratio of the final population using the visual flowchart?",
+        "options": [
+          "The distribution strictly balances at a perfect 50/50 split because the mathematical laws of continuous probability always seek a flat horizontal average over infinite time.",
+          "The system naturally settles at a continuous geometric ratio of 7 Happy people for every 5 Stressed people, favoring the absolute largest numerical percentage on the board.",
+          "By simply multiplying the starting population of 1000 directly against the highest percentage on the diagram, bypassing the simultaneous equations entirely.",
+          "By setting the inbound flow mathematically equal to the outbound flow (0.7H = 0.5S), revealing a strict internal ratio of exactly 5 Happy people for every 7 Stressed people."
+        ],
+        "correct_option": "By setting the inbound flow mathematically equal to the outbound flow (0.7H = 0.5S), revealing a strict internal ratio of exactly 5 Happy people for every 7 Stressed people.",
+        "explanation": "To find the steady state, the number of Happy people becoming Stressed (0.7 × H) must equal the number of Stressed people becoming Happy (0.5 × S). Algebraically, 0.7H = 0.5S simplifies directly to the fraction H/S = 5/7. Because there are 12 'parts' total (5 + 7), the final state will permanently maintain roughly 417 Happy people and 583 Stressed people!"
+      }
+    ]
+  },
+  {
+    "quizNumber": 23,
+    "title": "Scaling Dimensions and 3D Equilibrium",
+    "questionCode": "M2Q7",
+    "questions": [
+      {
+        "question": "When translating the flowchart from markov3.png into a mathematical transition matrix, what geometric shift has occurred compared to the previous Happy/Stressed problem?",
+        "options": [
+          "The addition of a third state forces the matrix to dynamically project a flat 2D population map onto a curved surface to account for the overlap.",
+          "Because the total population remains strictly locked at 1000, the system algebraically collapses the three locations down into a two-dimensional mathematical plane.",
+          "The matrix now fundamentally acts as an engine that consumes a 3D spatial coordinate as its input and maps it to a new 3D spatial coordinate.",
+          "The underlying mathematical rules require the introduction of a new imaginary axis to safely buffer the intersecting probability vectors."
+        ],
+        "correct_option": "The matrix now fundamentally acts as an engine that consumes a 3D spatial coordinate as its input and maps it to a new 3D spatial coordinate.",
+        "explanation": "The system now has exactly three variables (Park, Apartment, Restaurant). This means an input vector representing the population distribution requires three distinct numbers, placing it squarely in 3D space (ℝ³). The transition matrix grabs that 3D coordinate and calculates a completely new 3D coordinate for the next time step. The transformation is strictly ℝ³ → ℝ³."
+      },
+      {
+        "question": "Look at the arrows pointing away from the Apartment. Why is it mathematically critical that 0.5 + 0.1 + 0.4 = 1.0?",
+        "options": [
+          "It guarantees that the Apartment will always eventually hold exactly one-third of the total population, maintaining geographic symmetry.",
+          "These outbound probabilities form a single vertical column in the matrix, and they must perfectly sum to 1 to mathematically prevent human beings from spontaneously disappearing from the universe.",
+          "The sum of these arrows must equal 1 to perfectly offset the inbound arrows coming from the Park, ensuring the overall matrix determinant remains balanced.",
+          "It proves that the geometric center of the transition matrix sits exactly at the origin of the 3D grid."
+        ],
+        "correct_option": "These outbound probabilities form a single vertical column in the matrix, and they must perfectly sum to 1 to mathematically prevent human beings from spontaneously disappearing from the universe.",
+        "explanation": "In a Stochastic Matrix, the vertical columns track where people go. The people leaving the Apartment only have three choices: go to the Park (50%), stay in the Apartment (10%), or go to the Restaurant (40%). Because all 1000 people must physically exist somewhere after transitioning, the probabilities of all possible destinations from a single starting point must perfectly add up to 100%."
+      },
+      {
+        "question": "The prompt asks what the distribution will be 'eventually.' Visually speaking, what does this final steady-state coordinate actually look like inside the 3D grid?",
+        "options": [
+          "It is a rapidly rotating spatial vector that constantly cycles through the Park, Apartment, and Restaurant axes as the days pass.",
+          "It forms a rigid triangular plane that continuously expands outward toward infinity as more people transition between the locations.",
+          "It is a single, stationary coordinate arrow floating in 3D space that the matrix engine processes without changing its direction or length.",
+          "It represents a geometric collapse where all three spatial axes forcibly merge into a single unmoving point at (0, 0, 0)."
+        ],
+        "correct_option": "It is a single, stationary coordinate arrow floating in 3D space that the matrix engine processes without changing its direction or length.",
+        "explanation": "This is the definition of an Eigenvector (specifically, one with an eigenvalue of λ = 1). While the matrix violently tosses most 3D coordinates around the room, there is one specific, magical population ratio that, when pushed through the matrix, lands right back on itself. The system is still physically churning, but the overall shape of the population vector remains completely frozen in place."
+      },
+      {
+        "question": "The question specifically notes: 'If 1000 people were to start in one state...'. What happens to the final geometric equilibrium if everyone starts entirely in the Park, versus starting entirely in the Restaurant?",
+        "options": [
+          "The initial state acts as a massive mathematical anchor, heavily distorting the final probabilities to favor wherever the people began.",
+          "The gravitational pull of the transition matrix completely overpowers the starting conditions, pulling the population to the exact same final 3D coordinate regardless of where they began.",
+          "Starting 1000 people in the Park causes the system to never reach equilibrium because the Park has the highest overall retention rate.",
+          "Placing all inputs into a single dimension instantly singularizes the transformation matrix, making a long-term solution algebraically impossible."
+        ],
+        "correct_option": "The gravitational pull of the transition matrix completely overpowers the starting conditions, pulling the population to the exact same final 3D coordinate regardless of where they began.",
+        "explanation": "A beautiful property of regular Markov Chains is that history is completely erased over time. The transition matrix acts like a funnel. You can drop a marble (the starting population) anywhere you want in the 3D space, and the matrix will perpetually bounce it closer and closer to the exact same final eigenvector. The rules of the machine determine the destination, not the starting line."
+      },
+      {
+        "question": "How do we conceptually find the exact numerical distribution of the final steady state without blindly guessing?",
+        "options": [
+          "We construct a system of simultaneous equations by setting the algebraic expression for everyone entering a specific location perfectly equal to everyone leaving it.",
+          "We simply locate the single highest percentage on the visual diagram and multiply it by 1000 to find the dominant center of gravity.",
+          "We mathematically cross-multiply the three diagonal retention probabilities to find the absolute maximum geometric limit of the system.",
+          "We plot the three largest transition arrows on a graph and calculate their geometric intersection to find the population center."
+        ],
+        "correct_option": "We construct a system of simultaneous equations by setting the algebraic expression for everyone entering a specific location perfectly equal to everyone leaving it.",
+        "explanation": "This brings the curriculum perfectly full circle back to Question 2 (The Cafe Equations)! To find the equilibrium, the system must balance. The total number of people entering the Park from other places must exactly equal the number of people leaving the Park. By setting the 'Inflow' equal to the 'Outflow' for each location, you simply generate a standard system of intersecting planes (simultaneous equations) that you can cleanly solve for the final coordinate!"
+      }
+    ]
+  }
+]

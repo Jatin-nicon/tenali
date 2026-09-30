@@ -39,7 +39,10 @@ import CrossSectionApp from './CrossSectionApp';
 window.React = React;
 console.log("React version:", React.version);
 import LinearAlgebraApp from './LinearAlgebraApp'
+import MatrixMysticsApp from './matrixmystics/MatrixMysticsApp'
 import { TILES, FEATURED_TILES, MATH_LAB_ENTRY, GEOCRAFT_ENTRY } from './features/tiles'
+import LandingPage from './components/LandingPage/LandingPage.jsx'
+import LandingNavbar from './components/LandingPage/LandingNavbar.jsx'
 
 
 /**
@@ -286,7 +289,13 @@ function AuthMenu({ t = (s) => s }) {
     window.addEventListener('keydown', onKey)
     const onNav = e => { setOpen(false) }
     window.addEventListener('tenali-navigate', onNav)
-    return () => { window.removeEventListener('keydown', onKey); window.removeEventListener('tenali-navigate', onNav) }
+    const onOpenAuth = () => setOpen(prev => !prev)
+    window.addEventListener('tenali:openAuth', onOpenAuth)
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      window.removeEventListener('tenali-navigate', onNav)
+      window.removeEventListener('tenali:openAuth', onOpenAuth)
+    }
   }, [])
 
   const navigateTo = (mode) => {
@@ -319,6 +328,7 @@ function AuthMenu({ t = (s) => s }) {
     <>
       <button
         type="button"
+        className="auth-menu-floating-btn"
         aria-label="Menu"
         onClick={() => setOpen(o => !o)}
         style={{
@@ -42449,6 +42459,18 @@ function App() {
     }
   })
 
+  // Current view when mode is null: 'landing' (full landing page) or 'puzzles' (90+ puzzles grid)
+  const [currentView, setCurrentView] = useState(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('mode')) return 'puzzles';
+      if (params.get('view') === 'puzzles') return 'puzzles';
+      return 'landing';
+    } catch {
+      return 'landing';
+    }
+  })
+
   // Install monsters interceptor once on mount.
   // It wraps window.fetch to detect wrong answers and dispatch a CustomEvent
   // for MonsterToast (and Hall, when added). Spec §5.
@@ -42538,24 +42560,31 @@ function App() {
     }
   }, [])
 
-  // Synchronize browser URL query parameters dynamically with the active mode state
+  // Synchronize browser URL query parameters dynamically with the active mode and view state
   useEffect(() => {
     try {
       const params = new URLSearchParams(window.location.search);
       const currentMode = params.get('mode');
+      const currentParamView = params.get('view');
       if (mode) {
         if (currentMode !== mode) {
           window.history.replaceState({}, '', `${BASE}/?mode=${mode}`);
         }
       } else {
-        if (currentMode) {
-          window.history.replaceState({}, '', `${BASE}/`);
+        if (currentView === 'puzzles') {
+          if (currentParamView !== 'puzzles' || currentMode) {
+            window.history.replaceState({}, '', `${BASE}/?view=puzzles`);
+          }
+        } else {
+          if (currentMode || currentParamView) {
+            window.history.replaceState({}, '', `${BASE}/`);
+          }
         }
       }
     } catch (e) {
       console.error('Failed to sync URL mode:', e);
     }
-  }, [mode]);
+  }, [mode, currentView]);
 
   const { user } = useAuth()
   const [completedTopics, setCompletedTopics] = useState(() => {
@@ -43200,6 +43229,11 @@ function App() {
         </div></div>
       </>
     )
+  }
+
+  // Route: /matrixmystics → Matrix Mystics (Standalone Independent App)
+  if (pathname === '/matrixmystics' || pathname === '/mm') {
+    return <MatrixMysticsApp />
   }
 
   // Route: /chapter1 → Cambridge IGCSE Chapter 1 (Reviewing Number Concepts)
@@ -44899,7 +44933,7 @@ function App() {
     indicesgym: IndicesGymApp,     // Indices-Gym — index laws (MCQ)
     polygym: PolyGymApp,           // Polynomials Gym — arithmetic → monomial algebra (MCQ)
     treasurehunt: TreasureHuntApp, // Treasure Hunt — solve & seek grid game
-    // matrixmystics mode removed — Matrix Mystics content now embedded in LinearAlgebraApp's mission quiz
+    matrixmystics: MatrixMysticsApp, // Matrix Mystics — 3-Stage Geometric Linear Algebra Lab
     trackProgress: ProgressTrackerApp,
     riddle: RiddleApp,              // Math Riddles
     'water-jug-lab': WaterJugLab,
@@ -45055,7 +45089,12 @@ function App() {
 
     return (
       <Home
+        onBackToLanding={() => {
+          setCurrentView('landing');
+          try { window.history.replaceState({}, '', `${BASE}/`); } catch (e) {}
+        }}
         onSelect={(key) => {
+          setCurrentView('puzzles');
           if (key === 'goalpractice') {
             setMode('goalpractice');
           } else if (key === 'angles') {
@@ -45480,17 +45519,121 @@ function App() {
     )
   }
 
+  // ========== LANDING PAGE VIEW (Default when mode === null and currentView === 'landing') ==========
+  if (mode === null && currentView === 'landing') {
+    return (
+      <div className="landing-view-wrapper">
+        <LandingPage
+          onExplorePuzzles={() => {
+            setCurrentView('puzzles');
+            try { window.history.replaceState({}, '', `${BASE}/?view=puzzles`); } catch (e) {}
+          }}
+          onSelectTopic={(topicKey) => {
+            setCurrentView('puzzles');
+            if (topicKey === 'goalpractice') {
+              setMode('goalpractice');
+            } else if (topicKey === 'angles') {
+              setIsGoalMode(false);
+              handleSelectMode(topicKey);
+            } else {
+              setMode(topicKey);
+              setIsGoalMode(false);
+            }
+          }}
+          currentView={currentView}
+          onViewChange={(v) => {
+            setCurrentView(v);
+            try {
+              if (v === 'puzzles') {
+                window.history.replaceState({}, '', `${BASE}/?view=puzzles`);
+              } else {
+                window.history.replaceState({}, '', `${BASE}/`);
+              }
+            } catch (e) {}
+          }}
+          theme={theme}
+          toggleTheme={toggleTheme}
+        />
+        {/* Misconception Monsters toast & hall overlays */}
+        <MonsterToast
+          onOpenHall={() => setHallOpen(true)}
+          onTap={() => setHallOpen(true)}
+        />
+        <HallPanel
+          open={hallOpen}
+          onClose={() => {
+            setHallOpen(false);
+            setGuidedSolverMonsterId(null);
+          }}
+          monsterLog={monsterLog}
+          initialSelectedId={guidedSolverMonsterId}
+          initialGuidedSolver={!!guidedSolverMonsterId}
+          onStartCure={(monsterId, topic) => {
+            setHallOpen(false);
+            setGuidedSolverMonsterId(null);
+            setActiveCure({ monsterId, topic });
+          }}
+          onOpenGuidedSolver={(monsterId) => {
+            setGuidedSolverMonsterId(monsterId);
+          }}
+          onCloseSolver={() => {
+            setGuidedSolverMonsterId(null);
+          }}
+        />
+        {activeCure && (
+          <CureFlow
+            monsterId={activeCure.monsterId}
+            topic={activeCure.topic}
+            onCancel={() => setActiveCure(null)}
+            onComplete={() => {
+              try { setMonsterLog(loadMonsterLog()); } catch {}
+              setActiveCure(null);
+              setHallOpen(true);
+            }}
+            onOpenGuidedSolver={(monsterId) => {
+              setActiveCure(null);
+              setGuidedSolverMonsterId(monsterId);
+              setHallOpen(true);
+            }}
+          />
+        )}
+        <ReflectionJournal />
+      </div>
+    );
+  }
+
   return (
-    <div className="app-shell">
+    <div className="app-shell" style={{ paddingTop: mode === null ? 0 : undefined }}>
+      {mode === null && (
+        <div style={{ marginBottom: 20, width: '100%' }}>
+          <LandingNavbar
+            currentView={currentView}
+            onViewChange={(v) => {
+              setCurrentView(v);
+              try {
+                if (v === 'puzzles') {
+                  window.history.replaceState({}, '', `${BASE}/?view=puzzles`);
+                } else {
+                  window.history.replaceState({}, '', `${BASE}/`);
+                }
+              } catch (e) {}
+            }}
+            theme={theme}
+            toggleTheme={toggleTheme}
+          />
+        </div>
+      )}
       {mode === null && showTour && <OnboardingTour onFinish={() => { localStorage.setItem('tenali_tour_seen', 'true'); setShowTour(false) }} mode={mode} />}
       {mode === null && (
         <button className="guide-toggle" onClick={() => setShowTour(true)} title="Take a Tour">
           🧭 Guide
         </button>
       )}
-      <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
-        {theme === 'dark' ? '☀️' : '🌙'}
-      </button>
+      {mode !== null && (
+        <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
+          {theme === 'dark' ? '☀️' : '🌙'}
+        </button>
+      )}
       <style>{`
         .monster-interruption-popup {
           position: fixed;
@@ -45602,7 +45745,7 @@ function App() {
  * @param {Object} props
  * @param {Function} props.onSelect - Callback when user selects a quiz: receives mode key (e.g., 'gk')
  */
-function Home({ onSelect, completedTopics = [], goldMastery = [], coins = 0, isGoalSelection = false, onBack }) {
+function Home({ onSelect, onBackToLanding, completedTopics = [], goldMastery = [], coins = 0, isGoalSelection = false, onBack }) {
   const [showAbout, setShowAbout] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [search, setSearch] = useState('')
@@ -45675,12 +45818,23 @@ function Home({ onSelect, completedTopics = [], goldMastery = [], coins = 0, isG
             ← Back to Dashboard
           </button>
         )}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px', marginBottom: '4px', paddingTop: isGoalSelection ? '44px' : '0' }}>
+        {!isGoalSelection && onBackToLanding && (
+          <button onClick={onBackToLanding} style={{
+            position: 'absolute', top: '8px', left: '0', display: 'flex', alignItems: 'center', gap: '6px',
+            background: 'var(--clr-card)', border: '1.5px solid var(--clr-border)', color: 'var(--clr-text)',
+            padding: '6px 12px', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontFamily: 'var(--font-body)',
+            fontSize: '0.85rem', fontWeight: '500', transition: 'all var(--transition)'
+          }} onMouseEnter={e => e.target.style.background = 'var(--clr-hover-strong)'}
+             onMouseLeave={e => e.target.style.background = 'var(--clr-card)'}>
+            ← Overview
+          </button>
+        )}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px', marginBottom: '4px', paddingTop: (isGoalSelection || onBackToLanding) ? '44px' : '0' }}>
           <img src="/tenali.png" alt="Tenali Raman" style={{ width: '80px', height: 'auto', flexShrink: 0 }} />
           <div>
-            <h1 style={{ margin: 0 }}>{isGoalSelection ? 'Goal Practice' : 'Tenali'}</h1>
+            <h1 style={{ margin: 0 }}>{isGoalSelection ? 'Goal Practice' : 'Tenali Puzzles & Games'}</h1>
             <p className="subtitle" style={{ margin: 0 }}>
-              {isGoalSelection ? 'Select a topic to practice with custom goals' : 'Choose a learning game to begin'}
+              {isGoalSelection ? 'Select a topic to practice with custom goals' : 'Explore 90+ algorithmically generated math and reasoning games'}
             </p>
           </div>
         </div>
@@ -56418,8 +56572,9 @@ const PolyGymApp = makeMCQuizApp({
 // 6 modules, 53 topics, 1855+ questions across easy/medium/hard + real app.
 // ───────────────────────────────────────────────────────────────────────────
 
-const MatrixMysticsApp = makeMCQuizApp({
-  title: 'Matrix Mystics',
+// Legacy single-screen MCQ quiz (superseded by ./matrixmystics/MatrixMysticsApp)
+const _LegacyMatrixMysticsQuiz = makeMCQuizApp({
+  title: 'Matrix Mystics (Legacy)',
   subtitle: 'Linear Algebra — 6 modules, 53 topics',
   apiPath: 'matrixmystics-api',
   adaptiveOnly: true,

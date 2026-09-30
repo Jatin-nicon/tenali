@@ -43,13 +43,17 @@ function mcCheck(req, res) {
   });
 }
 
+const crypto = require('crypto');
+
 // Flat bank: topicKey -> { module, topicId, title, mcqs, real_life_application }
 const mmQuestionBank = {};
 // Module index: moduleNumber -> [topicKey]
 const mmModules = {};
+// Mission index: missionId -> full mission object
+const mmMissions = {};
 
 function loadMatrixMysticsBank() {
-  const dir = path.join(__dirname, '..', 'linearalgebra', 'matrixmystics');
+  const dir = path.join(__dirname, '..', '..', 'linearalgebra', 'matrixmystics');
   try {
     const files = fs.readdirSync(dir).filter(f => f.endsWith('.json'));
     let totalTopics = 0;
@@ -79,7 +83,30 @@ function loadMatrixMysticsBank() {
     }
     console.log(`[matrixmystics] Loaded ${Object.keys(mmQuestionBank).length} topics across ${Object.keys(mmModules).length} modules (${totalTopics} topic entries)`);
   } catch (e) {
-    console.error('[matrixmystics] Failed to read directory:', e.message);
+    console.error('[matrixmystics] Failed to read matrixmystics directory:', e.message);
+  }
+
+  // Load the 56 questions from linearalgebra/questions
+  const qDir = path.join(__dirname, '..', '..', 'linearalgebra', 'questions');
+  try {
+    const qFiles = fs.readdirSync(qDir).filter(f => f.endsWith('.json'));
+    for (const file of qFiles) {
+      try {
+        const qData = JSON.parse(fs.readFileSync(path.join(qDir, file), 'utf8'));
+        const mid = qData.missionId || qData.mission_id;
+        if (mid) {
+          mmMissions[mid] = {
+            ...qData,
+            file,
+          };
+        }
+      } catch (e) {
+        console.error(`[matrixmystics] Failed to load question ${file}:`, e.message);
+      }
+    }
+    console.log(`[matrixmystics] Loaded ${Object.keys(mmMissions).length} mission questions from linearalgebra/questions`);
+  } catch (e) {
+    console.error('[matrixmystics] Failed to read questions directory:', e.message);
   }
 }
 
@@ -206,4 +233,54 @@ router.get('/stats', (req, res) => {
   res.json(stats);
 });
 
+router.get('/missions', (req, res) => {
+  const list = Object.values(mmMissions)
+    .sort((a, b) => (a.missionId || 0) - (b.missionId || 0))
+    .map(m => ({
+      missionId: m.missionId,
+      module: m.module,
+      title: m.title,
+      core_concept: m.core_concept,
+      original_question: m.original_question,
+      quizCounts: {
+        easy: m.mcqs?.easy?.length || 0,
+        medium: m.mcqs?.medium?.length || 0,
+        hard: m.mcqs?.hard?.length || 0,
+        realapp: m.real_life_application?.length || 0,
+      }
+    }));
+  res.json(list);
+});
+
+router.get('/mission/:id', (req, res) => {
+  const mid = parseInt(req.params.id, 10);
+  const mission = mmMissions[mid];
+  if (!mission) return res.status(404).json({ error: 'Mission not found' });
+  res.json(mission);
+});
+
+router.post('/verify-proof', require('express').json(), (req, res) => {
+  const { missionId, proofHash, timestamp, score } = req.body || {};
+  if (!missionId || !proofHash) {
+    return res.status(400).json({ valid: false, error: 'Missing required proof fields' });
+  }
+  const mid = parseInt(missionId, 10);
+  const mission = mmMissions[mid];
+  if (!mission) {
+    return res.status(404).json({ valid: false, error: 'Unknown mission ID' });
+  }
+  const expectedPrefix = `MM-M${mission.module}Q${mission.missionId}-`;
+  const isValidFormat = typeof proofHash === 'string' && proofHash.startsWith(expectedPrefix);
+  return res.json({
+    valid: isValidFormat,
+    missionId: mission.missionId,
+    module: mission.module,
+    title: mission.title,
+    proofHash,
+    verifiedAt: new Date().toISOString(),
+    status: isValidFormat ? 'VERIFIED_COMPETENCY' : 'INVALID_HASH'
+  });
+});
+
 module.exports = router;
+
