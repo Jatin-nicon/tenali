@@ -91,6 +91,8 @@ import KernelPlayground from './modules/KernelPlayground';
 import LinearAlgebraModule from './modules/LinearAlgebra';
 import LineStudioModule from './modules/LineStudio';
 import FunctionStudioModule from './modules/FunctionStudio';
+import MatrixStudioModule from './modules/MatrixStudio';
+import DimensionStudioModule from './modules/DimensionStudio';
 import RealWorldHubApp from './RealWorldHub';
 import { cjTakeReco } from './cjReco'; // Feature CR — Road License difficulty hand-off
 const CJ_RECO_DIFFS = ['easy', 'medium', 'hard', 'extrahard'];
@@ -44891,6 +44893,12 @@ function App() {
     line: LineStudioModule,
     'function-studio': FunctionStudioModule,
     function: FunctionStudioModule,
+    'matrix-studio': MatrixStudioModule,
+    matrixstudio: MatrixStudioModule,
+    'dimension-studio': DimensionStudioModule,
+    dimensionstudio: DimensionStudioModule,
+    'space-studio': DimensionStudioModule,
+    spacestudio: DimensionStudioModule,
     profitloss: ProfitLossApp,     // Profit & Loss
     rounding: RoundingApp,         // Rounding
     binomial: BinomialApp,         // Binomial Theorem
@@ -45018,6 +45026,22 @@ function App() {
     if (mode === 'function-studio' || mode === 'function') {
       return (
         <FunctionStudioModule
+          onBack={() => setMode(null)}
+        />
+      );
+    }
+
+    if (mode === 'matrix-studio' || mode === 'matrixstudio') {
+      return (
+        <MatrixStudioModule
+          onBack={() => setMode(null)}
+        />
+      );
+    }
+
+    if (mode === 'dimension-studio' || mode === 'dimensionstudio' || mode === 'space-studio' || mode === 'spacestudio') {
+      return (
+        <DimensionStudioModule
           onBack={() => setMode(null)}
         />
       );
@@ -45173,8 +45197,14 @@ function App() {
       point: 'Point Studio',
       'line-studio': 'Line Studio',
       line: 'Line Studio',
+      'dimension-studio': 'Dimension Studio',
+      dimensionstudio: 'Dimension Studio',
+      'space-studio': 'Dimension Studio',
+      spacestudio: 'Dimension Studio',
       'function-studio': 'Function Studio',
       function: 'Function Studio',
+      'matrix-studio': 'Matrix Studio',
+      matrixstudio: 'Matrix Studio',
     }
     return labels[key] || key
   }
@@ -45680,7 +45710,7 @@ function App() {
       <div>
         {mode === 'vachana' ? (
           <Vachana onBack={() => setMode(null)} initialAdaptScore={diagnosticState[mode] || 0} />
-        ) : mode === 'geogebra' || mode === 'kernel' || mode === 'linear-algebra-studio' || mode === 'point-studio' || mode === 'point' || mode === 'line-studio' || mode === 'line' || mode === 'function-studio' || mode === 'function' ? (
+        ) : mode === 'geogebra' || mode === 'kernel' || mode === 'linear-algebra-studio' || mode === 'point-studio' || mode === 'point' || mode === 'line-studio' || mode === 'line' || mode === 'function-studio' || mode === 'function' || mode === 'matrix-studio' || mode === 'matrixstudio' || mode === 'dimension-studio' || mode === 'dimensionstudio' || mode === 'space-studio' || mode === 'spacestudio' ? (
           renderContent()
         ) : (
           <div className={`card ${mode === 'contrastlist' ? 'is-wide' : ''}`}>
