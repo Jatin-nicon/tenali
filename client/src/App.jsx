@@ -91,6 +91,7 @@ import KernelPlayground from './modules/KernelPlayground';
 import LinearAlgebraModule from './modules/LinearAlgebra';
 import LineStudioModule from './modules/LineStudio';
 import FunctionStudioModule from './modules/FunctionStudio';
+import InverseStudioModule from './modules/InverseStudio';
 import MatrixStudioModule from './modules/MatrixStudio';
 import DimensionStudioModule from './modules/DimensionStudio';
 import RealWorldHubApp from './RealWorldHub';
@@ -44893,6 +44894,9 @@ function App() {
     line: LineStudioModule,
     'function-studio': FunctionStudioModule,
     function: FunctionStudioModule,
+    'inverse-studio': InverseStudioModule,
+    inversestudio: InverseStudioModule,
+    inverse: InverseStudioModule,
     'matrix-studio': MatrixStudioModule,
     matrixstudio: MatrixStudioModule,
     'dimension-studio': DimensionStudioModule,
@@ -45026,6 +45030,14 @@ function App() {
     if (mode === 'function-studio' || mode === 'function') {
       return (
         <FunctionStudioModule
+          onBack={() => setMode(null)}
+        />
+      );
+    }
+
+    if (mode === 'inverse-studio' || mode === 'inversestudio' || mode === 'inverse') {
+      return (
+        <InverseStudioModule
           onBack={() => setMode(null)}
         />
       );
@@ -45203,6 +45215,9 @@ function App() {
       spacestudio: 'Dimension Studio',
       'function-studio': 'Function Studio',
       function: 'Function Studio',
+      'inverse-studio': 'Inverse Studio',
+      inversestudio: 'Inverse Studio',
+      inverse: 'Inverse Studio',
       'matrix-studio': 'Matrix Studio',
       matrixstudio: 'Matrix Studio',
     }
@@ -45710,7 +45725,7 @@ function App() {
       <div>
         {mode === 'vachana' ? (
           <Vachana onBack={() => setMode(null)} initialAdaptScore={diagnosticState[mode] || 0} />
-        ) : mode === 'geogebra' || mode === 'kernel' || mode === 'linear-algebra-studio' || mode === 'point-studio' || mode === 'point' || mode === 'line-studio' || mode === 'line' || mode === 'function-studio' || mode === 'function' || mode === 'matrix-studio' || mode === 'matrixstudio' || mode === 'dimension-studio' || mode === 'dimensionstudio' || mode === 'space-studio' || mode === 'spacestudio' ? (
+        ) : mode === 'geogebra' || mode === 'kernel' || mode === 'linear-algebra-studio' || mode === 'point-studio' || mode === 'point' || mode === 'line-studio' || mode === 'line' || mode === 'function-studio' || mode === 'function' || mode === 'inverse-studio' || mode === 'inversestudio' || mode === 'inverse' || mode === 'matrix-studio' || mode === 'matrixstudio' || mode === 'dimension-studio' || mode === 'dimensionstudio' || mode === 'space-studio' || mode === 'spacestudio' ? (
           renderContent()
         ) : (
           <div className={`card ${mode === 'contrastlist' ? 'is-wide' : ''}`}>

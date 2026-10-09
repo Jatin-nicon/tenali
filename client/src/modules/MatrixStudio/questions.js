@@ -6,30 +6,29 @@
  * Question Path:
  * Q1:  Plot Your Two Lines (User inputs 2 linear equations to plot)
  * Q2:  Same Values of x and y (MCQ: Where do both lines have same values of x and y? -> Intersection)
- * Q3:  Coordinates of the Intersection (Enter values of x and y at the intersection point)
- * Q4:  The Shared Solution (Plug-in arithmetic verifying (x, y) satisfies both)
- * Q5:  Spotting the Repetition (Variables repeat, multipliers hold the essence)
- * Q6:  Extracting the Multiplier Grid (2x2 rectangular matrix)
- * Q7:  Input Stack and Target Stack (Column vectors)
- * Q8:  Row-by-Column: The Multiplier Machine (Row-dot-column operation)
- * Q9:  The Grand Equation: Ax = b (Generalizing f(x) = y)
- * Q10: Live Evaluation: Feeding (x, y) to the Machine (Evaluating A·x = b)
- * Q11: Testing a Second System (Fresh 2x2 system assembly and solution)
- * Q12: The Naming Handover & Sandbox (Ceremony + live interactive coefficient sandbox)
+ * Q3:  Calculate the Intersection (Enter Intersect(Line1, Line2) to find meeting point)
+ * Q4:  Spotting the Structure (Variables are input slots; multipliers define the rule)
+ * Q5:  Extracting the Multiplier Grid (2x2 rectangular matrix)
+ * Q6:  Input Stack and Target Stack (Column vectors)
+ * Q7:  Row-by-Column: The Multiplier Machine (Row-dot-column operation)
+ * Q8:  The Grand Equation: Ax = b (Generalizing f(x) = y)
+ * Q9:  Live Evaluation: Feeding (x, y) to the Machine (Evaluating A·x = b)
+ * Q10: Testing a Second System (Fresh 2x2 system assembly and solution)
+ * Q11: The Naming Handover & Sandbox (Ceremony + live interactive coefficient sandbox)
  */
 
 export const PATH_META = {
   title: 'From Functions to Matrices',
   subtitle: 'The Simultaneous Machine: Ax = b',
-  totalQuestions: 12
+  totalQuestions: 11
 };
 
 export const PHASES = [
-  { id: 1, name: 'Phase 1: Two Rules at Once', range: [1, 4] },
-  { id: 2, name: 'Phase 2: Isolating the Structure', range: [5, 7] },
-  { id: 3, name: 'Phase 3: The Multiplier Machine', range: [8, 9] },
-  { id: 4, name: 'Phase 4: Live Verification on Canvas', range: [10, 11] },
-  { id: 5, name: 'Phase 5: The Naming Handover', range: [12, 12] }
+  { id: 1, name: 'Phase 1: Two Rules at Once', range: [1, 3] },
+  { id: 2, name: 'Phase 2: Isolating the Structure', range: [4, 6] },
+  { id: 3, name: 'Phase 3: The Multiplier Machine', range: [7, 8] },
+  { id: 4, name: 'Phase 4: Live Verification on Canvas', range: [9, 10] },
+  { id: 5, name: 'Phase 5: The Naming Handover', range: [11, 11] }
 ];
 
 export const DEFAULT_SYSTEM = {
@@ -79,22 +78,14 @@ export const MATRIX_PATH_QUESTIONS = [
   },
   {
     id: 4,
-    phaseId: 1,
-    phaseTitle: 'Phase 1: Two Rules at Once',
-    title: 'The Shared Solution',
-    prompt: 'Verify that the intersection point (2, 3) satisfies both equations:',
-    subtext: 'Substitute x = 2 and y = 3 into each equation to verify both rules hold true:'
+    phaseId: 2,
+    phaseTitle: 'Phase 2: Isolating the Structure',
+    title: 'A Function from ℝ² to ℝ²',
+    prompt: 'Consider h(x, y) = (2x + 3y, 4x + 5y). Calculate the output for input (2, 3):',
+    subtext: 'A single 2D input (x, y) feeds the SAME x and the SAME y into both coordinates simultaneously:'
   },
   {
     id: 5,
-    phaseId: 2,
-    phaseTitle: 'Phase 2: Isolating the Structure',
-    title: 'Spotting the Repetition',
-    prompt: 'x and y repeat in every row. What defines this system?',
-    subtext: 'Identify what carries the system\'s unique data:'
-  },
-  {
-    id: 6,
     phaseId: 2,
     phaseTitle: 'Phase 2: Isolating the Structure',
     title: 'Extracting the Multiplier Grid',
@@ -102,7 +93,7 @@ export const MATRIX_PATH_QUESTIONS = [
     subtext: 'Enter the coefficients from your equations:'
   },
   {
-    id: 7,
+    id: 6,
     phaseId: 2,
     phaseTitle: 'Phase 2: Isolating the Structure',
     title: 'Input Stack and Target Stack',
@@ -110,7 +101,7 @@ export const MATRIX_PATH_QUESTIONS = [
     subtext: 'Extract the right-hand values:'
   },
   {
-    id: 8,
+    id: 7,
     phaseId: 3,
     phaseTitle: 'Phase 3: The Multiplier Machine',
     title: 'Row-by-Column: The Multiplier Machine',
@@ -118,7 +109,7 @@ export const MATRIX_PATH_QUESTIONS = [
     subtext: 'Check row × column multiplication:'
   },
   {
-    id: 9,
+    id: 8,
     phaseId: 3,
     phaseTitle: 'Phase 3: The Multiplier Machine',
     title: 'The Grand Equation: A x = b',
@@ -126,7 +117,7 @@ export const MATRIX_PATH_QUESTIONS = [
     subtext: 'Match each part between 1D and 2D:'
   },
   {
-    id: 10,
+    id: 9,
     phaseId: 4,
     phaseTitle: 'Phase 4: Live Verification on Canvas',
     title: 'Live Evaluation: Feeding (x, y) to the Machine',
@@ -134,7 +125,7 @@ export const MATRIX_PATH_QUESTIONS = [
     subtext: 'Calculate each row\'s output:'
   },
   {
-    id: 11,
+    id: 10,
     phaseId: 4,
     phaseTitle: 'Phase 4: Live Verification on Canvas',
     title: 'Testing a Second System',
@@ -142,7 +133,7 @@ export const MATRIX_PATH_QUESTIONS = [
     subtext: 'Enter matrix A and point (x, y):'
   },
   {
-    id: 12,
+    id: 11,
     phaseId: 5,
     phaseTitle: 'Phase 5: The Naming Handover',
     title: 'The Naming Handover & Free-Play Lab',

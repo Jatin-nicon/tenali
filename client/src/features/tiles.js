@@ -115,6 +115,7 @@ export const TILES = [
     { key: 'line-studio', name: '📏 Line Studio', subtitle: 'Embodied geometry: The equation of a line', color: 'teal', category: 'linear-algebra' },
     { key: 'dimension-studio', name: '🌌 Dimension Studio', subtitle: 'Understanding ℝ, ℝ², ℝ³, and ℝⁿ: The worlds where math lives', color: 'orange', category: 'linear-algebra' },
     { key: 'function-studio', name: '⚡ Function Studio', subtitle: 'Rules beyond the line: The one-input-one-output pattern', color: 'purple', category: 'linear-algebra' },
+    { key: 'inverse-studio', name: '🔄 Inverse Studio', subtitle: 'Undoing the rule: Output to input in 1D & 2D', color: 'orange', category: 'linear-algebra' },
     { key: 'matrix-studio', name: '📐 Matrix Studio', subtitle: 'From functions to matrices: The simultaneous machine Ax = b', color: 'violet', category: 'linear-algebra' },
 ]
 

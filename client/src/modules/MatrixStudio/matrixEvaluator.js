@@ -260,3 +260,18 @@ export function validateVectorInput(userVector, expectedVector) {
   }
   return { valid: true };
 }
+
+/**
+ * Parses a vector component value, supporting direct numbers or arithmetic expressions (e.g. 2(2)+3(3) or 4+9)
+ */
+export function parseVectorComponentValue(str) {
+  if (!str || typeof str !== 'string' || !str.trim()) return NaN;
+  const clean = str.trim().replace(/\s+/g, '').replace(/(\d)\(/g, '$1*(');
+  if (/^[0-9+\-*/().]+$/.test(clean)) {
+    try {
+      const val = Function(`"use strict"; return (${clean})`)();
+      if (typeof val === 'number') return val;
+    } catch (err) {}
+  }
+  return parseFloat(str);
+}

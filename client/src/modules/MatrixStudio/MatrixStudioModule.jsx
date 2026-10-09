@@ -12,7 +12,8 @@ import {
   parseLinearEquation,
   solve2x2System,
   validateMatrixInput,
-  validateVectorInput
+  validateVectorInput,
+  parseVectorComponentValue
 } from './matrixEvaluator';
 import './MatrixStudioModule.css';
 
@@ -29,27 +30,26 @@ export default function MatrixStudioModule({ onBack }) {
   // Input refs for autofocus and canvas control
   const lineInputRef = useRef(null);
   const q3InputRef = useRef(null);
-  const q4Input1Ref = useRef(null);
-  const q10Row1Ref = useRef(null);
+  const q4ValXRef = useRef(null);
+  const q9Row1Ref = useRef(null);
   const ggbLabRef = useRef(null);
 
-  // Answers state across questions 1..12
+  // Answers state across questions 1..11
   const [answers, setAnswers] = useState({
     1: { isPlotted: false },
     2: { selectedOption: null, isCorrect: false },
     3: { inputStr: '', xVal: '', yVal: '', intersectFound: false, foundPt: null, isCorrect: false, error: null },
-    4: { val1: '', val2: '', isCorrect: false, error: null },
-    5: { selectedOption: null, isCorrect: false },
-    6: { matrix: [['', ''], ['', '']], isCorrect: false, error: null },
-    7: { targets: ['', ''], isCorrect: false, error: null },
+    4: { valX: '', valY: '', isCorrect: false, error: null },
+    5: { matrix: [['', ''], ['', '']], isCorrect: false, error: null },
+    6: { targets: ['', ''], isCorrect: false, error: null },
+    7: { selectedOption: null, isCorrect: false },
     8: { selectedOption: null, isCorrect: false },
-    9: { selectedOption: null, isCorrect: false },
-    10: { row1: '', row2: '', isCorrect: false, error: null },
-    11: { matrix: [['', ''], ['', '']], x: '', y: '', isCorrect: false, error: null },
-    12: { completed: true }
+    9: { row1: '', row2: '', isCorrect: false, error: null },
+    10: { matrix: [['', ''], ['', '']], x: '', y: '', isCorrect: false, error: null },
+    11: { completed: true }
   });
 
-  // Sandbox coefficients for Step 12 Free-play
+  // Sandbox coefficients for Step 11 Free-play
   const [sandboxCoeffs, setSandboxCoeffs] = useState({
     a1: 1,
     b1: 1,
@@ -79,10 +79,10 @@ export default function MatrixStudioModule({ onBack }) {
         lineInputRef.current.focus({ preventScroll: true });
       } else if (activeStep === 3 && q3InputRef.current && !answers[3]?.isCorrect) {
         q3InputRef.current.focus({ preventScroll: true });
-      } else if (activeStep === 4 && q4Input1Ref.current && !answers[4]?.isCorrect) {
-        q4Input1Ref.current.focus({ preventScroll: true });
-      } else if (activeStep === 10 && q10Row1Ref.current && !answers[10]?.isCorrect) {
-        q10Row1Ref.current.focus({ preventScroll: true });
+      } else if (activeStep === 4 && q4ValXRef.current && !answers[4]?.isCorrect) {
+        q4ValXRef.current.focus({ preventScroll: true });
+      } else if (activeStep === 9 && q9Row1Ref.current && !answers[9]?.isCorrect) {
+        q9Row1Ref.current.focus({ preventScroll: true });
       }
     }, 50);
     return () => clearTimeout(timer);
@@ -118,15 +118,15 @@ export default function MatrixStudioModule({ onBack }) {
         intersection: P,
         showIntersection: isQ3IntersectFound || isQ3Correct
       };
-    } else if (activeStep >= 4 && activeStep <= 10) {
+    } else if (activeStep >= 4 && activeStep <= 9) {
       return {
         line1: { equation: L1.ggbCmd, display: L1.display },
         line2: { equation: L2.ggbCmd, display: L2.display },
         intersection: P,
         showIntersection: true
       };
-    } else if (activeStep === 11) {
-      // Step 11: Fixed fresh test system
+    } else if (activeStep === 10) {
+      // Step 10: Fixed fresh test system
       return {
         line1: { equation: '2x + y = 8', display: '2x + y = 8' },
         line2: { equation: 'x + 2y = 7', display: 'x + 2y = 7' },
@@ -134,7 +134,7 @@ export default function MatrixStudioModule({ onBack }) {
         showIntersection: true
       };
     } else {
-      // Step 12: Sandbox mode
+      // Step 11: Sandbox mode
       const { a1, b1, c1, a2, b2, c2 } = sandboxCoeffs;
       const solved = solve2x2System(a1, b1, c1, a2, b2, c2);
       return {
@@ -156,7 +156,7 @@ export default function MatrixStudioModule({ onBack }) {
     const a = answers[qId];
     if (!a) return false;
     if (qId === 1) return Boolean(activeSystem && a.isPlotted);
-    if (qId === 12) return true;
+    if (qId === 11) return true;
     return Boolean(a.isCorrect);
   };
 
@@ -168,11 +168,11 @@ export default function MatrixStudioModule({ onBack }) {
     }
     if (activeStep === 2) return 'Where Values Match';
     if (activeStep === 3) return 'Find Shared (x, y)';
-    if (activeStep <= 5) return `System: ${L1.display} & ${L2.display}`;
-    if (activeStep <= 7) return 'Structure: [Grid] · [x] = [b]';
-    if (activeStep <= 9) return 'Ax = b';
-    if (activeStep === 10) return `A · [${P.x}/${P.y}] = [${L1.c}/${L2.c}]`;
-    if (activeStep === 11) return 'Test System: 2x + y = 8 & x + 2y = 7';
+    if (activeStep === 4) return '2D Function: h(x, y) = (2x+3y, 4x+5y)';
+    if (activeStep <= 6) return 'Structure: [Grid] · [x] = [b]';
+    if (activeStep <= 8) return 'Ax = b';
+    if (activeStep === 9) return `A · [${P.x}/${P.y}] = [${L1.c}/${L2.c}]`;
+    if (activeStep === 10) return 'Test System: 2x + y = 8 & x + 2y = 7';
     return 'Sandbox: Ax = b';
   };
 
@@ -360,76 +360,108 @@ export default function MatrixStudioModule({ onBack }) {
   };
 
   // =========================================================
-  // STEP 4: Plug-in verification
+  // STEP 4: A Function from ℝ² to ℝ² - Evaluating h(2, 3)
   // =========================================================
   const handleCheckQ4 = (e) => {
     e.preventDefault();
-    const v1 = parseNumericValue(answers[4].val1);
-    const v2 = parseNumericValue(answers[4].val2);
+    const rawX = answers[4]?.valX;
+    const rawY = answers[4]?.valY;
 
-    if (isNaN(v1) || isNaN(v2)) {
+    if (!rawX || !rawY || !rawX.trim() || !rawY.trim()) {
       setAnswers((prev) => ({
         ...prev,
-        4: { ...prev[4], error: 'Please enter calculated numeric results for both equations.' }
+        4: { ...prev[4], error: 'Please enter values for both coordinates of h(2, 3).' }
       }));
       return;
     }
 
-    const correct1 = Math.abs(v1 - L1.c) < 1e-4;
-    const correct2 = Math.abs(v2 - L2.c) < 1e-4;
+    const numX = parseVectorComponentValue(rawX);
+    const numY = parseVectorComponentValue(rawY);
 
-    if (!correct1 || !correct2) {
-      const formatExpr = (line) => {
-        const sign = line.b >= 0 ? '+' : '-';
-        return `${line.a}(${P.x}) ${sign} ${Math.abs(line.b)}(${P.y})`;
-      };
+    if (isNaN(numX) || isNaN(numY)) {
       setAnswers((prev) => ({
         ...prev,
-        4: {
-          ...prev[4],
-          error: `Check arithmetic: For Line 1, ${formatExpr(L1)} should equal ${L1.c}. For Line 2, ${formatExpr(L2)} should equal ${L2.c}.`
-        }
+        4: { ...prev[4], error: 'Please enter valid numbers or arithmetic expressions.' }
       }));
-    } else {
+      return;
+    }
+
+    const isXCorrect = Math.abs(numX - 13) < 0.01; // 2(2) + 3(3) = 4 + 9 = 13
+    const isYCorrect = Math.abs(numY - 23) < 0.01; // 4(2) + 5(3) = 8 + 15 = 23
+
+    if (isXCorrect && isYCorrect) {
       setAnswers((prev) => ({
         ...prev,
         4: { ...prev[4], isCorrect: true, error: null }
+      }));
+    } else {
+      let errMsg = '';
+      if (!isXCorrect && !isYCorrect) {
+        errMsg = 'Both coordinates are incorrect. Check: 2(2) + 3(3) and 4(2) + 5(3).';
+      } else if (!isXCorrect) {
+        errMsg = '1st coordinate is incorrect. Check: 2(2) + 3(3) = 4 + 9 = 13.';
+      } else {
+        errMsg = '2nd coordinate is incorrect. Check: 4(2) + 5(3) = 8 + 15 = 23.';
+      }
+      setAnswers((prev) => ({
+        ...prev,
+        4: { ...prev[4], error: errMsg }
       }));
     }
   };
 
   // =========================================================
-  // STEP 5: Spotting repetition
-  // =========================================================
-  const handleSelectQ5 = (optId) => {
-    const isCorrect = optId === 'q5_multipliers';
-    setAnswers((prev) => ({
-      ...prev,
-      5: { selectedOption: optId, isCorrect }
-    }));
-  };
-
-  // =========================================================
-  // STEP 6: Multiplier Grid
+  // STEP 5: Multiplier Grid
   // =========================================================
   const handleMatrixCellChange = (r, c, val) => {
     setAnswers((prev) => {
-      const newM = prev[6].matrix.map((row) => [...row]);
+      const newM = prev[5].matrix.map((row) => [...row]);
       newM[r][c] = val;
       return {
         ...prev,
-        6: { ...prev[6], matrix: newM, error: null }
+        5: { ...prev[5], matrix: newM, error: null }
+      };
+    });
+  };
+
+  const handleCheckQ5 = (e) => {
+    e.preventDefault();
+    const expected = [
+      [L1.a, L1.b],
+      [L2.a, L2.b]
+    ];
+    const res = validateMatrixInput(answers[5].matrix, expected);
+    if (!res.valid) {
+      setAnswers((prev) => ({
+        ...prev,
+        5: { ...prev[5], error: res.error }
+      }));
+    } else {
+      setAnswers((prev) => ({
+        ...prev,
+        5: { ...prev[5], isCorrect: true, error: null }
+      }));
+    }
+  };
+
+  // =========================================================
+  // STEP 6: Target Stacks
+  // =========================================================
+  const handleTargetChange = (idx, val) => {
+    setAnswers((prev) => {
+      const newT = [...prev[6].targets];
+      newT[idx] = val;
+      return {
+        ...prev,
+        6: { ...prev[6], targets: newT, error: null }
       };
     });
   };
 
   const handleCheckQ6 = (e) => {
     e.preventDefault();
-    const expected = [
-      [L1.a, L1.b],
-      [L2.a, L2.b]
-    ];
-    const res = validateMatrixInput(answers[6].matrix, expected);
+    const expected = [L1.c, L2.c];
+    const res = validateVectorInput(answers[6].targets, expected);
     if (!res.valid) {
       setAnswers((prev) => ({
         ...prev,
@@ -444,41 +476,21 @@ export default function MatrixStudioModule({ onBack }) {
   };
 
   // =========================================================
-  // STEP 7: Target Stacks
+  // STEP 7: Row-by-Column
   // =========================================================
-  const handleTargetChange = (idx, val) => {
-    setAnswers((prev) => {
-      const newT = [...prev[7].targets];
-      newT[idx] = val;
-      return {
-        ...prev,
-        7: { ...prev[7], targets: newT, error: null }
-      };
-    });
-  };
-
-  const handleCheckQ7 = (e) => {
-    e.preventDefault();
-    const expected = [L1.c, L2.c];
-    const res = validateVectorInput(answers[7].targets, expected);
-    if (!res.valid) {
-      setAnswers((prev) => ({
-        ...prev,
-        7: { ...prev[7], error: res.error }
-      }));
-    } else {
-      setAnswers((prev) => ({
-        ...prev,
-        7: { ...prev[7], isCorrect: true, error: null }
-      }));
-    }
+  const handleSelectQ7 = (optId) => {
+    const isCorrect = optId === 'q7_exact';
+    setAnswers((prev) => ({
+      ...prev,
+      7: { selectedOption: optId, isCorrect }
+    }));
   };
 
   // =========================================================
-  // STEP 8: Row-by-Column
+  // STEP 8: The Grand Equation Ax = b
   // =========================================================
   const handleSelectQ8 = (optId) => {
-    const isCorrect = optId === 'q8_exact';
+    const isCorrect = optId === 'q8_analog';
     setAnswers((prev) => ({
       ...prev,
       8: { selectedOption: optId, isCorrect }
@@ -486,28 +498,17 @@ export default function MatrixStudioModule({ onBack }) {
   };
 
   // =========================================================
-  // STEP 9: The Grand Equation Ax = b
+  // STEP 9: Live Evaluation of A · [x / y]
   // =========================================================
-  const handleSelectQ9 = (optId) => {
-    const isCorrect = optId === 'q9_analog';
-    setAnswers((prev) => ({
-      ...prev,
-      9: { selectedOption: optId, isCorrect }
-    }));
-  };
-
-  // =========================================================
-  // STEP 10: Live Evaluation of A · [x / y]
-  // =========================================================
-  const handleCheckQ10 = (e) => {
+  const handleCheckQ9 = (e) => {
     e.preventDefault();
-    const r1 = parseNumericValue(answers[10].row1);
-    const r2 = parseNumericValue(answers[10].row2);
+    const r1 = parseNumericValue(answers[9].row1);
+    const r2 = parseNumericValue(answers[9].row2);
 
     if (isNaN(r1) || isNaN(r2)) {
       setAnswers((prev) => ({
         ...prev,
-        10: { ...prev[10], error: 'Please calculate row outputs for both lines.' }
+        9: { ...prev[9], error: 'Please calculate row outputs for both lines.' }
       }));
       return;
     }
@@ -518,54 +519,54 @@ export default function MatrixStudioModule({ onBack }) {
     if (!correct1 || !correct2) {
       setAnswers((prev) => ({
         ...prev,
-        10: {
-          ...prev[10],
+        9: {
+          ...prev[9],
           error: `Row 1 should equal ${L1.c}, and Row 2 should equal ${L2.c}. Check your calculations!`
         }
       }));
     } else {
       setAnswers((prev) => ({
         ...prev,
-        10: { ...prev[10], isCorrect: true, error: null }
+        9: { ...prev[9], isCorrect: true, error: null }
       }));
     }
   };
 
   // =========================================================
-  // STEP 11: Second System Solve
+  // STEP 10: Second System Solve
   // =========================================================
-  const handleQ11MatrixChange = (r, c, val) => {
+  const handleQ10MatrixChange = (r, c, val) => {
     setAnswers((prev) => {
-      const newM = prev[11].matrix.map((row) => [...row]);
+      const newM = prev[10].matrix.map((row) => [...row]);
       newM[r][c] = val;
       return {
         ...prev,
-        11: { ...prev[11], matrix: newM, error: null }
+        10: { ...prev[10], matrix: newM, error: null }
       };
     });
   };
 
-  const handleCheckQ11 = (e) => {
+  const handleCheckQ10 = (e) => {
     e.preventDefault();
     const expectedM = [
       [2, 1],
       [1, 2]
     ];
-    const mRes = validateMatrixInput(answers[11].matrix, expectedM);
+    const mRes = validateMatrixInput(answers[10].matrix, expectedM);
     if (!mRes.valid) {
       setAnswers((prev) => ({
         ...prev,
-        11: { ...prev[11], error: `Matrix: ${mRes.error}` }
+        10: { ...prev[10], error: `Matrix: ${mRes.error}` }
       }));
       return;
     }
-    const xVal = parseNumericValue(answers[11].x);
-    const yVal = parseNumericValue(answers[11].y);
+    const xVal = parseNumericValue(answers[10].x);
+    const yVal = parseNumericValue(answers[10].y);
     if (xVal !== 3 || yVal !== 2) {
       setAnswers((prev) => ({
         ...prev,
-        11: {
-          ...prev[11],
+        10: {
+          ...prev[10],
           error: 'Look at the canvas intersection point: where do 2x + y = 8 and x + 2y = 7 meet? (x = 3, y = 2).'
         }
       }));
@@ -573,11 +574,11 @@ export default function MatrixStudioModule({ onBack }) {
     }
     setAnswers((prev) => ({
       ...prev,
-      11: { ...prev[11], isCorrect: true, error: null }
+      10: { ...prev[10], isCorrect: true, error: null }
     }));
   };
 
-  // Sandbox coefficient updates for Step 12
+  // Sandbox coefficient updates for Step 11
   const handleSandboxChange = (key, val) => {
     setSandboxCoeffs((prev) => ({
       ...prev,
@@ -606,7 +607,7 @@ export default function MatrixStudioModule({ onBack }) {
         <p className="fs-subtitle">{PATH_META.subtitle}</p>
       </div>
 
-      {/* 3. STEPPER BAR (Questions 1..12) */}
+      {/* 3. STEPPER BAR (Questions 1..11) */}
       <div className="fs-stepper-bar">
         {MATRIX_PATH_QUESTIONS.map((q) => {
           const isDone = isQuestionComplete(q.id);
@@ -637,14 +638,14 @@ export default function MatrixStudioModule({ onBack }) {
         </div>
 
         {/* 1. GRAPH AT TOP (GeoGebra Matrix Lab inside card) */}
-        {activeStep <= 12 && (
+        {activeStep <= 11 && (
           <GeoGebraMatrixLab
             ref={ggbLabRef}
             line1={geoGebraData.line1}
             line2={geoGebraData.line2}
             intersection={geoGebraData.intersection}
             showIntersection={geoGebraData.showIntersection}
-            compact={activeStep >= 6 && activeStep <= 10}
+            compact={activeStep >= 5 && activeStep <= 9}
             allowIntersect={activeStep === 3 && !answers[3]?.isCorrect}
             onIntersect={handleIntersectionFound}
           />
@@ -653,7 +654,7 @@ export default function MatrixStudioModule({ onBack }) {
         {/* 2. QUESTION CONTENT */}
         <div className="fs-step-intro-block">
           {/* Equation Pill Bar */}
-          {activeStep > 1 && activeStep <= 10 && (
+          {activeStep > 1 && activeStep <= 9 && (
             <div className="fs-equation-pill-bar">
               <span className="fs-equation-pill-label">Your Plotted System:</span>
               <span className="fs-equation-pill-val">
@@ -663,12 +664,10 @@ export default function MatrixStudioModule({ onBack }) {
           )}
 
           <h3 className="fs-step-heading">
-            {activeStep === 4 ? `Verify that (${P.x}, ${P.y}) satisfies both equations:` : currentQ.prompt}
+            {currentQ.prompt}
           </h3>
           <p className="fs-step-subtext">
-            {activeStep === 4
-              ? `Substitute x = ${P.x} and y = ${P.y} into each equation to verify both rules hold true:`
-              : currentQ.subtext}
+            {currentQ.subtext}
           </p>
 
           {/* ========================================================= */}
@@ -962,179 +961,140 @@ export default function MatrixStudioModule({ onBack }) {
           )}
 
           {/* ========================================================= */}
-          {/* QUESTION 4: Plug-in verification                          */}
+          {/* QUESTION 4: A Function from ℝ² to ℝ²                      */}
           {/* ========================================================= */}
           {activeStep === 4 && (
-            <form onSubmit={handleCheckQ4} style={{ marginTop: '0.85rem' }}>
-              <div className="fs-q4-container">
-                {/* Line 1 Card */}
-                <div className={`fs-q4-card line1 ${answers[4].isCorrect ? 'verified' : ''}`}>
-                  <div className="fs-q4-card-header">
-                    <div className="fs-q4-header-left">
-                      <span className="fs-q4-dot line1" />
-                      <span className="fs-q4-line-title">Line 1:</span>
-                      <span className="fs-q4-eq-badge">{L1.display}</span>
-                    </div>
-                    <span className="fs-q4-target-chip">Target = {L1.c}</span>
-                  </div>
-
-                  <div className="fs-q4-calc-row">
-                    <span className="fs-q4-subst-label">
-                      Substitute (x = {P.x}, y = {P.y}):
-                    </span>
-                    <div className="fs-q4-expr-group">
-                      <span className="fs-q4-expr">
-                        {L1.a}({P.x}) {L1.b >= 0 ? '+' : '-'} {Math.abs(L1.b)}({P.y}) =
-                      </span>
-                      <input
-                        ref={q4Input1Ref}
-                        type="text"
-                        className="fs-cell-input fs-q4-input"
-                        placeholder="?"
-                        value={answers[4].val1}
-                        onChange={(e) =>
-                          setAnswers((prev) => ({
-                            ...prev,
-                            4: { ...prev[4], val1: e.target.value, error: null }
-                          }))
-                        }
-                        disabled={answers[4].isCorrect}
-                        title="Line 1 calculation result"
-                      />
-                      {answers[4].isCorrect && (
-                        <span className="fs-q4-match-badge">✓ = {L1.c} (Holds True)</span>
-                      )}
-                    </div>
-                  </div>
+            <div style={{ marginTop: '0.5rem' }}>
+              {/* Function Rule & Substitution Card */}
+              <div className="fs-r2-function-card">
+                <div className="fs-r2-function-header">
+                  <span className="fs-r2-map-badge">2D Rule: ℝ² ➔ ℝ²</span>
+                  <span className="fs-r2-formula">h(x, y) = ( 2x + 3y , 4x + 5y )</span>
                 </div>
 
-                {/* Line 2 Card */}
-                <div className={`fs-q4-card line2 ${answers[4].isCorrect ? 'verified' : ''}`}>
-                  <div className="fs-q4-card-header">
-                    <div className="fs-q4-header-left">
-                      <span className="fs-q4-dot line2" />
-                      <span className="fs-q4-line-title">Line 2:</span>
-                      <span className="fs-q4-eq-badge">{L2.display}</span>
-                    </div>
-                    <span className="fs-q4-target-chip">Target = {L2.c}</span>
+                <div className="fs-r2-breakdown">
+                  <div className="fs-r2-input-strip">
+                    <span className="fs-r2-strip-label">Given input vector (x, y):</span>
+                    <span className="fs-r2-chip x-chip">x = 2</span>
+                    <span className="fs-r2-chip y-chip">y = 3</span>
                   </div>
 
-                  <div className="fs-q4-calc-row">
-                    <span className="fs-q4-subst-label">
-                      Substitute (x = {P.x}, y = {P.y}):
-                    </span>
-                    <div className="fs-q4-expr-group">
-                      <span className="fs-q4-expr">
-                        {L2.a}({P.x}) {L2.b >= 0 ? '+' : '-'} {Math.abs(L2.b)}({P.y}) =
+                  <div className="fs-r2-coord-rows">
+                    <div className="fs-r2-coord-row">
+                      <span className="fs-r2-coord-name">1st Coord:</span>
+                      <span className="fs-r2-coord-calc">
+                        2 · <span className="fs-r2-val-chip x-chip">2</span> + 3 · <span className="fs-r2-val-chip y-chip">3</span>
+                        {answers[4]?.isCorrect ? (
+                          <> = 4 + 9 = <strong style={{ color: 'var(--clr-teal)' }}>13 ✓</strong></>
+                        ) : (
+                          <> = ?</>
+                        )}
                       </span>
-                      <input
-                        type="text"
-                        className="fs-cell-input fs-q4-input"
-                        placeholder="?"
-                        value={answers[4].val2}
-                        onChange={(e) =>
-                          setAnswers((prev) => ({
-                            ...prev,
-                            4: { ...prev[4], val2: e.target.value, error: null }
-                          }))
-                        }
-                        disabled={answers[4].isCorrect}
-                        title="Line 2 calculation result"
-                      />
-                      {answers[4].isCorrect && (
-                        <span className="fs-q4-match-badge">✓ = {L2.c} (Holds True)</span>
-                      )}
+                    </div>
+                    <div className="fs-r2-coord-row">
+                      <span className="fs-r2-coord-name">2nd Coord:</span>
+                      <span className="fs-r2-coord-calc">
+                        4 · <span className="fs-r2-val-chip x-chip">2</span> + 5 · <span className="fs-r2-val-chip y-chip">3</span>
+                        {answers[4]?.isCorrect ? (
+                          <> = 8 + 15 = <strong style={{ color: 'var(--clr-teal)' }}>23 ✓</strong></>
+                        ) : (
+                          <> = ?</>
+                        )}
+                      </span>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {!answers[4].isCorrect && (
-                <button type="submit" className="fs-btn-primary" style={{ marginTop: '1rem' }}>
-                  Verify Solution 🚀
-                </button>
-              )}
+              {/* Evaluation Form */}
+              <form onSubmit={handleCheckQ4} className="fs-r2-form">
+                <div className="fs-r2-eval-row">
+                  <span className="fs-r2-eval-label">h(2, 3) =</span>
+                  <span className="fs-r2-paren">(</span>
+                  <input
+                    ref={q4ValXRef}
+                    type="text"
+                    className="fs-cell-input fs-r2-input"
+                    placeholder="2(2)+3(3)"
+                    value={answers[4]?.valX || ''}
+                    onChange={(e) =>
+                      setAnswers((prev) => ({
+                        ...prev,
+                        4: { ...prev[4], valX: e.target.value, error: null }
+                      }))
+                    }
+                    disabled={answers[4]?.isCorrect}
+                    title="1st coordinate output: 2(2) + 3(3)"
+                  />
+                  <span className="fs-r2-comma">,</span>
+                  <input
+                    type="text"
+                    className="fs-cell-input fs-r2-input"
+                    placeholder="4(2)+5(3)"
+                    value={answers[4]?.valY || ''}
+                    onChange={(e) =>
+                      setAnswers((prev) => ({
+                        ...prev,
+                        4: { ...prev[4], valY: e.target.value, error: null }
+                      }))
+                    }
+                    disabled={answers[4]?.isCorrect}
+                    title="2nd coordinate output: 4(2) + 5(3)"
+                  />
+                  <span className="fs-r2-paren">)</span>
 
-              {answers[4].error && (
-                <div className="fs-inquiry-feedback error" style={{ marginTop: '0.65rem' }}>
-                  <span>⚠️</span>
-                  <span>{answers[4].error}</span>
+                  {!answers[4]?.isCorrect && (
+                    <button type="submit" className="fs-btn-primary" style={{ padding: '0.5rem 1.15rem' }}>
+                      Check Output ➔
+                    </button>
+                  )}
                 </div>
-              )}
 
-              {answers[4].isCorrect && (
-                <div className="fs-inquiry-feedback success" style={{ marginTop: '0.65rem' }}>
-                  <span>✓</span>
-                  <span>Both equations are satisfied at ({P.x}, {P.y})! (2, 3) is the simultaneous solution.</span>
-                </div>
-              )}
-            </form>
-          )}
+                {answers[4]?.error && (
+                  <div className="fs-inquiry-feedback error" style={{ marginTop: '0.65rem' }}>
+                    <span>⚠️</span>
+                    <span>{answers[4].error}</span>
+                  </div>
+                )}
 
-          {/* ========================================================= */}
-          {/* QUESTION 5: Spotting Repetition                           */}
-          {/* ========================================================= */}
-          {activeStep === 5 && (
-            <div className="fs-options-grid">
-              {[
-                {
-                  id: 'q5_multipliers',
-                  text: 'The multipliers and constants',
-                  isCorrect: true
-                },
-                {
-                  id: 'q5_letters',
-                  text: 'The letters x and y',
-                  isCorrect: false
-                },
-                {
-                  id: 'q5_signs',
-                  text: 'The equal signs',
-                  isCorrect: false
-                }
-              ].map((opt, idx) => {
-                const isSelected = answers[5]?.selectedOption === opt.id;
-                let btnClass = 'fs-option-btn';
-                if (isSelected) {
-                  btnClass += opt.isCorrect ? ' correct' : ' incorrect';
-                }
-                const letter = String.fromCharCode(65 + idx);
-                return (
-                  <button
-                    key={opt.id}
-                    className={btnClass}
-                    onClick={() => handleSelectQ5(opt.id)}
-                    disabled={answers[5]?.isCorrect}
-                  >
-                    <span className="fs-option-letter">{letter}</span>
-                    <div style={{ flex: 1 }}>
-                      <span>{opt.text}</span>
-                      {isSelected && (
-                        <div style={{ marginTop: '0.25rem', fontSize: '0.8rem', fontWeight: 600 }}>
-                          {opt.isCorrect
-                            ? '✓ Exactly! Variables are just placeholders.'
-                            : '✕ Variables repeat; numbers define the system.'}
-                        </div>
-                      )}
+                {answers[4]?.isCorrect && (
+                  <div style={{ marginTop: '0.85rem' }}>
+                    <div className="fs-inquiry-feedback success">
+                      <span>✓</span>
+                      <span>Output evaluated: <strong>h(2, 3) = (13, 23)</strong> in ℝ²!</span>
                     </div>
-                  </button>
-                );
-              })}
 
-              {answers[5]?.isCorrect && (
-                <div className="fs-inquiry-feedback success" style={{ marginTop: '0.65rem' }}>
-                  <span>✓</span>
-                  <span>The multipliers and constants define the system.</span>
-                </div>
-              )}
+                    <div className="fs-earns-card" style={{ marginTop: '0.85rem' }}>
+                      <div className="fs-earns-badge">💡 Core Realization</div>
+                      <h4 style={{ margin: '0 0 0.4rem 0', color: 'var(--clr-accent)', fontSize: '0.98rem', fontWeight: 800 }}>
+                        Same x and Same y in Both Coordinates!
+                      </h4>
+                      <p style={{ margin: 0, fontSize: '0.875rem', lineHeight: 1.5, color: 'var(--clr-text, #ede8e3)' }}>
+                        Notice what happened when you evaluated the input vector <strong>(x, y) = (2, 3)</strong>:
+                      </p>
+                      <ul style={{ margin: '0.45rem 0 0.65rem 1.25rem', padding: 0, fontSize: '0.85rem', lineHeight: 1.55 }}>
+                        <li>
+                          The <strong style={{ color: '#38bdf8' }}>exact same x = 2</strong> went into both coordinates: <code style={{ color: '#38bdf8' }}>2(2)</code> and <code style={{ color: '#38bdf8' }}>4(2)</code>.
+                        </li>
+                        <li>
+                          The <strong style={{ color: '#fb923c' }}>exact same y = 3</strong> went into both coordinates: <code style={{ color: '#fb923c' }}>3(3)</code> and <code style={{ color: '#fb923c' }}>5(3)</code>.
+                        </li>
+                      </ul>
+                      <p style={{ margin: 0, fontSize: '0.84rem', lineHeight: 1.5, color: 'var(--clr-text-soft, #a89e94)' }}>
+                        A 2D function binds both coordinates to the <em>same input pair simultaneously</em>. That's why simultaneous equations share the same (x, y) solution — and why we can separate the multipliers into a matrix in the next step!
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </form>
             </div>
           )}
 
           {/* ========================================================= */}
-          {/* QUESTION 6: Extracting Multiplier Grid                    */}
+          {/* QUESTION 5: Extracting Multiplier Grid                    */}
           {/* ========================================================= */}
-          {activeStep === 6 && (
-            <form onSubmit={handleCheckQ6}>
+          {activeStep === 5 && (
+            <form onSubmit={handleCheckQ5}>
               <div className="fs-matrix-assembly">
                 <div className="fs-matrix-bracket">
                   <div className="fs-matrix-grid">
@@ -1142,36 +1102,36 @@ export default function MatrixStudioModule({ onBack }) {
                       type="text"
                       className="fs-cell-input"
                       placeholder="?"
-                      value={answers[6].matrix[0][0]}
+                      value={answers[5].matrix[0][0]}
                       onChange={(e) => handleMatrixCellChange(0, 0, e.target.value)}
-                      disabled={answers[6].isCorrect}
+                      disabled={answers[5].isCorrect}
                       title="Row 1, Column 1"
                     />
                     <input
                       type="text"
                       className="fs-cell-input"
                       placeholder="?"
-                      value={answers[6].matrix[0][1]}
+                      value={answers[5].matrix[0][1]}
                       onChange={(e) => handleMatrixCellChange(0, 1, e.target.value)}
-                      disabled={answers[6].isCorrect}
+                      disabled={answers[5].isCorrect}
                       title="Row 1, Column 2"
                     />
                     <input
                       type="text"
                       className="fs-cell-input"
                       placeholder="?"
-                      value={answers[6].matrix[1][0]}
+                      value={answers[5].matrix[1][0]}
                       onChange={(e) => handleMatrixCellChange(1, 0, e.target.value)}
-                      disabled={answers[6].isCorrect}
+                      disabled={answers[5].isCorrect}
                       title="Row 2, Column 1"
                     />
                     <input
                       type="text"
                       className="fs-cell-input"
                       placeholder="?"
-                      value={answers[6].matrix[1][1]}
+                      value={answers[5].matrix[1][1]}
                       onChange={(e) => handleMatrixCellChange(1, 1, e.target.value)}
-                      disabled={answers[6].isCorrect}
+                      disabled={answers[5].isCorrect}
                       title="Row 2, Column 2"
                     />
                   </div>
@@ -1192,20 +1152,20 @@ export default function MatrixStudioModule({ onBack }) {
                 </div>
               </div>
 
-              {!answers[6].isCorrect && (
+              {!answers[5].isCorrect && (
                 <button type="submit" className="fs-btn-primary" style={{ marginTop: '1rem' }}>
                   Check Matrix A 🚀
                 </button>
               )}
 
-              {answers[6].error && (
+              {answers[5].error && (
                 <div className="fs-inquiry-feedback error" style={{ marginTop: '0.65rem' }}>
                   <span>⚠️</span>
-                  <span>{answers[6].error}</span>
+                  <span>{answers[5].error}</span>
                 </div>
               )}
 
-              {answers[6].isCorrect && (
+              {answers[5].isCorrect && (
                 <div className="fs-inquiry-feedback success" style={{ marginTop: '0.65rem' }}>
                   <span>✓</span>
                   <span>Matrix A assembled!</span>
@@ -1215,10 +1175,10 @@ export default function MatrixStudioModule({ onBack }) {
           )}
 
           {/* ========================================================= */}
-          {/* QUESTION 7: Target Stacks                                 */}
+          {/* QUESTION 6: Target Stacks                                 */}
           {/* ========================================================= */}
-          {activeStep === 7 && (
-            <form onSubmit={handleCheckQ7}>
+          {activeStep === 6 && (
+            <form onSubmit={handleCheckQ6}>
               <div className="fs-matrix-assembly">
                 <div className="fs-matrix-bracket">
                   <div className="fs-matrix-grid">
@@ -1243,37 +1203,37 @@ export default function MatrixStudioModule({ onBack }) {
                     type="text"
                     className="fs-cell-input"
                     placeholder="?"
-                    value={answers[7].targets[0]}
+                    value={answers[6].targets[0]}
                     onChange={(e) => handleTargetChange(0, e.target.value)}
-                    disabled={answers[7].isCorrect}
+                    disabled={answers[6].isCorrect}
                     title="Target 1"
                   />
                   <input
                     type="text"
                     className="fs-cell-input"
                     placeholder="?"
-                    value={answers[7].targets[1]}
+                    value={answers[6].targets[1]}
                     onChange={(e) => handleTargetChange(1, e.target.value)}
-                    disabled={answers[7].isCorrect}
+                    disabled={answers[6].isCorrect}
                     title="Target 2"
                   />
                 </div>
               </div>
 
-              {!answers[7].isCorrect && (
+              {!answers[6].isCorrect && (
                 <button type="submit" className="fs-btn-primary" style={{ marginTop: '1rem' }}>
                   Check Target b 🚀
                 </button>
               )}
 
-              {answers[7].error && (
+              {answers[6].error && (
                 <div className="fs-inquiry-feedback error" style={{ marginTop: '0.65rem' }}>
                   <span>⚠️</span>
-                  <span>{answers[7].error}</span>
+                  <span>{answers[6].error}</span>
                 </div>
               )}
 
-              {answers[7].isCorrect && (
+              {answers[6].isCorrect && (
                 <div className="fs-inquiry-feedback success" style={{ marginTop: '0.65rem' }}>
                   <span>✓</span>
                   <span>Target vector b assembled!</span>
@@ -1283,24 +1243,83 @@ export default function MatrixStudioModule({ onBack }) {
           )}
 
           {/* ========================================================= */}
-          {/* QUESTION 8: Row-by-Column Machine                         */}
+          {/* QUESTION 7: Row-by-Column Machine                         */}
+          {/* ========================================================= */}
+          {activeStep === 7 && (
+            <div className="fs-options-grid">
+              {[
+                {
+                  id: 'q7_exact',
+                  text: 'Yes, it recreates both equations',
+                  isCorrect: true
+                },
+                {
+                  id: 'q7_different',
+                  text: 'No, gives different equations',
+                  isCorrect: false
+                },
+                {
+                  id: 'q7_multiply',
+                  text: 'Multiplies all numbers together',
+                  isCorrect: false
+                }
+              ].map((opt, idx) => {
+                const isSelected = answers[7]?.selectedOption === opt.id;
+                let btnClass = 'fs-option-btn';
+                if (isSelected) {
+                  btnClass += opt.isCorrect ? ' correct' : ' incorrect';
+                }
+                const letter = String.fromCharCode(65 + idx);
+                return (
+                  <button
+                    key={opt.id}
+                    className={btnClass}
+                    onClick={() => handleSelectQ7(opt.id)}
+                    disabled={answers[7]?.isCorrect}
+                  >
+                    <span className="fs-option-letter">{letter}</span>
+                    <div style={{ flex: 1 }}>
+                      <span>{opt.text}</span>
+                      {isSelected && (
+                        <div style={{ marginTop: '0.25rem', fontSize: '0.8rem', fontWeight: 600 }}>
+                          {opt.isCorrect
+                            ? '✓ Exactly! Row × column matches both lines.'
+                            : '✕ Multiply each row by the column vector.'}
+                        </div>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+
+              {answers[7]?.isCorrect && (
+                <div className="fs-inquiry-feedback success" style={{ marginTop: '0.65rem' }}>
+                  <span>✓</span>
+                  <span>Row-by-column multiplication reproduces both equations.</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ========================================================= */}
+          {/* QUESTION 8: The Grand Equation Ax = b                     */}
           {/* ========================================================= */}
           {activeStep === 8 && (
             <div className="fs-options-grid">
               {[
                 {
-                  id: 'q8_exact',
-                  text: 'Yes, it recreates both equations',
+                  id: 'q8_analog',
+                  text: 'A = machine, x = inputs, b = targets',
                   isCorrect: true
                 },
                 {
-                  id: 'q8_different',
-                  text: 'No, gives different equations',
+                  id: 'q8_wrong1',
+                  text: 'A = number, x = line, b = angle',
                   isCorrect: false
                 },
                 {
-                  id: 'q8_multiply',
-                  text: 'Multiplies all numbers together',
+                  id: 'q8_wrong2',
+                  text: 'b = machine, x = inputs, A = targets',
                   isCorrect: false
                 }
               ].map((opt, idx) => {
@@ -1323,8 +1342,8 @@ export default function MatrixStudioModule({ onBack }) {
                       {isSelected && (
                         <div style={{ marginTop: '0.25rem', fontSize: '0.8rem', fontWeight: 600 }}>
                           {opt.isCorrect
-                            ? '✓ Exactly! Row × column matches both lines.'
-                            : '✕ Multiply each row by the column vector.'}
+                            ? '✓ Exactly! A acts on x to give b.'
+                            : '✕ A is the machine, x is the input vector.'}
                         </div>
                       )}
                     </div>
@@ -1335,65 +1354,6 @@ export default function MatrixStudioModule({ onBack }) {
               {answers[8]?.isCorrect && (
                 <div className="fs-inquiry-feedback success" style={{ marginTop: '0.65rem' }}>
                   <span>✓</span>
-                  <span>Row-by-column multiplication reproduces both equations.</span>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* ========================================================= */}
-          {/* QUESTION 9: The Grand Equation Ax = b                     */}
-          {/* ========================================================= */}
-          {activeStep === 9 && (
-            <div className="fs-options-grid">
-              {[
-                {
-                  id: 'q9_analog',
-                  text: 'A = machine, x = inputs, b = targets',
-                  isCorrect: true
-                },
-                {
-                  id: 'q9_wrong1',
-                  text: 'A = number, x = line, b = angle',
-                  isCorrect: false
-                },
-                {
-                  id: 'q9_wrong2',
-                  text: 'b = machine, x = inputs, A = targets',
-                  isCorrect: false
-                }
-              ].map((opt, idx) => {
-                const isSelected = answers[9]?.selectedOption === opt.id;
-                let btnClass = 'fs-option-btn';
-                if (isSelected) {
-                  btnClass += opt.isCorrect ? ' correct' : ' incorrect';
-                }
-                const letter = String.fromCharCode(65 + idx);
-                return (
-                  <button
-                    key={opt.id}
-                    className={btnClass}
-                    onClick={() => handleSelectQ9(opt.id)}
-                    disabled={answers[9]?.isCorrect}
-                  >
-                    <span className="fs-option-letter">{letter}</span>
-                    <div style={{ flex: 1 }}>
-                      <span>{opt.text}</span>
-                      {isSelected && (
-                        <div style={{ marginTop: '0.25rem', fontSize: '0.8rem', fontWeight: 600 }}>
-                          {opt.isCorrect
-                            ? '✓ Exactly! A acts on x to give b.'
-                            : '✕ A is the machine, x is the input vector.'}
-                        </div>
-                      )}
-                    </div>
-                  </button>
-                );
-              })}
-
-              {answers[9]?.isCorrect && (
-                <div className="fs-inquiry-feedback success" style={{ marginTop: '0.65rem' }}>
-                  <span>✓</span>
                   <span>A x = b is the 2D version of f(x) = y.</span>
                 </div>
               )}
@@ -1401,29 +1361,29 @@ export default function MatrixStudioModule({ onBack }) {
           )}
 
           {/* ========================================================= */}
-          {/* QUESTION 10: Live Evaluation                              */}
+          {/* QUESTION 9: Live Evaluation                               */}
           {/* ========================================================= */}
-          {activeStep === 10 && (
-            <form onSubmit={handleCheckQ10}>
+          {activeStep === 9 && (
+            <form onSubmit={handleCheckQ9}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.85rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
                   <span style={{ fontWeight: 600, minWidth: '220px', fontSize: '0.9rem' }}>
                     Row 1: {L1.a}({P.x}) {L1.b >= 0 ? '+' : '-'} {Math.abs(L1.b)}({P.y}) =
                   </span>
                   <input
-                    ref={q10Row1Ref}
+                    ref={q9Row1Ref}
                     type="text"
                     className="fs-cell-input"
                     style={{ width: '80px', height: '36px' }}
                     placeholder="?"
-                    value={answers[10].row1}
+                    value={answers[9].row1}
                     onChange={(e) =>
                       setAnswers((prev) => ({
                         ...prev,
-                        10: { ...prev[10], row1: e.target.value, error: null }
+                        9: { ...prev[9], row1: e.target.value, error: null }
                       }))
                     }
-                    disabled={answers[10].isCorrect}
+                    disabled={answers[9].isCorrect}
                   />
                 </div>
 
@@ -1436,32 +1396,32 @@ export default function MatrixStudioModule({ onBack }) {
                     className="fs-cell-input"
                     style={{ width: '80px', height: '36px' }}
                     placeholder="?"
-                    value={answers[10].row2}
+                    value={answers[9].row2}
                     onChange={(e) =>
                       setAnswers((prev) => ({
                         ...prev,
-                        10: { ...prev[10], row2: e.target.value, error: null }
+                        9: { ...prev[9], row2: e.target.value, error: null }
                       }))
                     }
-                    disabled={answers[10].isCorrect}
+                    disabled={answers[9].isCorrect}
                   />
                 </div>
               </div>
 
-              {!answers[10].isCorrect && (
+              {!answers[9].isCorrect && (
                 <button type="submit" className="fs-btn-primary" style={{ marginTop: '1rem' }}>
                   Evaluate A · x 🚀
                 </button>
               )}
 
-              {answers[10].error && (
+              {answers[9].error && (
                 <div className="fs-inquiry-feedback error" style={{ marginTop: '0.65rem' }}>
                   <span>⚠️</span>
-                  <span>{answers[10].error}</span>
+                  <span>{answers[9].error}</span>
                 </div>
               )}
 
-              {answers[10].isCorrect && (
+              {answers[9].isCorrect && (
                 <div className="fs-inquiry-feedback success" style={{ marginTop: '0.65rem' }}>
                   <span>✓</span>
                   <span>Output [{L1.c}, {L2.c}] matches target b: A · x = b verified!</span>
@@ -1471,10 +1431,10 @@ export default function MatrixStudioModule({ onBack }) {
           )}
 
           {/* ========================================================= */}
-          {/* QUESTION 11: Second System Solve                          */}
+          {/* QUESTION 10: Second System Solve                          */}
           {/* ========================================================= */}
-          {activeStep === 11 && (
-            <form onSubmit={handleCheckQ11}>
+          {activeStep === 10 && (
+            <form onSubmit={handleCheckQ10}>
               <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--clr-accent)', marginBottom: '0.4rem' }}>
                 Step 1: Enter Matrix A for 2x + y = 8 &amp; x + 2y = 7:
               </div>
@@ -1486,36 +1446,36 @@ export default function MatrixStudioModule({ onBack }) {
                       type="text"
                       className="fs-cell-input"
                       placeholder="?"
-                      value={answers[11].matrix[0][0]}
-                      onChange={(e) => handleQ11MatrixChange(0, 0, e.target.value)}
-                      disabled={answers[11].isCorrect}
+                      value={answers[10].matrix[0][0]}
+                      onChange={(e) => handleQ10MatrixChange(0, 0, e.target.value)}
+                      disabled={answers[10].isCorrect}
                       title="Line 1: x-multiplier"
                     />
                     <input
                       type="text"
                       className="fs-cell-input"
                       placeholder="?"
-                      value={answers[11].matrix[0][1]}
-                      onChange={(e) => handleQ11MatrixChange(0, 1, e.target.value)}
-                      disabled={answers[11].isCorrect}
+                      value={answers[10].matrix[0][1]}
+                      onChange={(e) => handleQ10MatrixChange(0, 1, e.target.value)}
+                      disabled={answers[10].isCorrect}
                       title="Line 1: y-multiplier"
                     />
                     <input
                       type="text"
                       className="fs-cell-input"
                       placeholder="?"
-                      value={answers[11].matrix[1][0]}
-                      onChange={(e) => handleQ11MatrixChange(1, 0, e.target.value)}
-                      disabled={answers[11].isCorrect}
+                      value={answers[10].matrix[1][0]}
+                      onChange={(e) => handleQ10MatrixChange(1, 0, e.target.value)}
+                      disabled={answers[10].isCorrect}
                       title="Line 2: x-multiplier"
                     />
                     <input
                       type="text"
                       className="fs-cell-input"
                       placeholder="?"
-                      value={answers[11].matrix[1][1]}
-                      onChange={(e) => handleQ11MatrixChange(1, 1, e.target.value)}
-                      disabled={answers[11].isCorrect}
+                      value={answers[10].matrix[1][1]}
+                      onChange={(e) => handleQ10MatrixChange(1, 1, e.target.value)}
+                      disabled={answers[10].isCorrect}
                       title="Line 2: y-multiplier"
                     />
                   </div>
@@ -1548,14 +1508,14 @@ export default function MatrixStudioModule({ onBack }) {
                     className="fs-cell-input"
                     style={{ width: '70px', height: '36px' }}
                     placeholder="?"
-                    value={answers[11].x}
+                    value={answers[10].x}
                     onChange={(e) =>
                       setAnswers((prev) => ({
                         ...prev,
-                        11: { ...prev[11], x: e.target.value, error: null }
+                        10: { ...prev[10], x: e.target.value, error: null }
                       }))
                     }
-                    disabled={answers[11].isCorrect}
+                    disabled={answers[10].isCorrect}
                   />
                 </div>
 
@@ -1566,32 +1526,32 @@ export default function MatrixStudioModule({ onBack }) {
                     className="fs-cell-input"
                     style={{ width: '70px', height: '36px' }}
                     placeholder="?"
-                    value={answers[11].y}
+                    value={answers[10].y}
                     onChange={(e) =>
                       setAnswers((prev) => ({
                         ...prev,
-                        11: { ...prev[11], y: e.target.value, error: null }
+                        10: { ...prev[10], y: e.target.value, error: null }
                       }))
                     }
-                    disabled={answers[11].isCorrect}
+                    disabled={answers[10].isCorrect}
                   />
                 </div>
               </div>
 
-              {!answers[11].isCorrect && (
+              {!answers[10].isCorrect && (
                 <button type="submit" className="fs-btn-primary" style={{ marginTop: '1rem' }}>
                   Verify System 🚀
                 </button>
               )}
 
-              {answers[11].error && (
+              {answers[10].error && (
                 <div className="fs-inquiry-feedback error" style={{ marginTop: '0.65rem' }}>
                   <span>⚠️</span>
-                  <span>{answers[11].error}</span>
+                  <span>{answers[10].error}</span>
                 </div>
               )}
 
-              {answers[11].isCorrect && (
+              {answers[10].isCorrect && (
                 <div className="fs-inquiry-feedback success" style={{ marginTop: '0.65rem' }}>
                   <span>✓</span>
                   <span>Solved! A · [3, 2] = [8, 7] holds true.</span>
@@ -1601,9 +1561,9 @@ export default function MatrixStudioModule({ onBack }) {
           )}
 
           {/* ========================================================= */}
-          {/* QUESTION 12: Ceremony & Free-Play Sandbox                 */}
+          {/* QUESTION 11: Ceremony & Free-Play Sandbox                 */}
           {/* ========================================================= */}
-          {activeStep === 12 && (
+          {activeStep === 11 && (
             <div>
               <div className="fs-ceremony-card">
                 <div className="fs-ceremony-icon">🏛️</div>
@@ -1775,7 +1735,7 @@ export default function MatrixStudioModule({ onBack }) {
               </button>
             )}
 
-            {activeStep > 1 && activeStep < 12 && (
+            {activeStep > 1 && activeStep < 11 && (
               <button
                 className="fs-btn-primary"
                 onClick={() => setActiveStep(activeStep + 1)}
@@ -1785,7 +1745,7 @@ export default function MatrixStudioModule({ onBack }) {
               </button>
             )}
 
-            {activeStep === 12 && onBack && (
+            {activeStep === 11 && onBack && (
               <button className="fs-btn-primary" onClick={onBack}>
                 Return to Dashboard ✓
               </button>

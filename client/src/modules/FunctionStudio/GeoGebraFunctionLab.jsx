@@ -25,7 +25,8 @@ export default function GeoGebraFunctionLab({
   inputPlaceholder = 'e.g. y = x^2 or f(x) = x^2 or A = (-2, 4)',
   suggestedShortcuts = [],
   showInputBar = false,
-  compact = false
+  compact = false,
+  coordBounds = null
 }) {
   const [inputVal, setInputVal] = useState('');
   const [feedback, setFeedback] = useState(null);
@@ -219,7 +220,8 @@ export default function GeoGebraFunctionLab({
             api.setPerspective('G');
             api.evalCommand('SetPerspective("G")');
             // Centered Cartesian viewport fitting lines and curves
-            api.setCoordSystem(-7, 7, -7, 9);
+            const b = coordBounds || { xmin: -6, xmax: 10, ymin: -4, ymax: 12 };
+            api.setCoordSystem(b.xmin, b.xmax, b.ymin, b.ymax);
             api.evalCommand('SetAxesRatio(1, 1)');
             syncCanvasObjects();
           } catch (err) {
@@ -240,6 +242,19 @@ export default function GeoGebraFunctionLab({
       ggbApiRef.current = null;
     };
   }, [ensureGeoGebraLoaded]);
+
+  // Dynamic coordinate bounding update (e.g. Question 8 & evaluation framing)
+  useEffect(() => {
+    const api = ggbApiRef.current;
+    if (!api || isGgbLoading) return;
+    try {
+      const b = coordBounds || { xmin: -6, xmax: 10, ymin: -4, ymax: 12 };
+      api.setCoordSystem(b.xmin, b.xmax, b.ymin, b.ymax);
+      api.evalCommand('SetAxesRatio(1, 1)');
+    } catch (err) {
+      console.warn('GeoGebra coordBounds update warning:', err);
+    }
+  }, [coordBounds?.xmin, coordBounds?.xmax, coordBounds?.ymin, coordBounds?.ymax, isGgbLoading]);
 
   // Synchronize when state dependencies change
   useEffect(() => {
@@ -492,7 +507,8 @@ export default function GeoGebraFunctionLab({
   const handleRecenter = () => {
     if (ggbApiRef.current) {
       try {
-        ggbApiRef.current.setCoordSystem(-7, 7, -7, 9);
+        const b = coordBounds || { xmin: -6, xmax: 10, ymin: -4, ymax: 12 };
+        ggbApiRef.current.setCoordSystem(b.xmin, b.xmax, b.ymin, b.ymax);
         ggbApiRef.current.evalCommand('SetAxesRatio(1, 1)');
       } catch (e) {}
     }
