@@ -39,7 +39,6 @@ import CrossSectionApp from './CrossSectionApp';
 window.React = React;
 console.log("React version:", React.version);
 import LinearAlgebraApp from './LinearAlgebraApp'
-import MatrixMysticsApp from './matrixmystics/MatrixMysticsApp'
 import { TILES, FEATURED_TILES, MATH_LAB_ENTRY, GEOCRAFT_ENTRY } from './features/tiles'
 import LandingPage from './components/LandingPage/LandingPage.jsx'
 import LandingNavbar from './components/LandingPage/LandingNavbar.jsx'
@@ -43235,11 +43234,6 @@ function App() {
     )
   }
 
-  // Route: /matrixmystics → Matrix Mystics (Standalone Independent App)
-  if (pathname === '/matrixmystics' || pathname === '/mm') {
-    return <MatrixMysticsApp />
-  }
-
   // Route: /chapter1 → Cambridge IGCSE Chapter 1 (Reviewing Number Concepts)
   if (pathname === '/chapter1') {
     return (
@@ -44946,7 +44940,6 @@ function App() {
     indicesgym: IndicesGymApp,     // Indices-Gym — index laws (MCQ)
     polygym: PolyGymApp,           // Polynomials Gym — arithmetic → monomial algebra (MCQ)
     treasurehunt: TreasureHuntApp, // Treasure Hunt — solve & seek grid game
-    matrixmystics: MatrixMysticsApp, // Matrix Mystics — 3-Stage Geometric Linear Algebra Lab
     trackProgress: ProgressTrackerApp,
     riddle: RiddleApp,              // Math Riddles
     'water-jug-lab': WaterJugLab,
@@ -56554,21 +56547,6 @@ const PolyGymApp = makeMCQuizApp({
 // MATRIX MYSTICS — comprehensive linear algebra MCQ test bank
 // 6 modules, 53 topics, 1855+ questions across easy/medium/hard + real app.
 // ───────────────────────────────────────────────────────────────────────────
-
-// Legacy single-screen MCQ quiz (superseded by ./matrixmystics/MatrixMysticsApp)
-const _LegacyMatrixMysticsQuiz = makeMCQuizApp({
-  title: 'Matrix Mystics (Legacy)',
-  subtitle: 'Linear Algebra — 6 modules, 53 topics',
-  apiPath: 'matrixmystics-api',
-  adaptiveOnly: true,
-  diffLabels: {
-    easy: 'Easy',
-    medium: 'Medium',
-    hard: 'Hard',
-    extrahard: 'Extra Hard',
-  },
-  tip: 'All questions are MCQ. Read carefully — options are similar length to test real understanding.',
-})
 
 // ───────────────────────────────────────────────────────────────────────────
 // GYM — unified adaptive puzzle that draws from all 7 gym families.

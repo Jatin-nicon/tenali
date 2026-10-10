@@ -643,8 +643,6 @@ const statsRouter = require('./routes/stats');
 app.use('/permcomb-api',   statsRouter);
 const riddleRouter = require('./routes/riddle');
 app.use('/riddle-api', riddleRouter);
-const matrixMysticsRouter = require('./routes/matrixmystics');
-app.use('/matrixmystics-api', matrixMysticsRouter);
 const transferRouter = require('./routes/transfer');
 app.use('/transfer-api', transferRouter);
 app.use('/prob-api',  statsRouter);
