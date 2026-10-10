@@ -17,8 +17,9 @@ import {
 } from './matrixEvaluator';
 import './MatrixStudioModule.css';
 
-export default function MatrixStudioModule({ onBack }) {
+export default function MatrixStudioModule({ onBack, onNext }) {
   const [activeStep, setActiveStep] = useState(1);
+  const [autoAdvanceTimer, setAutoAdvanceTimer] = useState(null);
 
   // Active linear system input by user in Question 1 (single sequential input box, no pre-fill)
   const [activeSystem, setActiveSystem] = useState(null);
@@ -87,6 +88,28 @@ export default function MatrixStudioModule({ onBack }) {
     }, 50);
     return () => clearTimeout(timer);
   }, [activeStep]);
+
+  // Auto-advance countdown on Step 11 ceremony
+  const isCeremonyStep = activeStep === 11;
+  useEffect(() => {
+    let timer;
+    if (isCeremonyStep && onNext) {
+      if (autoAdvanceTimer === null) {
+        timer = setTimeout(() => {
+          setAutoAdvanceTimer(4);
+        }, 0);
+      } else if (autoAdvanceTimer > 0) {
+        timer = setTimeout(() => {
+          setAutoAdvanceTimer((prev) => (prev !== null ? prev - 1 : null));
+        }, 1000);
+      } else if (autoAdvanceTimer === 0 && onNext) {
+        onNext();
+      }
+    }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [isCeremonyStep, onNext, autoAdvanceTimer]);
 
   const isQ3IntersectFound = Boolean(answers[3]?.intersectFound);
   const isQ3Correct = Boolean(answers[3]?.isCorrect);
@@ -1703,6 +1726,38 @@ export default function MatrixStudioModule({ onBack }) {
                   </div>
                 )}
               </div>
+
+              {onNext && autoAdvanceTimer !== null && (
+                <div style={{
+                  background: 'rgba(232, 134, 74, 0.15)',
+                  border: '1px solid var(--clr-accent, #e8864a)',
+                  borderRadius: '8px',
+                  padding: '0.6rem 1.25rem',
+                  fontSize: '0.9rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.75rem',
+                  margin: '1.25rem 0'
+                }}>
+                  <span>🚀 Advancing to <strong>Null Space & Kernel (Stage 7)</strong> in <strong>{autoAdvanceTimer}s</strong>...</span>
+                  <button
+                    type="button"
+                    style={{
+                      background: 'none',
+                      border: '1px solid var(--clr-accent, #e8864a)',
+                      borderRadius: '4px',
+                      color: 'var(--clr-accent, #e8864a)',
+                      padding: '2px 8px',
+                      cursor: 'pointer',
+                      fontSize: '0.78rem'
+                    }}
+                    onClick={() => setAutoAdvanceTimer(null)}
+                  >
+                    Stay Here
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
@@ -1745,10 +1800,19 @@ export default function MatrixStudioModule({ onBack }) {
               </button>
             )}
 
-            {activeStep === 11 && onBack && (
-              <button className="fs-btn-primary" onClick={onBack}>
-                Return to Dashboard ✓
-              </button>
+            {activeStep === 11 && (
+              <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                {onBack && (
+                  <button className="fs-btn-secondary" onClick={onBack}>
+                    Dashboard 🏠
+                  </button>
+                )}
+                {onNext && (
+                  <button className="fs-btn-primary" onClick={onNext}>
+                    Proceed to Null Space & Kernel (Stage 7) ⚖️ ➔
+                  </button>
+                )}
+              </div>
             )}
           </div>
         </div>

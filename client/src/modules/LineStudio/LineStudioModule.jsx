@@ -30,10 +30,11 @@ function initShuffledOptions() {
   return result;
 }
 
-export default function LineStudioModule({ onBack }) {
+export default function LineStudioModule({ onBack, onNext }) {
   // activeStep: 1..6 are Questions 1..6; 7 is Graduation / Free Play
   const [activeStep, setActiveStep] = useState(1);
   const [isFinished, setIsFinished] = useState(false);
+  const [autoAdvanceTimer, setAutoAdvanceTimer] = useState(null);
 
   // GeoGebra Sliders State
   const [sliderA, setSliderA] = useState(2);
@@ -595,6 +596,28 @@ export default function LineStudioModule({ onBack }) {
     }
   };
 
+  // Auto-advance timer when graduating
+  const isAtGraduation = isFinished || activeStep > (PATH_META.totalQuestions || 10);
+  useEffect(() => {
+    let timer;
+    if (isAtGraduation && onNext) {
+      if (autoAdvanceTimer === null) {
+        timer = setTimeout(() => {
+          setAutoAdvanceTimer(4);
+        }, 0);
+      } else if (autoAdvanceTimer > 0) {
+        timer = setTimeout(() => {
+          setAutoAdvanceTimer((prev) => (prev !== null ? prev - 1 : null));
+        }, 1000);
+      } else if (autoAdvanceTimer === 0) {
+        onNext();
+      }
+    }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [isAtGraduation, onNext, autoAdvanceTimer]);
+
   // ========================================================
   // RENDER: GRADUATION / FREE-PLAY LAB (After Level 10)
   // ========================================================
@@ -657,13 +680,50 @@ export default function LineStudioModule({ onBack }) {
           </div>
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '1.5rem', marginBottom: '2rem' }}>
-          <button
-            className="la-btn-primary large"
-            onClick={onBack}
-          >
-            Complete Journey 🏆
-          </button>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', marginTop: '1.5rem', marginBottom: '2rem' }}>
+          {onNext && autoAdvanceTimer !== null && (
+            <div style={{
+              background: 'rgba(13, 148, 136, 0.15)',
+              border: '1px solid #0d9488',
+              borderRadius: '8px',
+              padding: '0.5rem 1rem',
+              color: '#0d9488',
+              fontSize: '0.88rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem'
+            }}>
+              <span>🚀 Advancing to <strong>Dimension Studio (Stage 3)</strong> in <strong>{autoAdvanceTimer}s</strong>...</span>
+              <button
+                type="button"
+                style={{
+                  background: 'none',
+                  border: '1px solid #0d9488',
+                  borderRadius: '4px',
+                  color: '#0d9488',
+                  padding: '2px 6px',
+                  cursor: 'pointer',
+                  fontSize: '0.75rem'
+                }}
+                onClick={() => setAutoAdvanceTimer(null)}
+              >
+                Stay Here
+              </button>
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: '0.65rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+            <button
+              className="la-btn-primary large"
+              onClick={() => (onNext ? onNext() : onBack?.())}
+            >
+              {onNext ? 'Proceed to Dimension Studio (Stage 3) 🌌 ➔' : 'Complete Journey 🏆'}
+            </button>
+            {onBack && (
+              <button className="la-btn-secondary large" onClick={onBack}>
+                Dashboard 🏠
+              </button>
+            )}
+          </div>
         </div>
       </div>
     );

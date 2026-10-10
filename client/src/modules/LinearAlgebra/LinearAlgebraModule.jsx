@@ -720,9 +720,10 @@ function initAllShuffledOptions(selectedObject) {
 // ==========================================
 // MAIN STUDIO MODULE: Point Studio (Understanding the Point)
 // ==========================================
-export default function LinearAlgebraModule({ onBack, questions = POINT_PATH_QUESTIONS }) {
+export default function LinearAlgebraModule({ onBack, onNext, questions = POINT_PATH_QUESTIONS }) {
   const [currentIdx, setCurrentIdx] = useState(0); // 0 to 10
   const [isFinished, setIsFinished] = useState(false);
+  const [autoAdvanceTimer, setAutoAdvanceTimer] = useState(null);
 
   // Environment & Studio Interactive States
   const [userEnvironment, setUserEnvironment] = useState(null);
@@ -841,9 +842,31 @@ export default function LinearAlgebraModule({ onBack, questions = POINT_PATH_QUE
     });
   };
 
+  useEffect(() => {
+    let timer;
+    if (isFinished && hasPlottedPoint && onNext) {
+      if (autoAdvanceTimer === null) {
+        timer = setTimeout(() => {
+          setAutoAdvanceTimer(4);
+        }, 0);
+      } else if (autoAdvanceTimer > 0) {
+        timer = setTimeout(() => {
+          setAutoAdvanceTimer((prev) => (prev !== null ? prev - 1 : null));
+        }, 1000);
+      } else if (autoAdvanceTimer === 0) {
+        onNext();
+      }
+    }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [isFinished, hasPlottedPoint, onNext, autoAdvanceTimer]);
+
   const handleCompleteJourney = () => {
     if (!hasPlottedPoint) return;
-    if (onBack) {
+    if (onNext) {
+      onNext();
+    } else if (onBack) {
       onBack();
     } else {
       handleRestart();
@@ -911,14 +934,44 @@ export default function LinearAlgebraModule({ onBack, questions = POINT_PATH_QUE
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginTop: '1.25rem', alignItems: 'center' }}>
+            {hasPlottedPoint && onNext && autoAdvanceTimer !== null && (
+              <div style={{
+                background: 'rgba(16, 185, 129, 0.15)',
+                border: '1px solid #10b981',
+                borderRadius: '8px',
+                padding: '0.5rem 1rem',
+                color: '#10b981',
+                fontSize: '0.88rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem'
+              }}>
+                <span>🚀 Advancing to <strong>Line Studio (Stage 2)</strong> in <strong>{autoAdvanceTimer}s</strong>...</span>
+                <button
+                  type="button"
+                  style={{
+                    background: 'none',
+                    border: '1px solid #10b981',
+                    borderRadius: '4px',
+                    color: '#10b981',
+                    padding: '2px 6px',
+                    cursor: 'pointer',
+                    fontSize: '0.75rem'
+                  }}
+                  onClick={() => setAutoAdvanceTimer(null)}
+                >
+                  Stay Here
+                </button>
+              </div>
+            )}
             <div style={{ display: 'flex', gap: '0.65rem', flexWrap: 'wrap', justifyContent: 'center' }}>
               <button
                 className="la-btn-primary"
                 onClick={handleCompleteJourney}
                 disabled={!hasPlottedPoint}
-                title={!hasPlottedPoint ? "Plot a point on the GeoGebra grid above to complete your journey" : "Complete the journey"}
+                title={!hasPlottedPoint ? "Plot a point on the GeoGebra grid above to complete your journey" : "Proceed to next studio"}
               >
-                Complete Journey 🎓
+                {onNext ? 'Proceed to Line Studio (Stage 2) 📏 ➔' : 'Complete Journey 🎓'}
               </button>
               <button className="la-btn-secondary" onClick={handleRestart}>
                 Explore the Journey Again 🔄

@@ -31,7 +31,7 @@ const STAGES = {
   }
 };
 
-export default function KernelPlayground({ onBack }) {
+export default function KernelPlayground({ onBack, onNext }) {
   const [currentStage, setCurrentStage] = useState(1);
   const [completedStages, setCompletedStages] = useState(new Set());
 
@@ -753,9 +753,9 @@ export default function KernelPlayground({ onBack }) {
 
       {/* Top Bar with Navigation */}
       <div className="kp-top-nav">
-        {onBack && (
-          <button className="kp-back-btn" onClick={onBack}>
-            ← Back to Tenali
+        {(onNext || onBack) && (
+          <button className="kp-back-btn" onClick={onNext || onBack}>
+            ← Matrix Mystics Home
           </button>
         )}
       </div>
@@ -915,12 +915,12 @@ export default function KernelPlayground({ onBack }) {
                 >
                   Play Again 🔄
                 </button>
-                {onBack && (
+                {(onNext || onBack) && (
                   <button
                     className="kp-inline-btn-secondary"
-                    onClick={onBack}
+                    onClick={onNext || onBack}
                   >
-                    Back to Home 🏠
+                    Matrix Mystics Home 🏰
                   </button>
                 )}
               </div>
@@ -1090,6 +1090,39 @@ export default function KernelPlayground({ onBack }) {
             Notice how all your winning points lie on that single straight line in space.
             In mathematics, the set of all inputs that collapse the output to zero is called the <strong>Kernel</strong> (or <strong>Null Space</strong>).
             Whenever this line exists, active inputs can completely cancel each other out!
+          </div>
+
+          <div style={{
+            marginTop: '1.5rem',
+            padding: '1.25rem 1.5rem',
+            background: 'linear-gradient(135deg, rgba(232, 134, 74, 0.12), rgba(20, 184, 166, 0.15))',
+            borderRadius: '12px',
+            border: '1px solid rgba(232, 134, 74, 0.35)',
+            textAlign: 'center'
+          }}>
+            <h3 style={{ margin: '0 0 0.5rem', color: '#f3efe6', fontSize: '1.2rem', fontWeight: 700 }}>
+              🎓 Matrix Mystics Journey Complete!
+            </h3>
+            <p style={{ margin: '0 auto 1.25rem', fontSize: '0.92rem', color: '#a89e94', maxWidth: '600px', lineHeight: 1.5 }}>
+              You have completed all 7 pedagogical stages — from zero-dimensional points and straight lines, through dimensional spaces, multi-variable mappings, inverses, and 2×2 linear systems, all the way to discovering the Kernel in 3D space!
+            </p>
+            <button
+              className="kp-inline-btn-primary"
+              onClick={onNext || onBack}
+              style={{
+                padding: '0.75rem 2rem',
+                fontSize: '1rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                borderRadius: '8px',
+                background: 'linear-gradient(135deg, #e8864a, #d47035)',
+                color: '#fff',
+                border: 'none',
+                boxShadow: '0 4px 14px rgba(232, 134, 74, 0.35)'
+              }}
+            >
+              Return to Matrix Mystics Home 🏰 ➔
+            </button>
           </div>
         </div>
       )}

@@ -123,9 +123,10 @@ function parseLinearFunction(inputStr) {
   return { success: true, a, b, display, gDisplay };
 }
 
-export default function InverseStudioModule({ onBack }) {
+export default function InverseStudioModule({ onBack, onNext }) {
   // activeStep: 1..10, 'summary'
   const [activeStep, setActiveStep] = useState(1);
+  const [autoAdvanceTimer, setAutoAdvanceTimer] = useState(null);
 
   // Question 1: Linear function input (learner enters their own function)
   const [q1FuncInput, setQ1FuncInput] = useState('');
@@ -242,6 +243,28 @@ export default function InverseStudioModule({ onBack }) {
     q8Done,
     q9Done
   ]);
+
+  // Auto-advance countdown on summary step
+  const isSummaryStep = activeStep === 'summary';
+  useEffect(() => {
+    let timer;
+    if (isSummaryStep && onNext) {
+      if (autoAdvanceTimer === null) {
+        timer = setTimeout(() => {
+          setAutoAdvanceTimer(4);
+        }, 0);
+      } else if (autoAdvanceTimer > 0) {
+        timer = setTimeout(() => {
+          setAutoAdvanceTimer((prev) => (prev !== null ? prev - 1 : null));
+        }, 1000);
+      } else if (autoAdvanceTimer === 0) {
+        onNext();
+      }
+    }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [isSummaryStep, onNext, autoAdvanceTimer]);
 
   // Current question metadata
   const isObs2 = activeStep === 'obs-2';
@@ -1591,14 +1614,58 @@ export default function InverseStudioModule({ onBack }) {
               </span>
             </div>
 
+            {onNext && autoAdvanceTimer !== null && (
+              <div style={{
+                background: 'rgba(232, 134, 74, 0.15)',
+                border: '1px solid var(--clr-accent, #e8864a)',
+                borderRadius: '8px',
+                padding: '0.6rem 1.25rem',
+                fontSize: '0.9rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.75rem',
+                margin: '1.25rem 0'
+              }}>
+                <span>🚀 Advancing to <strong>Matrix Studio (Stage 6)</strong> in <strong>{autoAdvanceTimer}s</strong>...</span>
+                <button
+                  type="button"
+                  style={{
+                    background: 'none',
+                    border: '1px solid var(--clr-accent, #e8864a)',
+                    borderRadius: '4px',
+                    color: 'var(--clr-accent, #e8864a)',
+                    padding: '2px 8px',
+                    cursor: 'pointer',
+                    fontSize: '0.78rem'
+                  }}
+                  onClick={() => setAutoAdvanceTimer(null)}
+                >
+                  Stay Here
+                </button>
+              </div>
+            )}
+
             {/* Navigation */}
             <div className="fs-step-footer-actions between">
               <button className="fs-btn-secondary" onClick={() => setActiveStep(8)}>
                 ← Back to Question 8
               </button>
-              <button className="fs-btn-primary" onClick={handleResetModule}>
-                🔄 Start Over
-              </button>
+              <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                <button className="fs-btn-secondary" onClick={handleResetModule}>
+                  🔄 Start Over
+                </button>
+                {onBack && (
+                  <button className="fs-btn-secondary" onClick={onBack}>
+                    Dashboard 🏠
+                  </button>
+                )}
+                {onNext && (
+                  <button className="fs-btn-primary" onClick={onNext}>
+                    Proceed to Matrix Studio (Stage 6) 📐 ➔
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         )}

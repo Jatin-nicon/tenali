@@ -24,8 +24,9 @@ function initShuffledOptions() {
   return result;
 }
 
-export default function DimensionStudioModule({ onBack = null }) {
+export default function DimensionStudioModule({ onBack = null, onNext = null }) {
   const [activeStep, setActiveStep] = useState(1);
+  const [autoAdvanceTimer, setAutoAdvanceTimer] = useState(null);
   const [shuffledOptionsMap] = useState(() => initShuffledOptions());
   const [answers, setAnswers] = useState(() => {
     const init = {};
@@ -54,6 +55,28 @@ export default function DimensionStudioModule({ onBack = null }) {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [activeStep]);
+
+  // Auto-advance countdown on ceremony step
+  const isCeremony = currentQ.type === 'sandbox';
+  useEffect(() => {
+    let timer;
+    if (isCeremony && onNext) {
+      if (autoAdvanceTimer === null) {
+        timer = setTimeout(() => {
+          setAutoAdvanceTimer(4);
+        }, 0);
+      } else if (autoAdvanceTimer > 0) {
+        timer = setTimeout(() => {
+          setAutoAdvanceTimer((prev) => (prev !== null ? prev - 1 : null));
+        }, 1000);
+      } else if (autoAdvanceTimer === 0) {
+        onNext();
+      }
+    }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [isCeremony, onNext, autoAdvanceTimer]);
 
   // Handle MCQ selection (does not auto-submit)
   const handleSelectOption = (optId) => {
@@ -374,6 +397,38 @@ export default function DimensionStudioModule({ onBack = null }) {
               </table>
             </div>
 
+            {onNext && autoAdvanceTimer !== null && (
+              <div style={{
+                background: 'rgba(232, 134, 74, 0.15)',
+                border: '1px solid var(--clr-accent, #e8864a)',
+                borderRadius: '8px',
+                padding: '0.6rem 1.25rem',
+                fontSize: '0.9rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.75rem',
+                margin: '1.25rem 0'
+              }}>
+                <span>🚀 Advancing to <strong>Function Studio (Stage 4)</strong> in <strong>{autoAdvanceTimer}s</strong>...</span>
+                <button
+                  type="button"
+                  style={{
+                    background: 'none',
+                    border: '1px solid var(--clr-accent, #e8864a)',
+                    borderRadius: '4px',
+                    color: 'var(--clr-accent, #e8864a)',
+                    padding: '2px 8px',
+                    cursor: 'pointer',
+                    fontSize: '0.78rem'
+                  }}
+                  onClick={() => setAutoAdvanceTimer(null)}
+                >
+                  Stay Here
+                </button>
+              </div>
+            )}
+
             <div className="fs-step-footer-actions between">
               <button
                 type="button"
@@ -382,15 +437,26 @@ export default function DimensionStudioModule({ onBack = null }) {
               >
                 ↺ Review from Question 1
               </button>
-              {onBack && (
-                <button
-                  type="button"
-                  className="fs-btn-primary"
-                  onClick={onBack}
-                >
-                  Return to Dashboard 🚀
-                </button>
-              )}
+              <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                {onBack && (
+                  <button
+                    type="button"
+                    className="fs-btn-secondary"
+                    onClick={onBack}
+                  >
+                    Dashboard 🏠
+                  </button>
+                )}
+                {onNext && (
+                  <button
+                    type="button"
+                    className="fs-btn-primary"
+                    onClick={onNext}
+                  >
+                    Proceed to Function Studio (Stage 4) ⚡ ➔
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         )}

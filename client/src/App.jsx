@@ -43,6 +43,7 @@ import MatrixMysticsApp from './matrixmystics/MatrixMysticsApp'
 import { TILES, FEATURED_TILES, MATH_LAB_ENTRY, GEOCRAFT_ENTRY } from './features/tiles'
 import LandingPage from './components/LandingPage/LandingPage.jsx'
 import LandingNavbar from './components/LandingPage/LandingNavbar.jsx'
+import MatrixMysticsHome from './components/MatrixMystics/MatrixMysticsHome.jsx'
 
 
 /**
@@ -45015,6 +45016,7 @@ function App() {
       return (
         <LinearAlgebraModule
           onBack={() => setMode(null)}
+          onNext={() => setMode('line-studio')}
         />
       );
     }
@@ -45023,30 +45025,7 @@ function App() {
       return (
         <LineStudioModule
           onBack={() => setMode(null)}
-        />
-      );
-    }
-
-    if (mode === 'function-studio' || mode === 'function') {
-      return (
-        <FunctionStudioModule
-          onBack={() => setMode(null)}
-        />
-      );
-    }
-
-    if (mode === 'inverse-studio' || mode === 'inversestudio' || mode === 'inverse') {
-      return (
-        <InverseStudioModule
-          onBack={() => setMode(null)}
-        />
-      );
-    }
-
-    if (mode === 'matrix-studio' || mode === 'matrixstudio') {
-      return (
-        <MatrixStudioModule
-          onBack={() => setMode(null)}
+          onNext={() => setMode('dimension-studio')}
         />
       );
     }
@@ -45055,6 +45034,34 @@ function App() {
       return (
         <DimensionStudioModule
           onBack={() => setMode(null)}
+          onNext={() => setMode('function-studio')}
+        />
+      );
+    }
+
+    if (mode === 'function-studio' || mode === 'function') {
+      return (
+        <FunctionStudioModule
+          onBack={() => setMode(null)}
+          onNext={() => setMode('inverse-studio')}
+        />
+      );
+    }
+
+    if (mode === 'inverse-studio' || mode === 'inversestudio' || mode === 'inverse') {
+      return (
+        <InverseStudioModule
+          onBack={() => setMode(null)}
+          onNext={() => setMode('matrix-studio')}
+        />
+      );
+    }
+
+    if (mode === 'matrix-studio' || mode === 'matrixstudio') {
+      return (
+        <MatrixStudioModule
+          onBack={() => setMode(null)}
+          onNext={() => setMode('kernel')}
         />
       );
     }
@@ -45063,6 +45070,7 @@ function App() {
       return (
         <KernelPlayground
           onBack={() => setMode(null)}
+          onNext={() => setMode(null)}
         />
       );
     }
@@ -45564,86 +45572,16 @@ function App() {
     )
   }
 
-  // ========== LANDING PAGE VIEW (Default when mode === null and currentView === 'landing') ==========
-  if (mode === null && currentView === 'landing') {
+  // ========== MATRIX MYSTICS HOME VIEW (Default when mode === null) ==========
+  if (mode === null) {
     return (
-      <div className="landing-view-wrapper">
-        <LandingPage
-          onExplorePuzzles={() => {
-            setCurrentView('puzzles');
-            try { window.history.replaceState({}, '', `${BASE}/?view=puzzles`); } catch (e) {}
-          }}
-          onSelectTopic={(topicKey) => {
-            setCurrentView('puzzles');
-            if (topicKey === 'goalpractice') {
-              setMode('goalpractice');
-            } else if (topicKey === 'angles') {
-              setIsGoalMode(false);
-              handleSelectMode(topicKey);
-            } else {
-              setMode(topicKey);
-              setIsGoalMode(false);
-            }
-          }}
-          currentView={currentView}
-          onViewChange={(v) => {
-            setCurrentView(v);
-            try {
-              if (v === 'puzzles') {
-                window.history.replaceState({}, '', `${BASE}/?view=puzzles`);
-              } else {
-                window.history.replaceState({}, '', `${BASE}/`);
-              }
-            } catch (e) {}
-          }}
-          theme={theme}
-          toggleTheme={toggleTheme}
-        />
-        {/* Misconception Monsters toast & hall overlays */}
-        <MonsterToast
-          onOpenHall={() => setHallOpen(true)}
-          onTap={() => setHallOpen(true)}
-        />
-        <HallPanel
-          open={hallOpen}
-          onClose={() => {
-            setHallOpen(false);
-            setGuidedSolverMonsterId(null);
-          }}
-          monsterLog={monsterLog}
-          initialSelectedId={guidedSolverMonsterId}
-          initialGuidedSolver={!!guidedSolverMonsterId}
-          onStartCure={(monsterId, topic) => {
-            setHallOpen(false);
-            setGuidedSolverMonsterId(null);
-            setActiveCure({ monsterId, topic });
-          }}
-          onOpenGuidedSolver={(monsterId) => {
-            setGuidedSolverMonsterId(monsterId);
-          }}
-          onCloseSolver={() => {
-            setGuidedSolverMonsterId(null);
-          }}
-        />
-        {activeCure && (
-          <CureFlow
-            monsterId={activeCure.monsterId}
-            topic={activeCure.topic}
-            onCancel={() => setActiveCure(null)}
-            onComplete={() => {
-              try { setMonsterLog(loadMonsterLog()); } catch {}
-              setActiveCure(null);
-              setHallOpen(true);
-            }}
-            onOpenGuidedSolver={(monsterId) => {
-              setActiveCure(null);
-              setGuidedSolverMonsterId(monsterId);
-              setHallOpen(true);
-            }}
-          />
-        )}
-        <ReflectionJournal />
-      </div>
+      <MatrixMysticsHome
+        onSelect={(key) => {
+          setMode(key);
+        }}
+        theme={theme}
+        toggleTheme={toggleTheme}
+      />
     );
   }
 

@@ -145,9 +145,10 @@ const Q5_OPTIONS = [
 
 const DEFAULT_LINE = parseLineEquation('y = 2x + 1');
 
-export default function FunctionStudioModule({ onBack }) {
+export default function FunctionStudioModule({ onBack, onNext }) {
   // activeStep: 1..8 corresponding to Questions 1..8
   const [activeStep, setActiveStep] = useState(1);
+  const [autoAdvanceTimer, setAutoAdvanceTimer] = useState(null);
 
   // Question 1: Line input text
   const [lineEquationInput, setLineEquationInput] = useState('');
@@ -238,6 +239,28 @@ export default function FunctionStudioModule({ onBack }) {
     isQ9Part1Done,
     isQ11Part1Done
   ]);
+
+  // Auto-advance countdown on summary step
+  const isSummaryStep = activeStep === 'summary';
+  useEffect(() => {
+    let timer;
+    if (isSummaryStep && onNext) {
+      if (autoAdvanceTimer === null) {
+        timer = setTimeout(() => {
+          setAutoAdvanceTimer(4);
+        }, 0);
+      } else if (autoAdvanceTimer > 0) {
+        timer = setTimeout(() => {
+          setAutoAdvanceTimer((prev) => (prev !== null ? prev - 1 : null));
+        }, 1000);
+      } else if (autoAdvanceTimer === 0) {
+        onNext();
+      }
+    }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [isSummaryStep, onNext, autoAdvanceTimer]);
 
   // Question completion criteria
   const isQuestionComplete = (qId) => {
@@ -2616,14 +2639,58 @@ export default function FunctionStudioModule({ onBack }) {
               </div>
             </div>
 
+            {onNext && autoAdvanceTimer !== null && (
+              <div style={{
+                background: 'rgba(232, 134, 74, 0.15)',
+                border: '1px solid var(--clr-accent, #e8864a)',
+                borderRadius: '8px',
+                padding: '0.6rem 1.25rem',
+                fontSize: '0.9rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.75rem',
+                margin: '1.25rem 0'
+              }}>
+                <span>🚀 Advancing to <strong>Inverse Studio (Stage 5)</strong> in <strong>{autoAdvanceTimer}s</strong>...</span>
+                <button
+                  type="button"
+                  style={{
+                    background: 'none',
+                    border: '1px solid var(--clr-accent, #e8864a)',
+                    borderRadius: '4px',
+                    color: 'var(--clr-accent, #e8864a)',
+                    padding: '2px 8px',
+                    cursor: 'pointer',
+                    fontSize: '0.78rem'
+                  }}
+                  onClick={() => setAutoAdvanceTimer(null)}
+                >
+                  Stay Here
+                </button>
+              </div>
+            )}
+
             {/* Step Footer Navigation */}
             <div className="fs-step-footer-actions between" style={{ marginTop: '1.25rem' }}>
               <button className="fs-btn-secondary" onClick={() => setActiveStep(11)}>
                 ← Back to Question 11
               </button>
-              <button className="fs-btn-primary" onClick={handleResetNewJourney}>
-                ✏️ Input Another Line / Function
-              </button>
+              <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                <button className="fs-btn-secondary" onClick={handleResetNewJourney}>
+                  ✏️ Try Another Function
+                </button>
+                {onBack && (
+                  <button className="fs-btn-secondary" onClick={onBack}>
+                    Dashboard 🏠
+                  </button>
+                )}
+                {onNext && (
+                  <button className="fs-btn-primary" onClick={onNext}>
+                    Proceed to Inverse Studio (Stage 5) 🔄 ➔
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         )}
